@@ -1,0 +1,35 @@
+name: Verba
+options:
+  bundleIdPrefix: com.sotamikami
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "16.0"
+
+packages:
+  KeyboardShortcuts:
+    url: https://github.com/sindresorhus/KeyboardShortcuts
+    from: "2.0.0"
+  WhisperKit:
+    url: https://github.com/argmaxinc/WhisperKit
+    from: "0.9.0"
+
+targets:
+  Verba:
+    type: application
+    platform: macOS
+    sources:
+      - Verba
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.sotamikami.verba
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: 1
+        INFOPLIST_FILE: Verba/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Verba/Verba.entitlements
+        SWIFT_VERSION: "5.9"
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+    dependencies:
+      - package: KeyboardShortcuts
+      - package: WhisperKit
+    entitlements:
+      path: Verba/Verba.entitlements
