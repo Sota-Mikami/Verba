@@ -1,69 +1,108 @@
 # Verba
 
-Local-first voice input for macOS. Speak naturally, get text pasted into any app.
+Local-first voice input for macOS. Speak naturally, get clean text pasted into any app.
 
-Uses [WhisperKit](https://github.com/argmaxinc/WhisperKit) for on-device transcription — no cloud STT required.
+**No cloud STT. No subscription. Just your voice → text.**
+
+Verba uses [WhisperKit](https://github.com/argmaxinc/WhisperKit) for fully on-device transcription with optional LLM formatting via OpenRouter, OpenAI, or any OpenAI-compatible endpoint.
+
+## Download
+
+**[Download latest release](https://github.com/Sota-Mikami/Verba/releases/latest)**
+
+> Requires macOS 14+ (Sonoma) and Apple Silicon (M1/M2/M3/M4)
 
 ## Features
 
-- **Push-to-talk** — Hold `Fn` to record, release to transcribe and paste
-- **Hands-free** — Double-tap `Fn` to start, double-tap again to stop
-- **Auto-paste** — Transcribed text is automatically pasted into the active app
+**Voice Input**
+- **Push-to-talk** — Hold a key to record, release to transcribe and paste
+- **Hands-free** — Toggle recording with a key combo or double-tap
+- **Custom shortcuts** — Set any modifier key, key combo (e.g. `fn Space`), or double-tap as trigger
+- **Auto-paste** — Transcribed text is pasted into the active app automatically
+
+**Transcription**
+- **On-device** — WhisperKit `large-v3-turbo` model, no data leaves your Mac
 - **Multi-language** — Japanese, English, Vietnamese, or auto-detect
-- **Formatted mode** — Optional AI cleanup via OpenRouter (removes filler words, fixes punctuation)
-- **Menu bar app** — Runs quietly in the menu bar, no Dock icon
+- **Fast & Formatted modes** — Raw output or AI-cleaned text (filler removal, punctuation, structure)
 
-## Requirements
+**Formatting Engine**
+- **Multi-provider** — OpenRouter, OpenAI, or any custom OpenAI-compatible endpoint
+- **Model selector** — Suggested models per provider with speed badges
+- **Hardened prompts** — Formatting-only output, no conversational responses
 
-- macOS 14+ (Sonoma)
-- Apple Silicon (M1/M2/M3/M4)
-- Accessibility permission (for global shortcuts and auto-paste)
-- Microphone permission
+**App**
+- **Menu bar + Dock** — Runs in menu bar with optional Dock icon
+- **Dashboard** — Session stats, mode usage, recent transcriptions
+- **History** — Full transcription history with audio playback, copy, retry, and delete
+- **System audio** — Keep playing, pause media, or capture system audio during recording
+- **Dark theme** — Discord-inspired design system
 
-## Setup
+## First Launch
 
-### 1. Build
+### 1. Install
+
+Download `Verba-vX.X.X-mac.zip` from [Releases](https://github.com/Sota-Mikami/Verba/releases), unzip, and move `Verba.app` to `/Applications`.
+
+On first open, macOS may show "unidentified developer" warning. Right-click → Open to bypass.
+
+### 2. Grant Permissions
+
+- **Accessibility**: System Settings → Privacy & Security → Accessibility → Enable Verba
+- **Microphone**: Granted on first launch prompt
+- **Fn key** (if using fn as trigger): System Settings → Keyboard → "Press 🌐 key to" → **Do Nothing**
+
+### 3. Optional: Formatted Mode
+
+For AI-cleaned output, go to Settings → Formatting Engine and add an API key:
+
+| Provider | Get API key | Recommended model |
+|----------|------------|-------------------|
+| [OpenRouter](https://openrouter.ai/) | Free tier available | `google/gemma-3-4b-it` (fastest) |
+| [OpenAI](https://platform.openai.com/) | Pay-as-you-go | `gpt-4.1-nano` (fastest) |
+
+Typical cost: **less than $1/month** for daily use.
+
+## Build from Source
 
 ```bash
 brew install xcodegen  # if not installed
+cd Verba
 xcodegen generate
 open Verba.xcodeproj
-# Build & Run (Cmd+R)
+# Product → Build (⌘B) or Run (⌘R)
 ```
 
-### 2. Permissions
-
-- **Accessibility**: System Settings → Privacy & Security → Accessibility → Enable Verba
-- **Microphone**: Granted on first launch
-- **Fn key**: System Settings → Keyboard → "Press 🌐 key to" → **Do Nothing**
-
-### 3. Optional: Formatted mode
-
-For AI-cleaned output, add an [OpenRouter](https://openrouter.ai/) API key in Settings → OpenRouter API.
-
-Recommended models:
-- `google/gemma-3-4b-it` — fastest
-- `google/gemma-3-12b-it` — balanced
+Release build:
+```bash
+xcodebuild -scheme Verba -configuration Release build
+```
 
 ## Architecture
 
 ```
-VerbaApp.swift          App entry point (MenuBarExtra)
-AppState.swift          Central state, recording/transcription pipeline
-HotkeyManager.swift     Global Fn key detection (flagsChanged events)
-AudioRecorder.swift     AVAudioEngine recording, 48kHz→16kHz conversion
-WhisperService.swift    WhisperKit on-device transcription
-PasteService.swift      Clipboard + CGEvent Cmd+V simulation
-OpenRouterService.swift Optional LLM text formatting
-FloatingIndicator.swift Non-activating recording indicator overlay
-SettingsView.swift      Settings UI
-MenuBarView.swift       Menu bar popover UI
+VerbaApp.swift            App entry (MenuBarExtra + AppDelegate)
+AppState.swift            Central state, recording pipeline, settings
+HotkeyManager.swift       Custom shortcut recorder + controller
+AudioRecorder.swift       AVAudioEngine + system audio capture
+WhisperService.swift      WhisperKit on-device transcription
+FormattingService.swift   Multi-provider LLM formatting
+PasteService.swift        Clipboard + CGEvent Cmd+V paste
+FloatingIndicator.swift   Non-activating recording overlay
+MainView.swift            Sidebar navigation (Dashboard/History/Settings)
+DashboardView.swift       Stats, mode cards, recent transcriptions
+HistoryView.swift         Full history with playback and actions
+SettingsView.swift        All settings with shortcut recorder
+DesignSystem.swift        Discord-inspired design tokens
 ```
 
-## Known issues
+## Roadmap
 
-- Accessibility permission resets on every debug build (binary signature changes). Toggle OFF→ON in System Settings after rebuilding. This does not affect signed release builds.
+- [ ] Custom formatting prompts (per-context templates)
+- [ ] Local LLM formatting via MLX (no API key needed)
+- [ ] GitHub Pages landing page
+- [ ] Real-time streaming transcription
+- [ ] Context-aware formatting (read active app content)
 
 ## License
 
-Private project.
+MIT
