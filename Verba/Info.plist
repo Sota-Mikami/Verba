@@ -12,9 +12,9 @@
     <string>$(MARKETING_VERSION)</string>
     <key>CFBundleVersion</key>
     <string>$(CURRENT_PROJECT_VERSION)</string>
-    <key>LSUIElement</key>
-    <true/>
     <key>NSMicrophoneUsageDescription</key>
     <string>Verba needs microphone access to transcribe your speech.</string>
+    <key>NSScreenCaptureUsageDescription</key>
+    <string>Verba needs screen recording permission to capture system audio for transcription.</string>
 </dict>
 </plist>

@@ -6,6 +6,7 @@ struct SettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+                generalSection
                 shortcutsSection
                 languageSection
                 modelSection
@@ -15,6 +16,50 @@ struct SettingsView: View {
             .padding(24)
         }
         .frame(width: 520, height: 480)
+    }
+
+    // MARK: - General
+
+    private var generalSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionHeader("General", icon: "gearshape")
+
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Show in Dock")
+                        .font(.body)
+                    Text("Display the app icon in the Dock.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Toggle("", isOn: $appState.showInDock)
+                    .toggleStyle(.switch)
+            }
+            .padding(12)
+            .background(.quaternary.opacity(0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("System audio during recording")
+                        .font(.body)
+                    Text(systemAudioDescription)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Picker("", selection: $appState.systemAudioBehavior) {
+                    ForEach(SystemAudioBehavior.allCases, id: \.self) { behavior in
+                        Text(behavior.rawValue).tag(behavior)
+                    }
+                }
+                .frame(width: 160)
+            }
+            .padding(12)
+            .background(.quaternary.opacity(0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
     }
 
     // MARK: - Keyboard Shortcuts
@@ -161,6 +206,17 @@ struct SettingsView: View {
     }
 
     // MARK: - Helpers
+
+    private var systemAudioDescription: String {
+        switch appState.systemAudioBehavior {
+        case .keepPlaying:
+            return "Music and videos keep playing while recording."
+        case .pauseMedia:
+            return "Auto-pause media on record, resume when done."
+        case .captureSystemAudio:
+            return "Mix system audio into transcription input."
+        }
+    }
 
     private func sectionHeader(_ title: String, icon: String) -> some View {
         Label(title, systemImage: icon)

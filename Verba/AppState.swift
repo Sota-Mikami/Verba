@@ -9,6 +9,12 @@ enum TranscriptionMode: String, CaseIterable {
     case formatted = "Formatted"
 }
 
+enum SystemAudioBehavior: String, CaseIterable {
+    case keepPlaying = "Keep Playing"
+    case pauseMedia = "Pause Media"
+    case captureSystemAudio = "Capture System Audio"
+}
+
 private enum RecordingTrigger {
     case none
     case pushToTalk
@@ -28,11 +34,16 @@ class AppState: ObservableObject {
 
     @AppStorage("openRouterApiKey") var openRouterApiKey = ""
     @AppStorage("openRouterModel") var openRouterModel = "google/gemma-3-4b-it"
+    @AppStorage("showInDock") var showInDock = true {
+        didSet { applyDockVisibility() }
+    }
+    @AppStorage("systemAudioBehavior") var systemAudioBehavior: SystemAudioBehavior = .keepPlaying
 
     private var audioRecorder = AudioRecorder()
     private var whisperService = WhisperService()
     private let openRouterService = OpenRouterService()
     private let pasteService = PasteService()
+    private let mediaControlService = MediaControlService()
     private let floatingIndicator = FloatingIndicatorController()
     let settingsWindow = SettingsWindowController()
 
@@ -47,15 +58,26 @@ class AppState: ObservableObject {
     ]
 
     init() {
+        applyDockVisibility()
+
         // Prompt for accessibility if not granted
         if !AXIsProcessTrusted() {
             let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
             AXIsProcessTrustedWithOptions(options)
         }
+        audioRecorder.onAudioLevel = { [weak self] (level: Float) in
+            Task { @MainActor [weak self] in
+                self?.floatingIndicator.updateAudioLevel(level)
+            }
+        }
         setupKeyboardShortcuts()
         Task {
             await initializeServices()
         }
+    }
+
+    func applyDockVisibility() {
+        NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
     }
 
     private func setupKeyboardShortcuts() {
@@ -149,6 +171,12 @@ class AppState: ObservableObject {
 
         do {
             pasteService.saveTargetApp()
+
+            if systemAudioBehavior == .pauseMedia {
+                Task { await mediaControlService.pauseIfPlaying() }
+            }
+
+            audioRecorder.captureSystemAudio = (systemAudioBehavior == .captureSystemAudio)
             try audioRecorder.startRecording()
             isRecording = true
             statusMessage = hint
@@ -165,9 +193,17 @@ class AppState: ObservableObject {
         statusMessage = "Transcribing..."
         floatingIndicator.show(isRecording: false, statusMessage: "Transcribing...", mode: mode)
 
-        let audioData = audioRecorder.stopRecording()
+        if systemAudioBehavior == .pauseMedia {
+            mediaControlService.resumeIfPaused()
+        }
 
         Task {
+            let audioData: Data
+            if systemAudioBehavior == .captureSystemAudio {
+                audioData = await audioRecorder.stopRecordingAsync()
+            } else {
+                audioData = audioRecorder.stopRecording()
+            }
             await processAudio(audioData)
         }
     }

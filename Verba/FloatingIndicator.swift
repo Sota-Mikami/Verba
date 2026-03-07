@@ -7,21 +7,39 @@ class NonActivatingWindow: NSWindow {
     override var canBecomeMain: Bool { false }
 }
 
+class FloatingIndicatorState: ObservableObject {
+    @Published var isRecording = false
+    @Published var statusMessage = ""
+    @Published var mode: TranscriptionMode = .formatted
+    @Published var audioLevels: [CGFloat] = Array(repeating: 0, count: 20)
+
+    @MainActor func pushLevel(_ level: Float) {
+        // Normalize: RMS is typically 0~0.3, amplify and clamp to 0~1
+        let normalized = CGFloat(min(level * 5, 1.0))
+        audioLevels.append(normalized)
+        if audioLevels.count > 20 {
+            audioLevels.removeFirst()
+        }
+    }
+}
+
 class FloatingIndicatorController {
     private var window: NonActivatingWindow?
+    let state = FloatingIndicatorState()
 
     @MainActor
     func show(isRecording: Bool, statusMessage: String, mode: TranscriptionMode) {
-        let hostingView = NSHostingView(rootView: FloatingIndicatorView(
-            isRecording: isRecording,
-            statusMessage: statusMessage,
-            mode: mode
-        ))
-        hostingView.frame = NSRect(x: 0, y: 0, width: 280, height: 56)
+        state.isRecording = isRecording
+        state.statusMessage = statusMessage
+        state.mode = mode
+        if !isRecording {
+            state.audioLevels = Array(repeating: 0, count: 20)
+        }
 
-        if let window {
-            window.contentView = hostingView
-        } else {
+        if window == nil {
+            let hostingView = NSHostingView(rootView: FloatingIndicatorView(state: state))
+            hostingView.frame = NSRect(x: 0, y: 0, width: 280, height: 56)
+
             let w = NonActivatingWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 280, height: 56),
                 styleMask: [.borderless],
@@ -48,6 +66,11 @@ class FloatingIndicatorController {
     }
 
     @MainActor
+    func updateAudioLevel(_ level: Float) {
+        state.pushLevel(level)
+    }
+
+    @MainActor
     private func positionAtBottom() {
         guard let window else { return }
         let mouseLocation = NSEvent.mouseLocation
@@ -61,41 +84,37 @@ class FloatingIndicatorController {
 }
 
 struct FloatingIndicatorView: View {
-    let isRecording: Bool
-    let statusMessage: String
-    let mode: TranscriptionMode
-
-    @State private var pulseScale: CGFloat = 1.0
+    @ObservedObject var state: FloatingIndicatorState
 
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
-                if isRecording {
-                    Circle()
-                        .fill(.red.opacity(0.3))
-                        .frame(width: 32, height: 32)
-                        .scaleEffect(pulseScale)
+                if state.isRecording {
+                    // Waveform bars replace the pulse circle
+                    WaveformView(levels: state.audioLevels)
+                        .frame(width: 36, height: 28)
+                } else {
+                    Image(systemName: "mic.badge.ellipsis")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(.orange)
                 }
-                Image(systemName: isRecording ? "mic.fill" : "mic.badge.ellipsis")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(isRecording ? .red : .orange)
             }
             .frame(width: 36, height: 36)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(statusMessage)
+                Text(state.statusMessage)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.white)
                     .lineLimit(1)
 
-                Text(mode == .formatted ? "Formatted" : "Fast")
+                Text(state.mode.rawValue)
                     .font(.system(size: 10))
                     .foregroundStyle(.white.opacity(0.6))
             }
 
             Spacer()
 
-            if isRecording {
+            if state.isRecording {
                 ElapsedTimeView()
                     .font(.system(size: 13, weight: .medium, design: .monospaced))
                     .foregroundStyle(.white.opacity(0.6))
@@ -109,11 +128,19 @@ struct FloatingIndicatorView: View {
                 .fill(.black.opacity(0.75))
         )
         .clipShape(RoundedRectangle(cornerRadius: 14))
-        .onAppear {
-            if isRecording {
-                withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
-                    pulseScale = 1.4
-                }
+    }
+}
+
+struct WaveformView: View {
+    let levels: [CGFloat]
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(Array(levels.enumerated()), id: \.offset) { _, level in
+                RoundedRectangle(cornerRadius: 1.5)
+                    .fill(.red)
+                    .frame(width: 2, height: max(3, level * 24))
+                    .animation(.easeOut(duration: 0.08), value: level)
             }
         }
     }
