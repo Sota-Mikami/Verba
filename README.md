@@ -47,7 +47,10 @@ Verba uses [WhisperKit](https://github.com/argmaxinc/WhisperKit) for fully on-de
 
 ### 1. Install
 
-Download `Verba-vX.X.X-mac.zip` from [Releases](https://github.com/Sota-Mikami/Verba/releases), unzip, and move `Verba.app` to `/Applications`.
+Download from [Releases](https://github.com/Sota-Mikami/Verba/releases):
+
+- **`Verba-vX.X.X.dmg`** (recommended) — Open the DMG, drag Verba to Applications
+- **`Verba-vX.X.X-mac.zip`** (alternative) — Unzip and move `Verba.app` to `/Applications`
 
 ### 2. Bypass Gatekeeper
 
