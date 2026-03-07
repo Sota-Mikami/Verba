@@ -1,8 +1,14 @@
 import AppKit
+import os
+
+private let logger = Logger(subsystem: "com.sotamikami.verba", category: "Paste")
 
 class PasteService {
     /// The app that was frontmost when recording started
     private var targetApp: NSRunningApplication?
+
+    /// Set by caller to show accessibility warnings
+    var onAccessibilityNeeded: (() -> Void)?
 
     /// Call when recording starts to remember which app to paste into
     func saveTargetApp() {
@@ -10,6 +16,15 @@ class PasteService {
     }
 
     func paste(text: String) {
+        guard AXIsProcessTrusted() else {
+            logger.warning("Accessibility not granted — cannot paste")
+            // Still copy to clipboard so user can manually paste
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(text, forType: .string)
+            onAccessibilityNeeded?()
+            return
+        }
+
         let pasteboard = NSPasteboard.general
         let savedItems = savePasteboard(pasteboard)
 
@@ -21,7 +36,7 @@ class PasteService {
             app.activate()
 
             // Give the app a moment to come to front, then paste
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 self.simulatePaste()
                 // Restore clipboard after paste completes
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -38,7 +53,6 @@ class PasteService {
     }
 
     private func simulatePaste() {
-        guard AXIsProcessTrusted() else { return }
 
         let source = CGEventSource(stateID: .hidSystemState)
 

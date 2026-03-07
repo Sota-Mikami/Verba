@@ -94,6 +94,14 @@ class AppState: ObservableObject {
             let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
             AXIsProcessTrustedWithOptions(options)
         }
+        pasteService.onAccessibilityNeeded = { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.statusMessage = "⚠ Accessibility permission needed — text copied to clipboard"
+                // Re-prompt for accessibility
+                let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
+                AXIsProcessTrustedWithOptions(options)
+            }
+        }
         audioRecorder.onAudioLevel = { [weak self] (level: Float) in
             Task { @MainActor [weak self] in
                 self?.floatingIndicator.updateAudioLevel(level)
@@ -297,8 +305,12 @@ class AppState: ObservableObject {
 
             lastTranscription = finalText
             if paste {
+                let accessibilityOK = AXIsProcessTrusted()
                 pasteService.paste(text: finalText)
-                statusMessage = "Pasted \(finalText.count) chars"
+                if accessibilityOK {
+                    statusMessage = "Pasted \(finalText.count) chars"
+                }
+                // If not trusted, onAccessibilityNeeded callback already set statusMessage
             } else {
                 statusMessage = "Retranscribed \(finalText.count) chars"
             }

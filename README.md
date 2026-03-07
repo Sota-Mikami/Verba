@@ -43,15 +43,40 @@ Verba uses [WhisperKit](https://github.com/argmaxinc/WhisperKit) for fully on-de
 
 Download `Verba-vX.X.X-mac.zip` from [Releases](https://github.com/Sota-Mikami/Verba/releases), unzip, and move `Verba.app` to `/Applications`.
 
-On first open, macOS may show "unidentified developer" warning. Right-click → Open to bypass.
+### 2. Bypass Gatekeeper
 
-### 2. Grant Permissions
+Verba is not signed with an Apple Developer certificate, so macOS will block the first launch. This is normal for open-source apps distributed outside the App Store.
+
+**Option A: Right-click → Open (recommended)**
+
+1. Right-click (or Control-click) `Verba.app` in Finder
+2. Select **Open** from the context menu
+3. Click **Open** in the dialog that appears
+
+> If the dialog only shows "Move to Trash", try Option B instead.
+
+**Option B: Allow in System Settings**
+
+1. Double-click `Verba.app` — macOS will block it
+2. Open **System Settings → Privacy & Security**
+3. Scroll down to find *"Verba" was blocked from use because it is not from an identified developer*
+4. Click **Open Anyway**, then confirm
+
+**Option C: Terminal (one-time)**
+
+```bash
+xattr -cr /Applications/Verba.app
+```
+
+This removes the quarantine flag. You only need to do this once.
+
+### 3. Grant Permissions
 
 - **Accessibility**: System Settings → Privacy & Security → Accessibility → Enable Verba
 - **Microphone**: Granted on first launch prompt
 - **Fn key** (if using fn as trigger): System Settings → Keyboard → "Press 🌐 key to" → **Do Nothing**
 
-### 3. Optional: Formatted Mode
+### 4. Optional: Formatted Mode
 
 For AI-cleaned output, go to Settings → Formatting Engine and add an API key:
 
