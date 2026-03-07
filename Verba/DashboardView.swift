@@ -6,17 +6,18 @@ struct DashboardView: View {
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
+        let l = appState.l10n
         switch hour {
-        case 5..<12: return "Good morning"
-        case 12..<17: return "Good afternoon"
-        case 17..<22: return "Good evening"
-        default: return "Good night"
+        case 5..<12: return l.goodMorning
+        case 12..<17: return l.goodAfternoon
+        case 17..<22: return l.goodEvening
+        default: return l.goodNight
         }
     }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            LazyVStack(alignment: .leading, spacing: 20) {
                 header
                     .offset(y: appeared ? 0 : 8)
                     .opacity(appeared ? 1 : 0)
@@ -52,7 +53,7 @@ struct DashboardView: View {
             Text(greeting)
                 .font(.system(size: 24, weight: .bold))
                 .foregroundStyle(DS.textNormal)
-            Text("Here's your voice input activity")
+            Text(appState.l10n.activitySubtitle)
                 .font(.system(size: 14))
                 .foregroundStyle(DS.textMuted)
         }
@@ -65,14 +66,14 @@ struct DashboardView: View {
             ModeCard(
                 icon: "mic.fill",
                 iconColor: DS.blurple,
-                title: "Push-to-talk",
+                title: appState.l10n.pushToTalk,
                 shortcutKeys: [appState.pttShortcut.label],
-                description: "Hold to record, release to transcribe."
+                description: appState.l10n.holdToRecord
             )
             ModeCard(
                 icon: "waveform",
                 iconColor: DS.green,
-                title: "Hands-free",
+                title: appState.l10n.handsFree,
                 shortcutKeys: [appState.hfShortcut.label],
                 description: hfCardDescription
             )
@@ -103,26 +104,26 @@ struct DashboardView: View {
 
     private var statsGrid: some View {
         HStack(spacing: 12) {
-            StatCard(icon: "bubble.left.and.bubble.right.fill", iconColor: DS.blurple, label: "Sessions", value: "\(stats.sessions)")
-            StatCard(icon: "character.cursor.ibeam", iconColor: DS.green, label: "Words", value: formatNumber(stats.words))
-            StatCard(icon: "clock.fill", iconColor: DS.orange, label: "Time Saved", value: formatDuration(stats.duration))
+            StatCard(icon: "bubble.left.and.bubble.right.fill", iconColor: DS.blurple, label: appState.l10n.sessions, value: "\(stats.sessions)")
+            StatCard(icon: "character.cursor.ibeam", iconColor: DS.green, label: appState.l10n.words, value: formatNumber(stats.words))
+            StatCard(icon: "clock.fill", iconColor: DS.orange, label: appState.l10n.timeSaved, value: formatDuration(stats.duration))
         }
     }
 
     private var usageCards: some View {
         HStack(spacing: 12) {
-            usageCard(title: "Mode Usage") {
+            usageCard(title: appState.l10n.modeUsage) {
                 UsageBar(label: "Fast", count: appState.history.filter { $0.mode == .fast }.count, total: max(appState.history.count, 1), color: DS.orange)
                 UsageBar(label: "Formatted", count: appState.history.filter { $0.mode == .formatted }.count, total: max(appState.history.count, 1), color: DS.blurple)
             }
-            usageCard(title: "Languages") {
+            usageCard(title: appState.l10n.languages) {
                 let grouped = Dictionary(grouping: appState.history, by: { $0.language ?? "auto" })
                 let sorted = grouped.sorted { $0.value.count > $1.value.count }
                 ForEach(sorted.prefix(3), id: \.key) { lang, records in
                     UsageBar(label: languageName(lang), count: records.count, total: max(appState.history.count, 1), color: DS.blurpleLight)
                 }
                 if sorted.isEmpty {
-                    Text("No data yet")
+                    Text(appState.l10n.noDataYet)
                         .font(.system(size: 12))
                         .foregroundStyle(DS.textFaint)
                 }
@@ -148,7 +149,7 @@ struct DashboardView: View {
 
     private var recentSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("RECENT TRANSCRIPTIONS")
+            Text(appState.l10n.recentTranscriptions)
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(DS.textMuted)
 
@@ -174,10 +175,10 @@ struct DashboardView: View {
             Image(systemName: "mic.badge.plus")
                 .font(.system(size: 32))
                 .foregroundStyle(DS.textFaint)
-            Text("No transcriptions yet")
+            Text(appState.l10n.noTranscriptionsYet)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(DS.textMuted)
-            Text("Hold fn to start your first recording")
+            Text(appState.l10n.holdFnToStart)
                 .font(.system(size: 12))
                 .foregroundStyle(DS.textFaint)
         }
@@ -202,12 +203,7 @@ struct DashboardView: View {
     }
 
     private func languageName(_ code: String) -> String {
-        switch code {
-        case "ja": return "Japanese"
-        case "en": return "English"
-        case "vi": return "Vietnamese"
-        default: return "Auto"
-        }
+        SpeechLanguage.all.first(where: { $0.code == code })?.displayName ?? appState.l10n.autoDetect
     }
 }
 

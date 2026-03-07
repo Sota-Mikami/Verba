@@ -1,5 +1,12 @@
 import AVFoundation
+import CoreAudio
 import Foundation
+
+struct MicDevice: Identifiable, Hashable {
+    let id: AudioDeviceID
+    let uid: String
+    let name: String
+}
 
 class AudioRecorder {
     private var audioEngine: AVAudioEngine?
@@ -8,6 +15,58 @@ class AudioRecorder {
     private let sampleRate: Double = 16000.0
     var onAudioLevel: ((Float) -> Void)?
     var captureSystemAudio = false
+    var selectedDeviceUID: String = "" // empty = system default
+
+    /// List available audio input devices
+    static func availableInputDevices() -> [MicDevice] {
+        var propSize: UInt32 = 0
+        var address = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyDevices,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+
+        guard AudioObjectGetPropertyDataSize(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &propSize) == noErr else { return [] }
+        let deviceCount = Int(propSize) / MemoryLayout<AudioDeviceID>.size
+        var deviceIDs = [AudioDeviceID](repeating: 0, count: deviceCount)
+        guard AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &propSize, &deviceIDs) == noErr else { return [] }
+
+        var result: [MicDevice] = []
+        for deviceID in deviceIDs {
+            // Check if device has input streams
+            var inputAddress = AudioObjectPropertyAddress(
+                mSelector: kAudioDevicePropertyStreams,
+                mScope: kAudioDevicePropertyScopeInput,
+                mElement: kAudioObjectPropertyElementMain
+            )
+            var streamSize: UInt32 = 0
+            guard AudioObjectGetPropertyDataSize(deviceID, &inputAddress, 0, nil, &streamSize) == noErr,
+                  streamSize > 0 else { continue }
+
+            // Get device name
+            var nameAddress = AudioObjectPropertyAddress(
+                mSelector: kAudioDevicePropertyDeviceNameCFString,
+                mScope: kAudioObjectPropertyScopeGlobal,
+                mElement: kAudioObjectPropertyElementMain
+            )
+            var nameRef: CFString = "" as CFString
+            var nameSize = UInt32(MemoryLayout<CFString>.size)
+            guard AudioObjectGetPropertyData(deviceID, &nameAddress, 0, nil, &nameSize, &nameRef) == noErr else { continue }
+
+            // Get device UID
+            var uidAddress = AudioObjectPropertyAddress(
+                mSelector: kAudioDevicePropertyDeviceUID,
+                mScope: kAudioObjectPropertyScopeGlobal,
+                mElement: kAudioObjectPropertyElementMain
+            )
+            var uidRef: CFString = "" as CFString
+            var uidSize = UInt32(MemoryLayout<CFString>.size)
+            guard AudioObjectGetPropertyData(deviceID, &uidAddress, 0, nil, &uidSize, &uidRef) == noErr else { continue }
+
+            result.append(MicDevice(id: deviceID, uid: uidRef as String, name: nameRef as String))
+        }
+        return result
+    }
 
     func requestMicPermission() async -> Bool {
         if #available(macOS 14.0, *) {
@@ -23,6 +82,26 @@ class AudioRecorder {
 
     func startRecording() throws {
         let engine = AVAudioEngine()
+
+        // Set input device if specified
+        if !selectedDeviceUID.isEmpty {
+            let devices = Self.availableInputDevices()
+            if let device = devices.first(where: { $0.uid == selectedDeviceUID }) {
+                var deviceID = device.id
+                let status = AudioUnitSetProperty(
+                    engine.inputNode.audioUnit!,
+                    kAudioOutputUnitProperty_CurrentDevice,
+                    kAudioUnitScope_Global,
+                    0,
+                    &deviceID,
+                    UInt32(MemoryLayout<AudioDeviceID>.size)
+                )
+                if status != noErr {
+                    print("Failed to set input device: \(status)")
+                }
+            }
+        }
+
         let inputNode = engine.inputNode
         let targetFormat = AVAudioFormat(
             commonFormat: .pcmFormatFloat32,

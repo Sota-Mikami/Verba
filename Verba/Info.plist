@@ -12,6 +12,10 @@
     <string>$(MARKETING_VERSION)</string>
     <key>CFBundleVersion</key>
     <string>$(CURRENT_PROJECT_VERSION)</string>
+    <key>SUFeedURL</key>
+    <string>https://verba.example.com/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string></string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Verba needs microphone access to transcribe your speech.</string>
     <key>NSScreenCaptureUsageDescription</key>

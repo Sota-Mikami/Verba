@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 import os
+import ServiceManagement
 
 private let logger = Logger(subsystem: "com.sotamikami.verba", category: "AppState")
 
@@ -29,8 +30,7 @@ class AppState: ObservableObject {
     @Published var isInitializing = false
     @Published var mode: TranscriptionMode = .formatted
     @Published var lastTranscription = ""
-    @Published var statusMessage = "Starting..."
-    @Published var selectedLanguage = "auto"
+    @Published var statusMessage = ""
     @Published var history: [TranscriptionRecord] = []
     @Published var unseenHistoryCount = 0
 
@@ -42,10 +42,28 @@ class AppState: ObservableObject {
     @AppStorage("customApiKey") var customApiKey = ""
     @AppStorage("customModel") var customModel = ""
     @AppStorage("customEndpoint") var customEndpoint = ""
+    @AppStorage("localModel") var localModel = "gemma3:4b"
+    @AppStorage("selectedPromptId") var selectedPromptId = FormattingPrompt.builtInGeneral.id.uuidString
+    @AppStorage("uiLanguage") var uiLanguage: String = "en" {
+        didSet { l10n = L10n(UILanguage(rawValue: uiLanguage) ?? .en) }
+    }
+    @AppStorage("appearance") var appearance: AppAppearance = .dark {
+        didSet { applyAppearance() }
+    }
+    @Published var customPrompts: [FormattingPrompt] = [] {
+        didSet { saveCustomPrompts() }
+    }
+    @Published var dictionaryEntries: [DictionaryEntry] = [] {
+        didSet { saveDictionary() }
+    }
+    @Published var l10n = L10n.current
     @AppStorage("historyRetention") var historyRetention: HistoryRetention = .thirtyDays
+    @Published var launchAtLogin = false
     @AppStorage("showInDock") var showInDock = true {
         didSet { applyDockVisibility() }
     }
+    @AppStorage("whisperModel") var whisperModel = "auto"
+    @AppStorage("selectedMicDeviceUID") var selectedMicDeviceUID = "" // empty = system default
     @AppStorage("systemAudioBehavior") var systemAudioBehavior: SystemAudioBehavior = .keepPlaying {
         didSet {
             if systemAudioBehavior == .captureSystemAudio && !SystemAudioCapture.hasPermission {
@@ -69,6 +87,7 @@ class AppState: ObservableObject {
     private var audioRecorder = AudioRecorder()
     private var whisperService = WhisperService()
     private let formattingService = FormattingService()
+    let localLLMService = LocalLLMService()
     private let pasteService = PasteService()
     private let mediaControlService = MediaControlService()
     private let floatingIndicator = FloatingIndicatorController()
@@ -78,14 +97,20 @@ class AppState: ObservableObject {
     let hotkeyController = HotkeyController()
     private var recordingTrigger: RecordingTrigger = .none
 
-    let availableLanguages = [
-        ("auto", "Auto Detect"),
-        ("ja", "Japanese"),
-        ("en", "English"),
-        ("vi", "Vietnamese"),
-    ]
+    var allPrompts: [FormattingPrompt] {
+        FormattingPrompt.allBuiltIn + customPrompts
+    }
+
+    var selectedPrompt: FormattingPrompt {
+        guard let uuid = UUID(uuidString: selectedPromptId) else { return .builtInGeneral }
+        return allPrompts.first { $0.id == uuid } ?? .builtInGeneral
+    }
 
     init() {
+        loadCustomPrompts()
+        loadDictionary()
+        syncLaunchAtLogin()
+        applyAppearance()
         applyDockVisibility()
         pruneExpiredHistory()
 
@@ -107,6 +132,7 @@ class AppState: ObservableObject {
                 self?.floatingIndicator.updateAudioLevel(level)
             }
         }
+        setupFloatingIndicatorCallbacks()
         setupKeyboardShortcuts()
         Task {
             await initializeServices()
@@ -127,12 +153,66 @@ class AppState: ObservableObject {
         case .openRouter: return openRouterModel
         case .openAI: return openAIModel
         case .custom: return customModel
-        case .local: return ""
+        case .local: return localModel
         }
     }
 
     func applyDockVisibility() {
         NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
+    }
+
+    private func syncLaunchAtLogin() {
+        launchAtLogin = SMAppService.mainApp.status == .enabled
+    }
+
+    func setLaunchAtLogin(_ enabled: Bool) {
+        do {
+            if enabled {
+                try SMAppService.mainApp.register()
+            } else {
+                try SMAppService.mainApp.unregister()
+            }
+            launchAtLogin = enabled
+        } catch {
+            logger.error("Launch at login error: \(error.localizedDescription)")
+            syncLaunchAtLogin()
+        }
+    }
+
+    func applyAppearance() {
+        switch appearance {
+        case .system:
+            NSApp.appearance = nil
+            let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            DS.activeScheme = isDark ? .dark : .light
+        case .light:
+            NSApp.appearance = NSAppearance(named: .aqua)
+            DS.activeScheme = .light
+        case .dark:
+            NSApp.appearance = NSAppearance(named: .darkAqua)
+            DS.activeScheme = .dark
+        }
+        objectWillChange.send()
+    }
+
+    private func setupFloatingIndicatorCallbacks() {
+        let state = floatingIndicator.state
+        state.onModeChanged = { [weak self] newMode in
+            Task { @MainActor [weak self] in
+                self?.mode = newMode
+            }
+        }
+        state.onPromptSelected = { [weak self] promptId in
+            Task { @MainActor [weak self] in
+                self?.selectedPromptId = promptId
+            }
+        }
+    }
+
+    private func syncFloatingIndicatorState() {
+        let state = floatingIndicator.state
+        state.selectedPromptId = selectedPromptId
+        state.allPrompts = allPrompts
     }
 
     private func setupKeyboardShortcuts() {
@@ -167,6 +247,7 @@ class AppState: ObservableObject {
                         // Switch from push-to-talk to hands-free (keep recording)
                         self.recordingTrigger = .handsFree
                         self.statusMessage = "Recording... (Fn×2 to stop)"
+                        self.syncFloatingIndicatorState()
                         self.floatingIndicator.show(isRecording: true, statusMessage: "Recording... (Fn×2 to stop)", mode: self.mode)
                     } else if self.recordingTrigger == .handsFree {
                         // Stop hands-free
@@ -208,13 +289,30 @@ class AppState: ObservableObject {
                 return
             }
 
-            try await whisperService.loadModel()
+            try await whisperService.loadModel(variant: whisperModel)
             isModelLoaded = true
             statusMessage = "Ready"
         } catch {
             let msg = String(describing: error)
             statusMessage = "Error: \(msg.prefix(80))"
             logger.error("Model load error: \(msg)")
+        }
+        isInitializing = false
+    }
+
+    func reloadWhisperModel() async {
+        isModelLoaded = false
+        isInitializing = true
+        statusMessage = "Downloading Whisper model..."
+        whisperService = WhisperService()
+        do {
+            try await whisperService.loadModel(variant: whisperModel)
+            isModelLoaded = true
+            statusMessage = "Ready"
+        } catch {
+            let msg = String(describing: error)
+            statusMessage = "Error: \(msg.prefix(80))"
+            logger.error("Model reload error: \(msg)")
         }
         isInitializing = false
     }
@@ -234,9 +332,11 @@ class AppState: ObservableObject {
             }
 
             audioRecorder.captureSystemAudio = (systemAudioBehavior == .captureSystemAudio)
+            audioRecorder.selectedDeviceUID = selectedMicDeviceUID
             try audioRecorder.startRecording()
             isRecording = true
             statusMessage = hint
+            syncFloatingIndicatorState()
             floatingIndicator.show(isRecording: true, statusMessage: hint, mode: mode)
         } catch {
             statusMessage = "Mic error: \(error.localizedDescription)"
@@ -266,8 +366,7 @@ class AppState: ObservableObject {
     }
 
     private func processAudio(_ audioData: Data, paste: Bool = true) async {
-        let language = selectedLanguage == "auto" ? nil : selectedLanguage
-        var record = TranscriptionRecord(audioData: audioData, language: language, mode: mode)
+        var record = TranscriptionRecord(audioData: audioData, language: nil, mode: mode)
         history.insert(record, at: 0)
         unseenHistoryCount += 1
         if history.count > Self.maxHistoryCount {
@@ -275,13 +374,13 @@ class AppState: ObservableObject {
         }
 
         do {
-            let rawText = try await whisperService.transcribe(audioData: audioData, language: language)
+            let rawText = try await whisperService.transcribe(audioData: audioData, language: nil)
 
             if rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 updateRecord(record.id) { $0.status = .failed; $0.errorMessage = "No speech detected" }
                 statusMessage = "No speech detected"
                 isProcessing = false
-                floatingIndicator.hide()
+                floatingIndicator.showError("No speech detected")
                 return
             }
 
@@ -289,7 +388,7 @@ class AppState: ObservableObject {
 
             var finalText = rawText
 
-            if mode == .formatted && !currentApiKey.isEmpty && formattingProvider.isAvailable {
+            if mode == .formatted && formattingProvider.isAvailable && (formattingProvider == .local ? localLLMService.isReady : !currentApiKey.isEmpty) {
                 updateRecord(record.id) { $0.status = .formatting }
                 statusMessage = "Formatting..."
                 floatingIndicator.show(isRecording: false, statusMessage: "Formatting...", mode: mode)
@@ -298,9 +397,15 @@ class AppState: ObservableObject {
                     provider: formattingProvider,
                     apiKey: currentApiKey,
                     model: currentModel,
-                    customEndpoint: customEndpoint
+                    customEndpoint: customEndpoint,
+                    prompt: selectedPrompt,
+                    dictionary: dictionaryEntries,
+                    localLLMService: localLLMService
                 ) ?? rawText
                 updateRecord(record.id) { $0.formattedText = finalText; $0.status = .success }
+                detectAndAutoAddTerms(raw: rawText, formatted: finalText)
+            } else if mode == .fast && !dictionaryEntries.isEmpty {
+                finalText = formattingService.applyDictionary(text: rawText, dictionary: dictionaryEntries)
             }
 
             lastTranscription = finalText
@@ -324,7 +429,7 @@ class AppState: ObservableObject {
             updateRecord(record.id) { $0.status = .failed; $0.errorMessage = error.localizedDescription }
             statusMessage = "Error: \(error.localizedDescription)"
             logger.error("Process error: \(error.localizedDescription)")
-            floatingIndicator.hide()
+            floatingIndicator.showError(error.localizedDescription)
         }
 
         isProcessing = false
@@ -361,6 +466,101 @@ class AppState: ObservableObject {
             AudioPlaybackService.shared.stop()
         }
         history.removeAll { $0.id == record.id }
+    }
+
+    // MARK: - Prompt Management
+
+    func addPrompt(_ prompt: FormattingPrompt) {
+        customPrompts.append(prompt)
+        selectedPromptId = prompt.id.uuidString
+    }
+
+    func updatePrompt(_ prompt: FormattingPrompt) {
+        if let index = customPrompts.firstIndex(where: { $0.id == prompt.id }) {
+            customPrompts[index] = prompt
+        }
+    }
+
+    func deletePrompt(_ prompt: FormattingPrompt) {
+        customPrompts.removeAll { $0.id == prompt.id }
+        if selectedPromptId == prompt.id.uuidString {
+            selectedPromptId = FormattingPrompt.builtInGeneral.id.uuidString
+        }
+    }
+
+    // MARK: - Dictionary Management
+
+    /// Detect words that appeared in formatted but not in raw text — likely proper nouns the LLM corrected.
+    private func detectAndAutoAddTerms(raw: String, formatted: String) {
+        let rawWords = Set(raw.components(separatedBy: .whitespacesAndNewlines).map { $0.lowercased() })
+        let formattedWords = formatted.components(separatedBy: .whitespacesAndNewlines)
+        let existingTerms = Set(dictionaryEntries.map { $0.term.lowercased() })
+
+        for word in formattedWords {
+            let clean = word.trimmingCharacters(in: .punctuationCharacters)
+            guard clean.count >= 2,
+                  !rawWords.contains(clean.lowercased()),
+                  !existingTerms.contains(clean.lowercased()),
+                  looksLikeProperNoun(clean) else { continue }
+            let entry = DictionaryEntry(term: clean, isAutoAdded: true)
+            dictionaryEntries.append(entry)
+        }
+    }
+
+    private func looksLikeProperNoun(_ word: String) -> Bool {
+        guard let first = word.first else { return false }
+        // Capitalized English word (not ALL CAPS which could be an acronym already in raw)
+        if first.isUppercase && first.isASCII && word.count > 1 {
+            let rest = word.dropFirst()
+            if rest.contains(where: { $0.isUppercase }) || rest.allSatisfy({ $0.isLowercase }) {
+                return true
+            }
+        }
+        // CamelCase / brand names like WhisperKit, OpenRouter
+        if word.dropFirst().contains(where: { $0.isUppercase }) && word.first?.isUppercase == true {
+            return true
+        }
+        // Contains non-ASCII (Japanese/Chinese names likely proper nouns if LLM introduced them)
+        // Skip — too noisy
+        return false
+    }
+
+    func addDictionaryEntry(_ entry: DictionaryEntry) {
+        dictionaryEntries.append(entry)
+    }
+
+    func updateDictionaryEntry(_ entry: DictionaryEntry) {
+        if let index = dictionaryEntries.firstIndex(where: { $0.id == entry.id }) {
+            dictionaryEntries[index] = entry
+        }
+    }
+
+    func deleteDictionaryEntry(_ entry: DictionaryEntry) {
+        dictionaryEntries.removeAll { $0.id == entry.id }
+    }
+
+    private func saveDictionary() {
+        if let data = try? JSONEncoder().encode(dictionaryEntries) {
+            UserDefaults.standard.set(data, forKey: "dictionaryEntries")
+        }
+    }
+
+    private func loadDictionary() {
+        guard let data = UserDefaults.standard.data(forKey: "dictionaryEntries"),
+              let entries = try? JSONDecoder().decode([DictionaryEntry].self, from: data) else { return }
+        dictionaryEntries = entries
+    }
+
+    private func saveCustomPrompts() {
+        if let data = try? JSONEncoder().encode(customPrompts) {
+            UserDefaults.standard.set(data, forKey: "customFormattingPrompts")
+        }
+    }
+
+    private func loadCustomPrompts() {
+        guard let data = UserDefaults.standard.data(forKey: "customFormattingPrompts"),
+              let prompts = try? JSONDecoder().decode([FormattingPrompt].self, from: data) else { return }
+        customPrompts = prompts
     }
 
     private func pruneExpiredHistory() {

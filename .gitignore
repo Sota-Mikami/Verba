@@ -3,5 +3,6 @@
 xcuserdata/
 DerivedData/
 .build/
+build/
 *.swp
 .env

@@ -1,4 +1,5 @@
 import SwiftUI
+import Sparkle
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     var appState: AppState?
@@ -15,10 +16,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 struct VerbaApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var appState = AppState()
+    private let updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
 
     var body: some Scene {
         MenuBarExtra {
-            MenuBarView()
+            MenuBarView(updater: updaterController.updater)
                 .environmentObject(appState)
                 .onAppear { appDelegate.appState = appState }
         } label: {

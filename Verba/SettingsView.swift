@@ -5,35 +5,88 @@ struct SettingsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                Text("Settings")
+            LazyVStack(alignment: .leading, spacing: 24) {
+                Text(appState.l10n.settings)
                     .font(.system(size: 24, weight: .bold))
                     .foregroundStyle(DS.textNormal)
 
+                uiLanguageSection
+                appearanceSection
                 generalSection
                 shortcutsSection
-                languageSection
                 modelSection
+                promptSection
                 formattingSection
-                accessibilityNote
             }
             .padding(28)
         }
         .background(DS.bgSecondary)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .onAppear { availableMics = AudioRecorder.availableInputDevices() }
     }
 
     // MARK: - General
 
+    // MARK: - UI Language
+
+    private var uiLanguageSection: some View {
+        settingsGroup(appState.l10n.uiLanguage) {
+            settingsRow(title: appState.l10n.uiLanguage, description: appState.l10n.uiLanguageDesc) {
+                Picker("", selection: $appState.uiLanguage) {
+                    ForEach(UILanguage.allCases, id: \.self) { lang in
+                        Text(lang.displayName).tag(lang.rawValue)
+                    }
+                }
+                .frame(width: 180)
+            }
+        }
+    }
+
+    // MARK: - Appearance
+
+    private var appearanceSection: some View {
+        settingsGroup(appState.l10n.appearance) {
+            settingsRow(title: appState.l10n.theme, description: appState.l10n.appearanceDesc) {
+                Picker("", selection: $appState.appearance) {
+                    ForEach(AppAppearance.allCases, id: \.self) { option in
+                        Text(option.rawValue).tag(option)
+                    }
+                }
+                .frame(width: 140)
+            }
+        }
+    }
+
+    @State private var availableMics: [MicDevice] = []
+
     private var generalSection: some View {
-        settingsGroup("GENERAL") {
-            settingsRow(title: "Show in Dock", description: "Display the app icon in the Dock.") {
+        settingsGroup(appState.l10n.general) {
+            settingsRow(title: appState.l10n.launchAtLogin, description: appState.l10n.launchAtLoginDesc) {
+                Toggle("", isOn: Binding(
+                    get: { appState.launchAtLogin },
+                    set: { appState.setLaunchAtLogin($0) }
+                ))
+                    .toggleStyle(.switch)
+                    .tint(DS.blurple)
+            }
+            Divider().foregroundStyle(DS.cardBorder)
+            settingsRow(title: appState.l10n.showInDock, description: appState.l10n.showInDockDesc) {
                 Toggle("", isOn: $appState.showInDock)
                     .toggleStyle(.switch)
                     .tint(DS.blurple)
             }
             Divider().foregroundStyle(DS.cardBorder)
-            settingsRow(title: "System audio during recording", description: systemAudioDescription) {
+            settingsRow(title: appState.l10n.microphone, description: appState.l10n.microphoneDesc) {
+                Picker("", selection: $appState.selectedMicDeviceUID) {
+                    Text(appState.l10n.systemDefault).tag("")
+                    ForEach(availableMics) { mic in
+                        Text(mic.name).tag(mic.uid)
+                    }
+                }
+                .frame(width: 200)
+            }
+            Divider().foregroundStyle(DS.cardBorder)
+            settingsRow(title: appState.l10n.systemAudioDuringRecording, description: systemAudioDescription) {
                 Picker("", selection: $appState.systemAudioBehavior) {
                     ForEach(SystemAudioBehavior.allCases, id: \.self) { behavior in
                         Text(behavior.rawValue).tag(behavior)
@@ -42,7 +95,7 @@ struct SettingsView: View {
                 .frame(width: 180)
             }
             Divider().foregroundStyle(DS.cardBorder)
-            settingsRow(title: "History retention", description: "Auto-delete old recordings and transcriptions.") {
+            settingsRow(title: appState.l10n.historyRetention, description: appState.l10n.historyRetentionDesc) {
                 Picker("", selection: $appState.historyRetention) {
                     ForEach(HistoryRetention.allCases, id: \.self) { retention in
                         Text(retention.rawValue).tag(retention)
@@ -72,9 +125,9 @@ struct SettingsView: View {
     }
 
     private var shortcutsSection: some View {
-        settingsGroup("KEYBOARD SHORTCUTS") {
+        settingsGroup(appState.l10n.keyboardShortcuts) {
             EditableShortcutRow(
-                title: "Push-to-talk",
+                title: appState.l10n.pushToTalk,
                 description: pttDescription,
                 shortcut: appState.pttShortcut,
                 isRecording: recordingTarget == .ptt,
@@ -83,7 +136,7 @@ struct SettingsView: View {
             )
             Divider().foregroundStyle(DS.cardBorder)
             EditableShortcutRow(
-                title: "Hands-free",
+                title: appState.l10n.handsFree,
                 description: hfDescription,
                 shortcut: appState.hfShortcut,
                 isRecording: recordingTarget == .hf,
@@ -102,7 +155,7 @@ struct SettingsView: View {
                         HStack(spacing: 4) {
                             Image(systemName: "arrow.counterclockwise")
                                 .font(.system(size: 11))
-                            Text("Reset All to Default")
+                            Text(appState.l10n.resetAllToDefault)
                                 .font(.system(size: 12, weight: .medium))
                         }
                         .foregroundStyle(DS.textMuted)
@@ -149,32 +202,72 @@ struct SettingsView: View {
         recorder.start()
     }
 
-    // MARK: - Language
-
-    private var languageSection: some View {
-        settingsGroup("LANGUAGE") {
-            settingsRow(title: "Speech language", description: "Language of your speech input.") {
-                Picker("", selection: $appState.selectedLanguage) {
-                    ForEach(appState.availableLanguages, id: \.0) { code, name in
-                        Text(name).tag(code)
-                    }
-                }
-                .frame(width: 160)
-            }
-        }
-    }
-
     // MARK: - Model
 
+    @State private var pendingWhisperModel: String? = nil
+
     private var modelSection: some View {
-        settingsGroup("TRANSCRIPTION") {
-            settingsRow(title: "Whisper model", description: appState.isModelLoaded ? "Loaded and ready" : "Downloading...") {
+        settingsGroup(appState.l10n.transcription) {
+            settingsRow(title: appState.l10n.whisperModel, description: appState.isModelLoaded ? appState.l10n.loadedAndReady : appState.l10n.downloading) {
                 Circle()
                     .fill(appState.isModelLoaded ? DS.green : DS.orange)
                     .frame(width: 10, height: 10)
             }
             Divider().foregroundStyle(DS.cardBorder)
-            settingsRow(title: "Output mode", description: "Fast: raw output. Formatted: AI-cleaned text.") {
+
+            // Whisper model picker
+            VStack(alignment: .leading, spacing: 4) {
+                Text(appState.l10n.whisperModelDesc)
+                    .font(.system(size: 11))
+                    .foregroundStyle(DS.textFaint)
+                    .padding(.horizontal, 8)
+                    .padding(.top, 4)
+
+                VStack(spacing: 2) {
+                    ForEach(WhisperModelOption.recommended) { option in
+                        WhisperModelRow(
+                            option: option,
+                            isSelected: appState.whisperModel == option.id,
+                            onSelect: {
+                                if appState.whisperModel != option.id {
+                                    appState.whisperModel = option.id
+                                    pendingWhisperModel = option.id
+                                }
+                            }
+                        )
+                    }
+                }
+                .padding(4)
+
+                if pendingWhisperModel != nil {
+                    HStack(spacing: 8) {
+                        Text(appState.l10n.restartRequired)
+                            .font(.system(size: 11))
+                            .foregroundStyle(DS.textFaint)
+                        Spacer()
+                        Button {
+                            pendingWhisperModel = nil
+                            Task {
+                                await appState.reloadWhisperModel()
+                            }
+                        } label: {
+                            Text(appState.l10n.reloadModel)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(DS.blurple)
+                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.bottom, 4)
+                }
+            }
+
+            Divider().foregroundStyle(DS.cardBorder)
+            settingsRow(title: appState.l10n.outputMode, description: appState.l10n.outputModeDesc) {
                 Picker("", selection: $appState.mode) {
                     ForEach(TranscriptionMode.allCases, id: \.self) { mode in
                         Text(mode.rawValue).tag(mode)
@@ -185,12 +278,76 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Formatting Prompts
+
+    @State private var editingPrompt: FormattingPrompt? = nil
+    @State private var isCreatingPrompt = false
+
+    private var promptSection: some View {
+        settingsGroup(appState.l10n.formattingPrompt) {
+            // Prompt selector
+            VStack(spacing: 2) {
+                ForEach(appState.allPrompts) { prompt in
+                    PromptRow(
+                        prompt: prompt,
+                        isSelected: appState.selectedPromptId == prompt.id.uuidString,
+                        onSelect: { appState.selectedPromptId = prompt.id.uuidString },
+                        onEdit: prompt.isBuiltIn ? nil : { editingPrompt = prompt },
+                        onDelete: prompt.isBuiltIn ? nil : { appState.deletePrompt(prompt) }
+                    )
+                }
+            }
+            .padding(4)
+
+            Divider().foregroundStyle(DS.cardBorder)
+
+            // Add new prompt button
+            Button {
+                isCreatingPrompt = true
+                editingPrompt = FormattingPrompt(
+                    name: "",
+                    systemPrompt: "あなたはテキスト整形専用のプロセッサです。入力は音声認識の生テキストです。\n\n【やること】\n- \n\n【絶対にやらないこと】\n- テキストの内容に返事・回答・応答をしない\n- 前置きを付けない\n\n整形後のテキストだけを出力してください。"
+                )
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 13))
+                    Text(appState.l10n.addCustomPrompt)
+                        .font(.system(size: 13, weight: .medium))
+                }
+                .foregroundStyle(DS.blurple)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+            }
+            .buttonStyle(.plain)
+        }
+        .sheet(item: $editingPrompt) { prompt in
+            PromptEditorSheet(
+                prompt: prompt,
+                isNew: isCreatingPrompt,
+                onSave: { saved in
+                    if isCreatingPrompt {
+                        appState.addPrompt(saved)
+                    } else {
+                        appState.updatePrompt(saved)
+                    }
+                    editingPrompt = nil
+                    isCreatingPrompt = false
+                },
+                onCancel: {
+                    editingPrompt = nil
+                    isCreatingPrompt = false
+                }
+            )
+        }
+    }
+
     // MARK: - Formatting Engine
 
     private var formattingSection: some View {
-        settingsGroup("FORMATTING ENGINE") {
+        settingsGroup(appState.l10n.formattingEngine) {
             // Provider selector
-            settingsRow(title: "Provider", description: "Choose how text formatting is processed.") {
+            settingsRow(title: appState.l10n.provider, description: appState.l10n.providerDesc) {
                 Picker("", selection: $appState.formattingProvider) {
                     ForEach(FormattingProvider.allCases, id: \.self) { provider in
                         HStack {
@@ -206,14 +363,14 @@ struct SettingsView: View {
                 .frame(width: 180)
             }
 
-            if appState.formattingProvider.isAvailable {
-                Divider().foregroundStyle(DS.cardBorder)
+            Divider().foregroundStyle(DS.cardBorder)
 
-                // Provider-specific settings
-                VStack(alignment: .leading, spacing: 14) {
-                    // API Key
+            // Provider-specific settings
+            VStack(alignment: .leading, spacing: 14) {
+                // API Key (not needed for local)
+                if appState.formattingProvider != .local {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("API Key")
+                        Text(appState.l10n.apiKey)
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(DS.textMuted)
                         SecureField(appState.formattingProvider.apiKeyPlaceholder, text: currentApiKeyBinding)
@@ -224,29 +381,36 @@ struct SettingsView: View {
                             .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
                             .foregroundStyle(DS.textNormal)
                     }
+                }
 
-                    // Custom endpoint (only for Custom provider)
-                    if appState.formattingProvider == .custom {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Endpoint URL")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(DS.textMuted)
-                            TextField("https://api.example.com/v1", text: $appState.customEndpoint)
-                                .textFieldStyle(.plain)
-                                .font(.system(size: 13, design: .monospaced))
-                                .padding(8)
-                                .background(DS.inputBg)
-                                .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
-                                .foregroundStyle(DS.textNormal)
-                            Text("Must be OpenAI-compatible (/chat/completions)")
-                                .font(.system(size: 11))
-                                .foregroundStyle(DS.textFaint)
-                        }
+                // Custom endpoint (for Custom provider)
+                if appState.formattingProvider == .custom {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(appState.l10n.endpointURL)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(DS.textMuted)
+                        TextField("https://api.example.com/v1", text: $appState.customEndpoint)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 13, design: .monospaced))
+                            .padding(8)
+                            .background(DS.inputBg)
+                            .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                            .foregroundStyle(DS.textNormal)
+                        Text("Must be OpenAI-compatible (/chat/completions)")
+                            .font(.system(size: 11))
+                            .foregroundStyle(DS.textFaint)
                     }
+                }
 
-                    // Model selector
+                // Local model management
+                if appState.formattingProvider == .local {
+                    LocalModelSection(localLLMService: appState.localLLMService, localModelId: $appState.localModel)
+                }
+
+                // Cloud model selector (not for local)
+                if appState.formattingProvider != .local {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Model")
+                        Text(appState.l10n.model)
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(DS.textMuted)
 
@@ -266,9 +430,8 @@ struct SettingsView: View {
                             .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
                         }
 
-                        // Custom model input
                         HStack(spacing: 8) {
-                            TextField("Or enter model ID...", text: currentModelBinding)
+                            TextField(appState.l10n.orEnterModelId, text: currentModelBinding)
                                 .textFieldStyle(.plain)
                                 .font(.system(size: 12, design: .monospaced))
                                 .padding(8)
@@ -278,24 +441,8 @@ struct SettingsView: View {
                         }
                     }
                 }
-                .padding(16)
-            } else {
-                // Local LLM placeholder
-                VStack(spacing: 8) {
-                    Image(systemName: "cpu")
-                        .font(.system(size: 24))
-                        .foregroundStyle(DS.textFaint)
-                    Text("Local LLM support coming soon")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(DS.textMuted)
-                    Text("Run formatting models locally on your Mac using MLX. No API key needed.")
-                        .font(.system(size: 12))
-                        .foregroundStyle(DS.textFaint)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(24)
             }
+            .padding(16)
         }
     }
 
@@ -313,29 +460,10 @@ struct SettingsView: View {
         case .openRouter: return $appState.openRouterModel
         case .openAI: return $appState.openAIModel
         case .custom: return $appState.customModel
-        case .local: return .constant("")
+        case .local: return $appState.localModel
         }
     }
 
-    // MARK: - Accessibility note
-
-    @ViewBuilder
-    private var accessibilityNote: some View {
-        if appState.pttShortcut.modifierKeyCode == 63 || appState.hfShortcut.modifierKeyCode == 63 {
-            HStack(alignment: .top, spacing: 10) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(DS.yellow)
-                    .font(.system(size: 13))
-                Text("Set System Settings → Keyboard → \"Press 🌐 key to\" → **Do Nothing** for best results.")
-                    .font(.system(size: 12))
-                    .foregroundStyle(DS.textMuted)
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(DS.yellow.opacity(0.08))
-            .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
-        }
-    }
 
     // MARK: - Helpers
 
@@ -484,6 +612,345 @@ struct EditableShortcutRow: View {
     }
 }
 
+// MARK: - Whisper Model Row
+
+struct WhisperModelRow: View {
+    let option: WhisperModelOption
+    let isSelected: Bool
+    let onSelect: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: onSelect) {
+            HStack(spacing: 10) {
+                ZStack {
+                    Circle()
+                        .fill(isSelected ? DS.blurple : .clear)
+                        .frame(width: 16, height: 16)
+                    Circle()
+                        .strokeBorder(isSelected ? DS.blurple : DS.textFaint.opacity(0.5), lineWidth: 1.5)
+                        .frame(width: 16, height: 16)
+                    if isSelected {
+                        Circle()
+                            .fill(.white)
+                            .frame(width: 6, height: 6)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 6) {
+                        Text(option.name)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(DS.textNormal)
+                        Badge(text: option.sizeLabel, color: DS.textFaint)
+                    }
+                    Text(option.description)
+                        .font(.system(size: 10))
+                        .foregroundStyle(DS.textFaint)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+            }
+            .padding(.vertical, 6)
+            .padding(.horizontal, 8)
+            .background(isHovered ? DS.cardBorder.opacity(0.3) : .clear)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+    }
+}
+
+// MARK: - Prompt Row
+
+struct PromptRow: View {
+    let prompt: FormattingPrompt
+    let isSelected: Bool
+    let onSelect: () -> Void
+    let onEdit: (() -> Void)?
+    let onDelete: (() -> Void)?
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: onSelect) {
+            HStack(spacing: 10) {
+                ZStack {
+                    Circle()
+                        .fill(isSelected ? DS.blurple : .clear)
+                        .frame(width: 16, height: 16)
+                    Circle()
+                        .strokeBorder(isSelected ? DS.blurple : DS.textFaint.opacity(0.5), lineWidth: 1.5)
+                        .frame(width: 16, height: 16)
+                    if isSelected {
+                        Circle()
+                            .fill(.white)
+                            .frame(width: 6, height: 6)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 6) {
+                        Text(prompt.name)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(DS.textNormal)
+                        if prompt.isBuiltIn {
+                            Badge(text: "Built-in", color: DS.textFaint)
+                        }
+                    }
+                    Text(prompt.systemPrompt.prefix(60).replacingOccurrences(of: "\n", with: " ") + "...")
+                        .font(.system(size: 10))
+                        .foregroundStyle(DS.textFaint)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                if isHovered {
+                    HStack(spacing: 4) {
+                        if let onEdit {
+                            Button(action: onEdit) {
+                                Image(systemName: "pencil")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(DS.textMuted)
+                                    .padding(4)
+                                    .background(DS.bgTertiary)
+                                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        if let onDelete {
+                            Button(action: onDelete) {
+                                Image(systemName: "trash")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(DS.red)
+                                    .padding(4)
+                                    .background(DS.bgTertiary)
+                                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .transition(.opacity)
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(isSelected ? DS.blurple.opacity(0.08) : isHovered ? DS.bgModifierHover : .clear)
+            .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .animation(.easeOut(duration: 0.15), value: isSelected)
+        .animation(.easeOut(duration: 0.1), value: isHovered)
+    }
+}
+
+// MARK: - Prompt Editor Sheet
+
+struct PromptEditorSheet: View {
+    @State var prompt: FormattingPrompt
+    let isNew: Bool
+    let onSave: (FormattingPrompt) -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(isNew ? "New Formatting Prompt" : "Edit Prompt")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(DS.textNormal)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Name")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(DS.textMuted)
+                TextField("e.g. Code Review, Slack Message...", text: $prompt.name)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+                    .padding(8)
+                    .background(DS.inputBg)
+                    .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                    .foregroundStyle(DS.textNormal)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("System Prompt")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(DS.textMuted)
+                TextEditor(text: $prompt.systemPrompt)
+                    .font(.system(size: 12, design: .monospaced))
+                    .padding(8)
+                    .frame(minHeight: 140)
+                    .scrollContentBackground(.hidden)
+                    .background(DS.inputBg)
+                    .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                    .foregroundStyle(DS.textNormal)
+            }
+
+            DisclosureGroup {
+                VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Example Input")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(DS.textMuted)
+                        TextEditor(text: $prompt.fewShotUser)
+                            .font(.system(size: 11, design: .monospaced))
+                            .padding(6)
+                            .frame(minHeight: 60)
+                            .scrollContentBackground(.hidden)
+                            .background(DS.inputBg)
+                            .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                            .foregroundStyle(DS.textNormal)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Expected Output")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(DS.textMuted)
+                        TextEditor(text: $prompt.fewShotAssistant)
+                            .font(.system(size: 11, design: .monospaced))
+                            .padding(6)
+                            .frame(minHeight: 60)
+                            .scrollContentBackground(.hidden)
+                            .background(DS.inputBg)
+                            .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                            .foregroundStyle(DS.textNormal)
+                    }
+                }
+                .padding(.top, 6)
+            } label: {
+                Text("Few-shot Example (optional)")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(DS.textMuted)
+            }
+            .tint(DS.textMuted)
+
+            Spacer()
+
+            HStack {
+                Button(action: onCancel) {
+                    Text("Cancel")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(DS.textMuted)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .background(DS.bgTertiary)
+                        .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
+                }
+                .buttonStyle(.plain)
+
+                Spacer()
+
+                Button {
+                    onSave(prompt)
+                } label: {
+                    Text(isNew ? "Add Prompt" : "Save Changes")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .background(prompt.name.isEmpty ? DS.blurple.opacity(0.4) : DS.blurple)
+                        .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
+                }
+                .buttonStyle(.plain)
+                .disabled(prompt.name.isEmpty)
+            }
+        }
+        .padding(24)
+        .frame(width: 500, height: 520)
+        .background(DS.bgSecondary)
+    }
+}
+
+// MARK: - Dictionary Editor Sheet
+
+struct DictionaryEditorSheet: View {
+    @State var entry: DictionaryEntry
+    let isNew: Bool
+    let l10n: L10n
+    let onSave: (DictionaryEntry) -> Void
+    let onCancel: () -> Void
+    @State private var readingsText: String = ""
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(isNew ? l10n.addTerm : l10n.term)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(DS.textNormal)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(l10n.term)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(DS.textMuted)
+                TextField(l10n.termPlaceholder, text: $entry.term)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+                    .padding(8)
+                    .background(DS.inputBg)
+                    .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                    .foregroundStyle(DS.textNormal)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(l10n.readings)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(DS.textMuted)
+                TextField(l10n.readingsPlaceholder, text: $readingsText)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+                    .padding(8)
+                    .background(DS.inputBg)
+                    .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                    .foregroundStyle(DS.textNormal)
+                Text(l10n.readingsDesc)
+                    .font(.system(size: 11))
+                    .foregroundStyle(DS.textFaint)
+            }
+
+            Spacer()
+
+            HStack {
+                Button(action: onCancel) {
+                    Text(l10n.cancel)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(DS.textMuted)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .background(DS.bgTertiary)
+                        .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
+                }
+                .buttonStyle(.plain)
+
+                Spacer()
+
+                Button {
+                    entry.readings = readingsText
+                        .split(separator: ",")
+                        .map { $0.trimmingCharacters(in: .whitespaces) }
+                        .filter { !$0.isEmpty }
+                    onSave(entry)
+                } label: {
+                    Text(isNew ? l10n.addTerm : l10n.saveChanges)
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .background(entry.term.isEmpty ? DS.blurple.opacity(0.4) : DS.blurple)
+                        .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
+                }
+                .buttonStyle(.plain)
+                .disabled(entry.term.isEmpty)
+            }
+        }
+        .padding(24)
+        .frame(width: 420, height: 300)
+        .background(DS.bgSecondary)
+        .onAppear {
+            readingsText = entry.readings.joined(separator: ", ")
+        }
+    }
+}
+
 // MARK: - Key Badge
 
 struct KeyBadge: View {
@@ -501,5 +968,225 @@ struct KeyBadge: View {
                 RoundedRectangle(cornerRadius: DS.radiusSmall)
                     .stroke(DS.cardBorder, lineWidth: 1)
             )
+    }
+}
+
+// MARK: - Local Model Section
+
+struct LocalModelSection: View {
+    @ObservedObject var localLLMService: LocalLLMService
+    @Binding var localModelId: String
+    @State private var showDeleteConfirm = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Info banner
+            HStack(spacing: 8) {
+                Image(systemName: "cpu")
+                    .font(.system(size: 12))
+                    .foregroundStyle(DS.blurple)
+                Text("Run AI formatting entirely on your Mac. No API key, no internet needed.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(DS.textMuted)
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(DS.blurple.opacity(0.06))
+            .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+
+            // Model list
+            Text("MODEL")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(DS.textFaint)
+
+            VStack(spacing: 2) {
+                ForEach(LocalModelOption.recommended) { option in
+                    LocalModelRow(
+                        option: option,
+                        isSelected: localModelId == option.id,
+                        state: localModelId == option.id ? localLLMService.modelState : .notDownloaded,
+                        onSelect: {
+                            localModelId = option.id
+                            localLLMService.checkModelStatus(modelId: option.id)
+                        },
+                        onDownload: {
+                            localModelId = option.id
+                            Task { await localLLMService.downloadAndLoad(modelId: option.id) }
+                        },
+                        onLoad: {
+                            Task { await localLLMService.loadModel(modelId: option.id) }
+                        },
+                        onDelete: {
+                            localLLMService.deleteModel(modelId: option.id)
+                        }
+                    )
+                }
+            }
+            .background(DS.inputBg)
+            .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
+
+            // Status
+            if let error = localLLMService.errorMessage {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 11))
+                        .foregroundStyle(DS.red)
+                    Text(error)
+                        .font(.system(size: 11))
+                        .foregroundStyle(DS.red)
+                        .lineLimit(2)
+                }
+            }
+        }
+        .onAppear {
+            if !localModelId.isEmpty {
+                localLLMService.checkModelStatus(modelId: localModelId)
+            }
+        }
+    }
+}
+
+struct LocalModelRow: View {
+    let option: LocalModelOption
+    let isSelected: Bool
+    let state: LocalModelState
+    let onSelect: () -> Void
+    let onDownload: () -> Void
+    let onLoad: () -> Void
+    let onDelete: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: onSelect) {
+            HStack(spacing: 10) {
+                // Radio button
+                ZStack {
+                    Circle()
+                        .fill(isSelected ? DS.blurple : .clear)
+                        .frame(width: 16, height: 16)
+                    Circle()
+                        .strokeBorder(isSelected ? DS.blurple : DS.textFaint.opacity(0.5), lineWidth: 1.5)
+                        .frame(width: 16, height: 16)
+                    if isSelected {
+                        Circle()
+                            .fill(.white)
+                            .frame(width: 6, height: 6)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 6) {
+                        Text(option.name)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(DS.textNormal)
+                        Badge(text: option.sizeLabel, color: DS.textFaint)
+                    }
+                    Text(option.description)
+                        .font(.system(size: 10))
+                        .foregroundStyle(DS.textFaint)
+                }
+
+                Spacer()
+
+                // State indicator / action button
+                if isSelected {
+                    stateView
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(isSelected ? DS.blurple.opacity(0.08) : isHovered ? DS.bgModifierHover : .clear)
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .animation(.easeOut(duration: 0.15), value: isSelected)
+        .animation(.easeOut(duration: 0.1), value: isHovered)
+    }
+
+    @ViewBuilder
+    private var stateView: some View {
+        switch state {
+        case .notDownloaded:
+            Button(action: onDownload) {
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .font(.system(size: 12))
+                    Text("Download")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .foregroundStyle(DS.blurple)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(DS.blurple.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+            }
+            .buttonStyle(.plain)
+
+        case .downloading(let progress):
+            HStack(spacing: 6) {
+                ProgressView()
+                    .controlSize(.small)
+                Text("\(Int(progress * 100))%")
+                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    .foregroundStyle(DS.textMuted)
+            }
+
+        case .downloaded:
+            HStack(spacing: 4) {
+                Button(action: onLoad) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "play.circle.fill")
+                            .font(.system(size: 12))
+                        Text("Load")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .foregroundStyle(DS.green)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(DS.green.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                }
+                .buttonStyle(.plain)
+
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 11))
+                        .foregroundStyle(DS.red)
+                        .padding(4)
+                        .background(DS.bgModifierHover)
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                }
+                .buttonStyle(.plain)
+            }
+
+        case .loading:
+            HStack(spacing: 6) {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Loading...")
+                    .font(.system(size: 11))
+                    .foregroundStyle(DS.textMuted)
+            }
+
+        case .ready:
+            HStack(spacing: 4) {
+                Circle()
+                    .fill(DS.green)
+                    .frame(width: 6, height: 6)
+                Text("Ready")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(DS.green)
+
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 11))
+                        .foregroundStyle(DS.red)
+                        .padding(4)
+                        .background(DS.bgModifierHover)
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 }

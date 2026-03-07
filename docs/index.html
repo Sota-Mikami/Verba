@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verba — Local-First Voice Input for macOS</title>
+  <meta name="description" content="Speak naturally, get clean text. On-device speech recognition with WhisperKit. No cloud, no subscription, no data leaving your Mac.">
+  <meta property="og:title" content="Verba — Local-First Voice Input for macOS">
+  <meta property="og:description" content="On-device speech recognition powered by WhisperKit. Your voice stays on your Mac.">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #1a1a2e;
+      --bg-secondary: #16213e;
+      --bg-card: #1e2a47;
+      --bg-card-hover: #243052;
+      --accent: #7c5cfc;
+      --accent-light: #9b7dff;
+      --accent-glow: rgba(124, 92, 252, 0.15);
+      --text-primary: #e8e8f0;
+      --text-secondary: #a0a0b8;
+      --text-muted: #6a6a80;
+      --border: rgba(255, 255, 255, 0.06);
+      --green: #43b581;
+      --red: #f04747;
+      --orange: #faa61a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Nav */
+    nav {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 100;
+      background: rgba(26, 26, 46, 0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+
+    .nav-logo {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+
+    .nav-logo span { color: var(--accent); }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover { color: var(--text-primary); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-light);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(124, 92, 252, 0.3);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--text-primary);
+    }
+
+    .btn-large {
+      padding: 14px 32px;
+      font-size: 16px;
+      border-radius: 12px;
+    }
+
+    /* Hero */
+    .hero {
+      padding: 160px 0 100px;
+      text-align: center;
+      position: relative;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      background: var(--accent-glow);
+      border: 1px solid rgba(124, 92, 252, 0.2);
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent-light);
+      margin-bottom: 32px;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    h1 {
+      font-size: clamp(40px, 6vw, 64px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -2px;
+      margin-bottom: 24px;
+    }
+
+    h1 .gradient {
+      background: linear-gradient(135deg, var(--accent-light) 0%, #c084fc 50%, #f472b6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: 20px;
+      color: var(--text-secondary);
+      max-width: 560px;
+      margin: 0 auto 48px;
+      line-height: 1.6;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .hero-meta {
+      display: flex;
+      gap: 32px;
+      justify-content: center;
+      margin-top: 48px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .hero-meta span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Local First Banner */
+    .local-first {
+      padding: 80px 0;
+    }
+
+    .local-first-card {
+      background: linear-gradient(135deg, rgba(67, 181, 129, 0.08) 0%, rgba(124, 92, 252, 0.08) 100%);
+      border: 1px solid rgba(67, 181, 129, 0.15);
+      border-radius: 20px;
+      padding: 56px;
+      text-align: center;
+    }
+
+    .local-first-card h2 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      letter-spacing: -1px;
+    }
+
+    .local-first-card .icon-lock {
+      font-size: 48px;
+      margin-bottom: 24px;
+      display: block;
+    }
+
+    .local-first-card p {
+      color: var(--text-secondary);
+      font-size: 18px;
+      max-width: 640px;
+      margin: 0 auto 40px;
+      line-height: 1.7;
+    }
+
+    .privacy-points {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .privacy-point {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .privacy-point .check {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(67, 181, 129, 0.15);
+      color: var(--green);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .privacy-point span {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    /* Features */
+    .features {
+      padding: 80px 0;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    .section-header h2 {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+    }
+
+    .section-header p {
+      color: var(--text-secondary);
+      font-size: 16px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      transition: all 0.3s;
+    }
+
+    .feature-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(124, 92, 252, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 20px;
+    }
+
+    .feature-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.3px;
+    }
+
+    .feature-card p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .icon-purple { background: rgba(124, 92, 252, 0.12); }
+    .icon-green { background: rgba(67, 181, 129, 0.12); }
+    .icon-orange { background: rgba(250, 166, 26, 0.12); }
+    .icon-red { background: rgba(240, 71, 71, 0.12); }
+    .icon-blue { background: rgba(88, 148, 252, 0.12); }
+
+    /* How it works */
+    .how-it-works {
+      padding: 80px 0;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 24px;
+      margin-top: 56px;
+    }
+
+    .step {
+      text-align: center;
+      padding: 32px 24px;
+    }
+
+    .step-number {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--accent-glow);
+      border: 2px solid var(--accent);
+      color: var(--accent-light);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .step h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .step p {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    /* Models table */
+    .models {
+      padding: 80px 0;
+    }
+
+    .model-tables {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+      gap: 24px;
+    }
+
+    .model-table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .model-table-header {
+      padding: 24px 28px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .model-table-header h3 {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .model-table-header p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      text-align: left;
+      padding: 12px 28px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px 28px;
+      font-size: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .tag-green {
+      background: rgba(67, 181, 129, 0.12);
+      color: var(--green);
+    }
+
+    .tag-orange {
+      background: rgba(250, 166, 26, 0.12);
+      color: var(--orange);
+    }
+
+    /* CTA */
+    .cta {
+      padding: 100px 0;
+      text-align: center;
+    }
+
+    .cta h2 {
+      font-size: 40px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      margin-bottom: 16px;
+    }
+
+    .cta p {
+      color: var(--text-secondary);
+      font-size: 18px;
+      margin-bottom: 40px;
+    }
+
+    .cta-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0;
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-inner p {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover { color: var(--text-secondary); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .hero { padding: 120px 0 60px; }
+      .local-first-card { padding: 32px 20px; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .model-tables { grid-template-columns: 1fr; }
+      .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+    }
+
+    /* Kbd styling */
+    kbd {
+      display: inline-block;
+      padding: 2px 8px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav>
+    <div class="container nav-inner">
+      <a href="#" class="nav-logo">Verb<span>a</span></a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#models">Models</a>
+        <a href="https://github.com/Sota-Mikami/Verba" class="btn btn-secondary">GitHub</a>
+        <a href="https://github.com/Sota-Mikami/Verba/releases/latest" class="btn btn-primary">Download</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container">
+      <div class="badge">
+        <span class="badge-dot"></span>
+        100% Local &middot; Open Source
+      </div>
+      <h1>
+        Voice to text,<br>
+        <span class="gradient">entirely on your Mac.</span>
+      </h1>
+      <p class="hero-sub">
+        Speak naturally and get clean, formatted text pasted into any app.
+        No cloud. No subscription. Your voice never leaves your device.
+      </p>
+      <div class="hero-actions">
+        <a href="https://github.com/Sota-Mikami/Verba/releases/latest" class="btn btn-primary btn-large">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download for macOS
+        </a>
+        <a href="https://github.com/Sota-Mikami/Verba" class="btn btn-secondary btn-large">
+          View on GitHub
+        </a>
+      </div>
+      <div class="hero-meta">
+        <span>macOS 14+</span>
+        <span>Apple Silicon</span>
+        <span>MIT License</span>
+        <span>v0.2.0</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Local First -->
+  <section class="local-first">
+    <div class="container">
+      <div class="local-first-card">
+        <span class="icon-lock">&#128274;</span>
+        <h2>Local First. Privacy by Design.</h2>
+        <p>
+          Every part of Verba's pipeline runs on your Mac. Speech recognition uses WhisperKit,
+          and text formatting can use on-device MLX models. No audio is sent to any server.
+          No account required. No telemetry.
+        </p>
+        <div class="privacy-points">
+          <div class="privacy-point">
+            <div class="check">&#10003;</div>
+            <span>Audio processed on-device via WhisperKit</span>
+          </div>
+          <div class="privacy-point">
+            <div class="check">&#10003;</div>
+            <span>LLM formatting runs locally with MLX</span>
+          </div>
+          <div class="privacy-point">
+            <div class="check">&#10003;</div>
+            <span>No account, no signup, no cloud</span>
+          </div>
+          <div class="privacy-point">
+            <div class="check">&#10003;</div>
+            <span>Works fully offline after model download</span>
+          </div>
+          <div class="privacy-point">
+            <div class="check">&#10003;</div>
+            <span>Open source &mdash; audit the code yourself</span>
+          </div>
+          <div class="privacy-point">
+            <div class="check">&#10003;</div>
+            <span>Optional cloud providers for formatting</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <h2>Everything you need</h2>
+        <p>Professional voice input, built for daily use</p>
+      </div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon icon-purple">&#127908;</div>
+          <h3>Push-to-Talk & Hands-Free</h3>
+          <p>Hold a key to record, or toggle hands-free mode. Custom shortcuts let you use any key combo like <kbd>fn</kbd> <kbd>Space</kbd> or double-tap triggers.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon icon-green">&#9889;</div>
+          <h3>Instant Auto-Paste</h3>
+          <p>Transcribed text is automatically pasted into the active app. Works with any text field — editors, chat apps, browsers, terminals.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon icon-orange">&#129302;</div>
+          <h3>AI-Powered Formatting</h3>
+          <p>Remove filler words, fix punctuation, and structure text with on-device MLX models or cloud providers. Multiple prompt templates included.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon icon-blue">&#127760;</div>
+          <h3>Multi-Language</h3>
+          <p>Supports Japanese, English, Vietnamese, and auto-detect. Whisper models handle code-switching naturally.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon icon-red">&#128218;</div>
+          <h3>Smart Dictionary</h3>
+          <p>Auto-learns proper nouns from formatting corrections. Add custom terms with readings for consistent transcription of names and jargon.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon icon-purple">&#128187;</div>
+          <h3>Menu Bar Native</h3>
+          <p>Lives in your menu bar, always ready. Guided onboarding, dashboard with stats, full transcription history with audio playback.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="how-it-works" id="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <h2>How it works</h2>
+        <p>From voice to text in seconds, entirely on your device</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Press your shortcut</h3>
+          <p>Hold <kbd>fn</kbd> for push-to-talk or double-tap for hands-free. A floating indicator confirms recording.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>Speak naturally</h3>
+          <p>Talk at your normal pace in any supported language. Real-time audio level feedback shows the app is listening.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>WhisperKit transcribes</h3>
+          <p>On-device speech recognition converts your audio to text using Apple's Neural Engine. Fast and accurate.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <h3>Text appears</h3>
+          <p>Optionally formatted by an on-device LLM, the clean text is pasted directly into your active app.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Models -->
+  <section class="models" id="models">
+    <div class="container">
+      <div class="section-header">
+        <h2>Choose your models</h2>
+        <p>Pick the right balance of speed, quality, and size for your Mac</p>
+      </div>
+      <div class="model-tables">
+        <div class="model-table-card">
+          <div class="model-table-header">
+            <h3>Whisper Models (Speech-to-Text)</h3>
+            <p>Powered by WhisperKit &mdash; runs on Apple Neural Engine</p>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Model</th><th>Size</th><th>Speed</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Tiny</td><td>~75 MB</td><td><span class="tag tag-green">Fastest</span></td></tr>
+              <tr><td>Base</td><td>~140 MB</td><td><span class="tag tag-green">Fast</span></td></tr>
+              <tr><td>Small</td><td>~460 MB</td><td><span class="tag tag-orange">Medium</span></td></tr>
+              <tr><td>Large V3 Turbo</td><td>~1.5 GB</td><td><span class="tag tag-orange">Medium</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="model-table-card">
+          <div class="model-table-header">
+            <h3>LLM Models (Text Formatting)</h3>
+            <p>Powered by Apple MLX &mdash; runs on GPU, no API key needed</p>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Model</th><th>Size</th><th>Quality</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Qwen3 0.6B</td><td>~400 MB</td><td><span class="tag tag-green">Basic</span></td></tr>
+              <tr><td>Gemma 3 1B</td><td>~800 MB</td><td><span class="tag tag-green">Good</span></td></tr>
+              <tr><td>Qwen3 1.7B</td><td>~1 GB</td><td><span class="tag tag-orange">Better</span></td></tr>
+              <tr><td>SmolLM3 3B</td><td>~2 GB</td><td><span class="tag tag-orange">Great</span></td></tr>
+              <tr><td>Qwen3 4B</td><td>~2.5 GB</td><td><span class="tag tag-orange">Best</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <div class="container">
+      <h2>Ready to speak?</h2>
+      <p>Download Verba and start typing with your voice. Free, open source, local first.</p>
+      <div class="cta-actions">
+        <a href="https://github.com/Sota-Mikami/Verba/releases/latest" class="btn btn-primary btn-large">
+          Download v0.2.0
+        </a>
+        <a href="https://github.com/Sota-Mikami/Verba" class="btn btn-secondary btn-large">
+          Star on GitHub
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-inner">
+      <p>Verba &mdash; Local-first voice input for macOS. MIT License.</p>
+      <div class="footer-links">
+        <a href="https://github.com/Sota-Mikami/Verba">GitHub</a>
+        <a href="https://github.com/Sota-Mikami/Verba/releases">Releases</a>
+        <a href="https://github.com/Sota-Mikami/Verba/blob/main/CHANGELOG.md">Changelog</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,15 +1,26 @@
 import SwiftUI
 
 enum NavigationPage: String, CaseIterable {
-    case dashboard = "Dashboard"
-    case history = "History"
-    case settings = "Settings"
+    case dashboard
+    case history
+    case dictionary
+    case settings
 
     var icon: String {
         switch self {
         case .dashboard: return "square.grid.2x2"
         case .history: return "clock.arrow.circlepath"
+        case .dictionary: return "character.book.closed"
         case .settings: return "gearshape.fill"
+        }
+    }
+
+    func localizedName(_ l10n: L10n) -> String {
+        switch self {
+        case .dashboard: return l10n.dashboard
+        case .history: return l10n.history
+        case .dictionary: return l10n.dictionaryNav
+        case .settings: return l10n.settings
         }
     }
 }
@@ -17,6 +28,14 @@ enum NavigationPage: String, CaseIterable {
 struct MainView: View {
     @EnvironmentObject var appState: AppState
     @State private var selectedPage: NavigationPage = .dashboard
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+
+    private var showOnboarding: Binding<Bool> {
+        Binding(
+            get: { !hasCompletedOnboarding },
+            set: { newValue in hasCompletedOnboarding = !newValue }
+        )
+    }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -27,8 +46,13 @@ struct MainView: View {
                 .transition(.opacity.animation(.easeInOut(duration: 0.15)))
         }
         .background(DS.bgPrimary)
-        .environment(\.colorScheme, .dark)
+        .preferredColorScheme(appState.appearance.colorScheme)
         .animation(.spring(response: 0.3, dampingFraction: 0.9), value: selectedPage)
+        .sheet(isPresented: showOnboarding) {
+            OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
+                .environmentObject(appState)
+                .interactiveDismissDisabled()
+        }
     }
 
     // MARK: - Sidebar
@@ -61,7 +85,7 @@ struct MainView: View {
             VStack(spacing: 2) {
                 ForEach(NavigationPage.allCases, id: \.self) { page in
                     SidebarItem(
-                        title: page.rawValue,
+                        title: page.localizedName(appState.l10n),
                         icon: page.icon,
                         isSelected: selectedPage == page,
                         badge: page == .history ? appState.unseenHistoryCount : nil
@@ -92,7 +116,7 @@ struct MainView: View {
                         .fill(appState.isModelLoaded ? DS.green : DS.orange)
                         .frame(width: 8, height: 8)
                 }
-                Text(appState.isModelLoaded ? "Whisper Ready" : "Loading...")
+                Text(appState.isModelLoaded ? "Whisper Ready" : appState.l10n.loadingModel)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(DS.textMuted)
             }
@@ -112,6 +136,8 @@ struct MainView: View {
             DashboardView().environmentObject(appState)
         case .history:
             HistoryView().environmentObject(appState)
+        case .dictionary:
+            DictionaryView().environmentObject(appState)
         case .settings:
             SettingsView().environmentObject(appState)
         }
@@ -134,10 +160,10 @@ struct SidebarItem: View {
                 Image(systemName: icon)
                     .font(.system(size: 13))
                     .frame(width: 18)
-                    .foregroundStyle(isSelected ? .white : DS.textMuted)
+                    .foregroundStyle(isSelected ? DS.blurple : DS.textMuted)
                 Text(title)
                     .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
-                    .foregroundStyle(isSelected ? .white : DS.textMuted)
+                    .foregroundStyle(isSelected ? DS.textNormal : DS.textMuted)
                 Spacer()
                 if let badge, badge > 0 {
                     Text("\(badge)")

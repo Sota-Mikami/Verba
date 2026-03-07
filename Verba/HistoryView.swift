@@ -2,25 +2,26 @@ import SwiftUI
 
 struct HistoryView: View {
     @EnvironmentObject var appState: AppState
+    @State private var showClearConfirm = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("History")
+                    Text(appState.l10n.history)
                         .font(.system(size: 24, weight: .bold))
                         .foregroundStyle(DS.textNormal)
-                    Text("\(appState.history.count) transcriptions")
+                    Text("\(appState.history.count) \(appState.l10n.transcriptions)")
                         .font(.system(size: 13))
                         .foregroundStyle(DS.textMuted)
                 }
                 Spacer()
                 if !appState.history.isEmpty {
                     Button {
-                        appState.clearHistory()
+                        showClearConfirm = true
                     } label: {
-                        Text("Clear All")
+                        Text(appState.l10n.clearAll)
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(DS.red)
                             .padding(.horizontal, 12)
@@ -29,6 +30,14 @@ struct HistoryView: View {
                             .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
                     }
                     .buttonStyle(.plain)
+                    .alert(appState.l10n.clearAllConfirmTitle, isPresented: $showClearConfirm) {
+                        Button(appState.l10n.clearAll, role: .destructive) {
+                            appState.clearHistory()
+                        }
+                        Button(appState.l10n.cancel, role: .cancel) {}
+                    } message: {
+                        Text(appState.l10n.clearAllConfirmMessage)
+                    }
                 }
             }
             .padding(.horizontal, 28)
@@ -41,7 +50,7 @@ struct HistoryView: View {
                     Image(systemName: "clock.arrow.circlepath")
                         .font(.system(size: 32))
                         .foregroundStyle(DS.textFaint)
-                    Text("No history yet")
+                    Text(appState.l10n.noHistoryYet)
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(DS.textMuted)
                 }

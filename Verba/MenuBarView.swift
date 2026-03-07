@@ -1,7 +1,9 @@
 import SwiftUI
+import Sparkle
 
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
+    let updater: SPUUpdater
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -31,8 +33,8 @@ struct MenuBarView: View {
             if appState.isModelLoaded {
                 // Shortcuts hint
                 VStack(spacing: 6) {
-                    shortcutHint(label: "Push-to-talk", shortcut: "Hold Fn")
-                    shortcutHint(label: "Hands-free", shortcut: "Fn × 2")
+                    shortcutHint(label: appState.l10n.pushToTalk, shortcut: appState.pttShortcut.label)
+                    shortcutHint(label: appState.l10n.handsFree, shortcut: appState.hfShortcut.label)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
@@ -44,7 +46,7 @@ struct MenuBarView: View {
                         HStack {
                             Image(systemName: "stop.circle.fill")
                                 .foregroundStyle(.red)
-                            Text("Stop Recording")
+                            Text(appState.l10n.stopRecording)
                         }
                     }
                     .buttonStyle(.plain)
@@ -54,29 +56,31 @@ struct MenuBarView: View {
 
                 Divider()
 
-                // Language picker
-                Picker("Language", selection: $appState.selectedLanguage) {
-                    ForEach(appState.availableLanguages, id: \.0) { code, name in
-                        Text(name).tag(code)
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 4)
-
                 // Mode picker
-                Picker("Mode", selection: $appState.mode) {
+                Picker(appState.l10n.mode, selection: $appState.mode) {
                     ForEach(TranscriptionMode.allCases, id: \.self) { mode in
                         Text(mode.rawValue).tag(mode)
                     }
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 4)
+
+                // Prompt picker (only in Formatted mode)
+                if appState.mode == .formatted {
+                    Picker(appState.l10n.prompt, selection: $appState.selectedPromptId) {
+                        ForEach(appState.allPrompts) { prompt in
+                            Text(prompt.name).tag(prompt.id.uuidString)
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 4)
+                }
             } else {
                 HStack(spacing: 6) {
                     ProgressView()
                         .scaleEffect(0.5)
                         .frame(width: 12, height: 12)
-                    Text("Loading model...")
+                    Text(appState.l10n.loadingModel)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -88,7 +92,7 @@ struct MenuBarView: View {
             if !appState.lastTranscription.isEmpty {
                 Divider()
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Last transcription")
+                    Text(appState.l10n.lastTranscription)
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.tertiary)
                     Text(appState.lastTranscription)
@@ -98,7 +102,7 @@ struct MenuBarView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
 
-                Button("Copy") {
+                Button(appState.l10n.copy) {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(appState.lastTranscription, forType: .string)
                 }
@@ -109,14 +113,21 @@ struct MenuBarView: View {
 
             Divider()
 
-            Button("Open Verba") {
+            Button(appState.l10n.openVerba) {
                 appState.mainWindow.open(appState: appState)
             }
             .font(.system(size: 12))
             .padding(.horizontal, 12)
             .padding(.vertical, 4)
 
-            Button("Quit Verba") {
+            Button(appState.l10n.checkForUpdates) {
+                updater.checkForUpdates()
+            }
+            .font(.system(size: 12))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 4)
+
+            Button(appState.l10n.quitVerba) {
                 NSApplication.shared.terminate(nil)
             }
             .font(.system(size: 12))

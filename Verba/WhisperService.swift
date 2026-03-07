@@ -1,6 +1,21 @@
 import Foundation
 import WhisperKit
 
+struct WhisperModelOption: Identifiable, Hashable {
+    let id: String
+    let name: String
+    let description: String
+    let sizeLabel: String
+
+    static let recommended: [WhisperModelOption] = [
+        WhisperModelOption(id: "auto", name: "Auto", description: "Best model for this device", sizeLabel: "Auto"),
+        WhisperModelOption(id: "openai_whisper-tiny", name: "Tiny", description: "Fastest, lowest quality", sizeLabel: "~75MB"),
+        WhisperModelOption(id: "openai_whisper-base", name: "Base", description: "Fast, decent quality", sizeLabel: "~140MB"),
+        WhisperModelOption(id: "openai_whisper-small", name: "Small", description: "Balanced", sizeLabel: "~460MB"),
+        WhisperModelOption(id: "openai_whisper-large-v3-turbo", name: "Large V3 Turbo", description: "Best quality, recommended", sizeLabel: "~1.5GB"),
+    ]
+}
+
 class WhisperService {
     private var whisperKit: WhisperKit?
     private static let errorLogPath = "/tmp/verba-error.log"
@@ -21,18 +36,29 @@ class WhisperService {
         }
     }
 
-    func loadModel() async throws {
-        Self.writeLog("Starting WhisperKit initialization...")
+    func loadModel(variant: String = "auto") async throws {
+        Self.writeLog("Starting WhisperKit initialization with variant: \(variant)...")
 
         do {
-            // Let WhisperKit auto-select the best model for this device
-            whisperKit = try await WhisperKit(
-                verbose: true,
-                logLevel: .debug,
-                prewarm: false,
-                load: true,
-                download: true
-            )
+            if variant == "auto" {
+                // Let WhisperKit auto-select the best model for this device
+                whisperKit = try await WhisperKit(
+                    verbose: true,
+                    logLevel: .debug,
+                    prewarm: false,
+                    load: true,
+                    download: true
+                )
+            } else {
+                whisperKit = try await WhisperKit(
+                    model: variant,
+                    verbose: true,
+                    logLevel: .debug,
+                    prewarm: false,
+                    load: true,
+                    download: true
+                )
+            }
             Self.writeLog("WhisperKit initialized successfully, model: \(whisperKit?.modelVariant.description ?? "unknown")")
         } catch {
             Self.writeLog("WhisperKit init FAILED: \(error)")

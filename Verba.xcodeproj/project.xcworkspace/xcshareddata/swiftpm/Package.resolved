@@ -1,5 +1,5 @@
 {
-  "originHash" : "9a97c8073af9b07b8c46128893fdd0b6f4eb090da4c6175aa09be32df1ea140f",
+  "originHash" : "b05b6500ba6b688efe05779c0e0eb61f31971a0e20cc69c3e1030fc6ecedb52c",
   "pins" : [
     {
       "identity" : "keyboardshortcuts",
@@ -8,6 +8,33 @@
       "state" : {
         "revision" : "1aef85578fdd4f9eaeeb8d53b7b4fc31bf08fe27",
         "version" : "2.4.0"
+      }
+    },
+    {
+      "identity" : "mlx-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ml-explore/mlx-swift",
+      "state" : {
+        "revision" : "6ba4827fb82c97d012eec9ab4b2de21f85c3b33d",
+        "version" : "0.30.6"
+      }
+    },
+    {
+      "identity" : "mlx-swift-lm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ml-explore/mlx-swift-lm",
+      "state" : {
+        "branch" : "main",
+        "revision" : "6bb84aac13f76ca5e2c3ff312bc072977e684ff4"
+      }
+    },
+    {
+      "identity" : "sparkle",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sparkle-project/Sparkle",
+      "state" : {
+        "revision" : "21d8df80440b1ca3b65fa82e40782f1e5a9e6ba2",
+        "version" : "2.9.0"
       }
     },
     {
@@ -53,6 +80,15 @@
       "state" : {
         "revision" : "f731f03bf746481d4fda07f817c3774390c4d5b9",
         "version" : "2.3.2"
+      }
+    },
+    {
+      "identity" : "swift-numerics",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-numerics",
+      "state" : {
+        "revision" : "0c0290ff6b24942dadb83a929ffaaa1481df04a2",
+        "version" : "1.1.1"
       }
     },
     {

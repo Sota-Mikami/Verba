@@ -2,9 +2,9 @@
 
 Local-first voice input for macOS. Speak naturally, get clean text pasted into any app.
 
-**No cloud STT. No subscription. Just your voice → text.**
+**No cloud STT. No subscription. Your voice stays on your Mac.**
 
-Verba uses [WhisperKit](https://github.com/argmaxinc/WhisperKit) for fully on-device transcription with optional LLM formatting via OpenRouter, OpenAI, or any OpenAI-compatible endpoint.
+Verba uses [WhisperKit](https://github.com/argmaxinc/WhisperKit) for fully on-device transcription with optional LLM formatting via on-device MLX models, OpenRouter, OpenAI, or any OpenAI-compatible endpoint.
 
 ## Download
 
@@ -21,21 +21,27 @@ Verba uses [WhisperKit](https://github.com/argmaxinc/WhisperKit) for fully on-de
 - **Auto-paste** — Transcribed text is pasted into the active app automatically
 
 **Transcription**
-- **On-device** — WhisperKit `large-v3-turbo` model, no data leaves your Mac
+- **On-device** — WhisperKit models (Tiny to Large-V3-Turbo), no data leaves your Mac
+- **Whisper model selection** — Choose from Auto, Tiny, Base, Small, or Large-V3-Turbo based on your needs
 - **Multi-language** — Japanese, English, Vietnamese, or auto-detect
 - **Fast & Formatted modes** — Raw output or AI-cleaned text (filler removal, punctuation, structure)
 
 **Formatting Engine**
-- **Multi-provider** — OpenRouter, OpenAI, or any custom OpenAI-compatible endpoint
+- **Local LLM (On-Device)** — Format text with MLX models (Qwen3, Gemma 3, SmolLM3) — no API key, no cloud
+- **Cloud providers** — OpenRouter, OpenAI, or any custom OpenAI-compatible endpoint
 - **Model selector** — Suggested models per provider with speed badges
-- **Hardened prompts** — Formatting-only output, no conversational responses
+- **Custom prompts** — Built-in General / Meeting Notes / Email templates, plus custom prompt editor
+- **Dictionary** — Auto-learned proper nouns and custom term replacement
 
 **App**
+- **Guided onboarding** — First-launch wizard for permissions and model setup
 - **Menu bar + Dock** — Runs in menu bar with optional Dock icon
 - **Dashboard** — Session stats, mode usage, recent transcriptions
 - **History** — Full transcription history with audio playback, copy, retry, and delete
 - **System audio** — Keep playing, pause media, or capture system audio during recording
-- **Dark theme** — Discord-inspired design system
+- **Auto-update** — Built-in Sparkle updater for seamless updates
+- **Dark & Light themes** — Discord-inspired design system with system appearance support
+- **Localization** — English and Japanese UI
 
 ## First Launch
 
@@ -45,7 +51,7 @@ Download `Verba-vX.X.X-mac.zip` from [Releases](https://github.com/Sota-Mikami/V
 
 ### 2. Bypass Gatekeeper
 
-Verba is not signed with an Apple Developer certificate, so macOS will block the first launch. This is normal for open-source apps distributed outside the App Store.
+Verba is not signed with an Apple Developer certificate, so macOS will block the first launch.
 
 **Option A: Right-click → Open (recommended)**
 
@@ -68,17 +74,28 @@ Verba is not signed with an Apple Developer certificate, so macOS will block the
 xattr -cr /Applications/Verba.app
 ```
 
-This removes the quarantine flag. You only need to do this once.
+### 3. Onboarding
 
-### 3. Grant Permissions
-
-- **Accessibility**: System Settings → Privacy & Security → Accessibility → Enable Verba
-- **Microphone**: Granted on first launch prompt
-- **Fn key** (if using fn as trigger): System Settings → Keyboard → "Press 🌐 key to" → **Do Nothing**
+On first launch, Verba guides you through:
+1. **Microphone permission** — Required for voice recording
+2. **Accessibility permission** — Required for auto-paste into active apps
+3. **Whisper model download** — Downloads the speech recognition model
 
 ### 4. Optional: Formatted Mode
 
-For AI-cleaned output, go to Settings → Formatting Engine and add an API key:
+For AI-cleaned output, you have two options:
+
+**Local (No API key needed)**
+Go to Settings → Formatting Engine → Local (On-Device), then download a model:
+
+| Model | Size | Best for |
+|-------|------|----------|
+| Qwen3 0.6B | ~400MB | Ultra-fast, basic formatting |
+| Qwen3 1.7B | ~1GB | Good balance of speed and quality |
+| Qwen3 4B | ~2.5GB | Best quality for most Macs |
+
+**Cloud providers**
+Go to Settings → Formatting Engine and add an API key:
 
 | Provider | Get API key | Recommended model |
 |----------|------------|-------------------|
@@ -94,39 +111,55 @@ brew install xcodegen  # if not installed
 cd Verba
 xcodegen generate
 open Verba.xcodeproj
-# Product → Build (⌘B) or Run (⌘R)
+# Product → Build (Cmd+B) or Run (Cmd+R)
 ```
 
 Release build:
 ```bash
-xcodebuild -scheme Verba -configuration Release build
+xcodegen generate && xcodebuild -scheme Verba -configuration Release \
+  CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build
 ```
 
 ## Architecture
 
 ```
-VerbaApp.swift            App entry (MenuBarExtra + AppDelegate)
+VerbaApp.swift            App entry (MenuBarExtra + Sparkle updater)
 AppState.swift            Central state, recording pipeline, settings
 HotkeyManager.swift       Custom shortcut recorder + controller
 AudioRecorder.swift       AVAudioEngine + system audio capture
 WhisperService.swift      WhisperKit on-device transcription
-FormattingService.swift   Multi-provider LLM formatting
+FormattingService.swift   Multi-provider LLM formatting (cloud + local)
+LocalLLMService.swift     On-device MLX model management + inference
 PasteService.swift        Clipboard + CGEvent Cmd+V paste
-FloatingIndicator.swift   Non-activating recording overlay
+FloatingIndicator.swift   Non-activating recording overlay with error display
+OnboardingView.swift      First-launch setup wizard
 MainView.swift            Sidebar navigation (Dashboard/History/Settings)
 DashboardView.swift       Stats, mode cards, recent transcriptions
 HistoryView.swift         Full history with playback and actions
 SettingsView.swift        All settings with shortcut recorder
+DictionaryView.swift      Custom term dictionary management
+Localization.swift        English + Japanese UI strings
 DesignSystem.swift        Discord-inspired design tokens
 ```
 
+## Tech Stack
+
+| Component | Technology |
+|-----------|-----------|
+| Speech-to-Text | [WhisperKit](https://github.com/argmaxinc/WhisperKit) (on-device) |
+| Local LLM | [mlx-swift-lm](https://github.com/ml-explore/mlx-swift-lm) (Apple MLX) |
+| Cloud LLM | OpenAI-compatible API (OpenRouter, OpenAI, custom) |
+| Keyboard Shortcuts | [KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts) |
+| Auto-Update | [Sparkle](https://github.com/sparkle-project/Sparkle) |
+| Project Generation | [XcodeGen](https://github.com/yonaskolb/XcodeGen) |
+
 ## Roadmap
 
-- [ ] Custom formatting prompts (per-context templates)
-- [ ] Local LLM formatting via MLX (no API key needed)
-- [ ] GitHub Pages landing page
 - [ ] Real-time streaming transcription
 - [ ] Context-aware formatting (read active app content)
+- [ ] Audio feedback (sound effects for start/stop)
+- [ ] DMG installer for easier distribution
+- [ ] Export transcription history
 
 ## License
 
