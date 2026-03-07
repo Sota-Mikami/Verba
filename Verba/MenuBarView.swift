@@ -109,8 +109,8 @@ struct MenuBarView: View {
 
             Divider()
 
-            Button("Settings...") {
-                appState.settingsWindow.open(appState: appState)
+            Button("Open Verba") {
+                appState.mainWindow.open(appState: appState)
             }
             .font(.system(size: 12))
             .padding(.horizontal, 12)

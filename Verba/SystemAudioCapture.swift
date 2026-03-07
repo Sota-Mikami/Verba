@@ -12,18 +12,22 @@ class SystemAudioCapture: NSObject, SCStreamOutput {
     private let targetSampleRate: Double = 16000.0
     private let dataQueue = DispatchQueue(label: "com.sotamikami.verba.systemaudio")
 
-    /// Check and request screen recording permission (required even for audio-only).
-    static func requestPermission() async -> Bool {
-        do {
-            _ = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
-            return true
-        } catch {
-            logger.warning("Screen capture permission denied: \(error.localizedDescription)")
-            return false
-        }
+    /// Check if screen recording permission is already granted (no prompt).
+    static var hasPermission: Bool {
+        CGPreflightScreenCaptureAccess()
+    }
+
+    /// Request screen recording permission (shows prompt once).
+    static func requestPermission() {
+        CGRequestScreenCaptureAccess()
     }
 
     func startCapture() async throws {
+        guard Self.hasPermission else {
+            logger.warning("Screen capture permission not granted, skipping system audio")
+            throw CaptureError.noPermission
+        }
+
         let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
 
         guard let display = content.displays.first else {
@@ -98,5 +102,6 @@ class SystemAudioCapture: NSObject, SCStreamOutput {
 
     enum CaptureError: Error {
         case noDisplay
+        case noPermission
     }
 }

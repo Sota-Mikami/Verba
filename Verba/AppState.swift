@@ -31,23 +31,51 @@ class AppState: ObservableObject {
     @Published var lastTranscription = ""
     @Published var statusMessage = "Starting..."
     @Published var selectedLanguage = "auto"
+    @Published var history: [TranscriptionRecord] = []
+    @Published var unseenHistoryCount = 0
 
+    @AppStorage("formattingProvider") var formattingProvider: FormattingProvider = .openRouter
     @AppStorage("openRouterApiKey") var openRouterApiKey = ""
     @AppStorage("openRouterModel") var openRouterModel = "google/gemma-3-4b-it"
+    @AppStorage("openAIApiKey") var openAIApiKey = ""
+    @AppStorage("openAIModel") var openAIModel = "gpt-4o-mini"
+    @AppStorage("customApiKey") var customApiKey = ""
+    @AppStorage("customModel") var customModel = ""
+    @AppStorage("customEndpoint") var customEndpoint = ""
+    @AppStorage("historyRetention") var historyRetention: HistoryRetention = .thirtyDays
     @AppStorage("showInDock") var showInDock = true {
         didSet { applyDockVisibility() }
     }
-    @AppStorage("systemAudioBehavior") var systemAudioBehavior: SystemAudioBehavior = .keepPlaying
+    @AppStorage("systemAudioBehavior") var systemAudioBehavior: SystemAudioBehavior = .keepPlaying {
+        didSet {
+            if systemAudioBehavior == .captureSystemAudio && !SystemAudioCapture.hasPermission {
+                SystemAudioCapture.requestPermission()
+            }
+        }
+    }
+    @AppStorage("pttShortcut") var pttShortcut: KeyShortcut = .defaultPTT {
+        didSet {
+            hotkeyController.pttShortcut = pttShortcut
+            hotkeyController.restart()
+        }
+    }
+    @AppStorage("hfShortcut") var hfShortcut: KeyShortcut = .defaultHF {
+        didSet {
+            hotkeyController.hfShortcut = hfShortcut
+            hotkeyController.restart()
+        }
+    }
 
     private var audioRecorder = AudioRecorder()
     private var whisperService = WhisperService()
-    private let openRouterService = OpenRouterService()
+    private let formattingService = FormattingService()
     private let pasteService = PasteService()
     private let mediaControlService = MediaControlService()
     private let floatingIndicator = FloatingIndicatorController()
-    let settingsWindow = SettingsWindowController()
+    let mainWindow = MainWindowController()
+    private static let maxHistoryCount = 50
 
-    private let hotkeyController = HotkeyController()
+    let hotkeyController = HotkeyController()
     private var recordingTrigger: RecordingTrigger = .none
 
     let availableLanguages = [
@@ -59,6 +87,7 @@ class AppState: ObservableObject {
 
     init() {
         applyDockVisibility()
+        pruneExpiredHistory()
 
         // Prompt for accessibility if not granted
         if !AXIsProcessTrusted() {
@@ -76,11 +105,31 @@ class AppState: ObservableObject {
         }
     }
 
+    var currentApiKey: String {
+        switch formattingProvider {
+        case .openRouter: return openRouterApiKey
+        case .openAI: return openAIApiKey
+        case .custom: return customApiKey
+        case .local: return ""
+        }
+    }
+
+    var currentModel: String {
+        switch formattingProvider {
+        case .openRouter: return openRouterModel
+        case .openAI: return openAIModel
+        case .custom: return customModel
+        case .local: return ""
+        }
+    }
+
     func applyDockVisibility() {
         NSApp.setActivationPolicy(showInDock ? .regular : .accessory)
     }
 
     private func setupKeyboardShortcuts() {
+        hotkeyController.pttShortcut = pttShortcut
+        hotkeyController.hfShortcut = hfShortcut
         hotkeyController.start(
             onPushToTalkStart: { [weak self] in
                 Task { @MainActor in
@@ -208,33 +257,51 @@ class AppState: ObservableObject {
         }
     }
 
-    private func processAudio(_ audioData: Data) async {
+    private func processAudio(_ audioData: Data, paste: Bool = true) async {
+        let language = selectedLanguage == "auto" ? nil : selectedLanguage
+        var record = TranscriptionRecord(audioData: audioData, language: language, mode: mode)
+        history.insert(record, at: 0)
+        unseenHistoryCount += 1
+        if history.count > Self.maxHistoryCount {
+            history.removeLast()
+        }
+
         do {
-            let language = selectedLanguage == "auto" ? nil : selectedLanguage
             let rawText = try await whisperService.transcribe(audioData: audioData, language: language)
 
             if rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                updateRecord(record.id) { $0.status = .failed; $0.errorMessage = "No speech detected" }
                 statusMessage = "No speech detected"
                 isProcessing = false
                 floatingIndicator.hide()
                 return
             }
 
+            updateRecord(record.id) { $0.rawText = rawText; $0.status = .success }
+
             var finalText = rawText
 
-            if mode == .formatted && !openRouterApiKey.isEmpty {
+            if mode == .formatted && !currentApiKey.isEmpty && formattingProvider.isAvailable {
+                updateRecord(record.id) { $0.status = .formatting }
                 statusMessage = "Formatting..."
                 floatingIndicator.show(isRecording: false, statusMessage: "Formatting...", mode: mode)
-                finalText = await openRouterService.format(
+                finalText = await formattingService.format(
                     text: rawText,
-                    apiKey: openRouterApiKey,
-                    model: openRouterModel
+                    provider: formattingProvider,
+                    apiKey: currentApiKey,
+                    model: currentModel,
+                    customEndpoint: customEndpoint
                 ) ?? rawText
+                updateRecord(record.id) { $0.formattedText = finalText; $0.status = .success }
             }
 
             lastTranscription = finalText
-            pasteService.paste(text: finalText)
-            statusMessage = "Pasted \(finalText.count) chars"
+            if paste {
+                pasteService.paste(text: finalText)
+                statusMessage = "Pasted \(finalText.count) chars"
+            } else {
+                statusMessage = "Retranscribed \(finalText.count) chars"
+            }
             floatingIndicator.hide()
 
             try? await Task.sleep(for: .seconds(3))
@@ -242,11 +309,51 @@ class AppState: ObservableObject {
                 statusMessage = "Ready"
             }
         } catch {
+            updateRecord(record.id) { $0.status = .failed; $0.errorMessage = error.localizedDescription }
             statusMessage = "Error: \(error.localizedDescription)"
             logger.error("Process error: \(error.localizedDescription)")
             floatingIndicator.hide()
         }
 
         isProcessing = false
+    }
+
+    private func updateRecord(_ id: UUID, _ update: (inout TranscriptionRecord) -> Void) {
+        if let index = history.firstIndex(where: { $0.id == id }) {
+            update(&history[index])
+        }
+    }
+
+    func retryTranscription(_ record: TranscriptionRecord) {
+        guard !isProcessing else { return }
+        isProcessing = true
+        statusMessage = "Retranscribing..."
+        deleteRecord(record)
+        Task {
+            await processAudio(record.audioData, paste: false)
+        }
+    }
+
+    func clearHistory() {
+        AudioPlaybackService.shared.stop()
+        history.removeAll()
+        unseenHistoryCount = 0
+    }
+
+    func markHistorySeen() {
+        unseenHistoryCount = 0
+    }
+
+    func deleteRecord(_ record: TranscriptionRecord) {
+        if AudioPlaybackService.shared.isPlaying(record.id) {
+            AudioPlaybackService.shared.stop()
+        }
+        history.removeAll { $0.id == record.id }
+    }
+
+    private func pruneExpiredHistory() {
+        guard let days = historyRetention.days else { return }
+        let cutoff = Calendar.current.date(byAdding: .day, value: -days, to: Date()) ?? Date()
+        history.removeAll { $0.timestamp < cutoff }
     }
 }
