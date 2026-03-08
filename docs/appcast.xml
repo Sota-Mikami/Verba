@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.4.0</title>
-            <description><![CDATA[<h2>What's New in v0.4.0</h2><ul><li>**Floating indicator stop/cancel buttons** — "Done" (checkmark, accent) confirms & transcribes, "Cancel" (trash, muted→red on hover) discards recording. Hover reveals label for clarity.</li><li>**Menu bar enhancements** — Mode picker (Fast/Formatted), prompt selector (greyed in Fast mode), recent history submenu (max 10, copy on click)</li><li>**5-step onboarding** — Added shortcut confirmation (step 4) and interactive trial recording (step 5) to first-launch wizard</li><li>**Real-time streaming transcription** — Partial transcription updates during recording, live text preview in floating indicator</li><li>**Full EN/JA localization** — 30+ previously hardcoded strings now localized across all views, status messages, and onboarding</li><li>**Design system migration** — Discord-cold grays replaced with warm plum-black palette, warm off-white text, two-accent system (purple + amber)</li><li>**Light mode overhaul** — Warm off-whites and warm text grays replace cold Discord grays; `DS.textOnAccent` ensures readability on accent backgrounds</li><li>**Floating indicator rebrand** — Branded warm glass, amber recording dot with breathe animation, two-accent waveform, forced dark mode</li><li>**Streaming text layout** — Fixed height (180px) with internal scroll, bottom controls always pinned visible</li><li>**Settings restructured** — 2-tier layout: basic settings always visible, Voice Engine collapsed by default</li><li>**Animation cleanup** — All `.spring()` replaced with `.easeOut()`, removed bounce effects</li><li>**Menu bar simplified** — Removed inline status/mode badge, uses macOS-standard system colors</li><li>**Dictionary simplified** — Term-only list, injected as Whisper prompt tokens for better accuracy</li><li>Floating indicator controls hidden when streaming text grows (window grew downward off-screen)</li><li>Light mode text unreadable on accent backgrounds</li><li>Picker/Select text invisible in light mode (color scheme mismatch)</li></ul>]]></description>
-            <pubDate>Sun, 08 Mar 2026 17:21:56 +0700</pubDate>
+            <title>Version 0.4.1</title>
+            <description><![CDATA[<h2>What's New in v0.4.1</h2><ul><li>**Audio feedback** — Sound cues for recording start (pop), stop (tink), and paste confirmation (morse)</li><li>**Paste success indicator** — Green checkmark briefly shown in floating indicator before fade-out</li><li>**Animated formatting dots** — "Formatting..." cycles dots for visible progress</li><li>**Timer flip animation** — Elapsed time digits animate with numericText transition</li><li>**App icon** — Updated to match brand palette (dark plum-black background, purple waves, amber glow)</li><li>**Timer accuracy** — Elapsed time now uses Date-based calculation instead of cumulative increment</li><li>**Formatting center alignment** — Status text now vertically centered in indicator during transcribing/formatting</li><li>**Dictionary terminology** — Unified to "Add Term" (was mixed "New word" / "Add Term")</li><li>**Button contrast** — Fixed accent buttons (Add Term, Save) using textOnAccent for readability in light mode</li><li>**Dictionary Enter key** — Term can be added by pressing Enter</li></ul>]]></description>
+            <pubDate>Sun, 08 Mar 2026 17:43:31 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.4.0/Verba-v0.4.0.dmg"
-                sparkle:version="8"
-                sparkle:shortVersionString="0.4.0"
-                sparkle:edSignature="3/oXnc7CoA2lWAZEcUjYQAQUqUv0mEeP9HlWlUT9NpkgNTJJQ9/2JHyAgPhqu3okxQKU/3CIS5+fT83pZbCvAQ=="
-                length="9670860"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.4.1/Verba-v0.4.1.dmg"
+                sparkle:version="9"
+                sparkle:shortVersionString="0.4.1"
+                sparkle:edSignature="8POsqIKpPTHf3MDbvb1499gYjulwUPaQE59SauYJnwQYjQGKaj79QK9Ezmu/zroTqzLhrNBFcj/ExhalzkjpBQ=="
+                length="9964110"
                 type="application/octet-stream"
             />
         </item>
