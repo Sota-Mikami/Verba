@@ -48,7 +48,7 @@ Local-first voice input for macOS. Speak naturally, get clean text pasted into a
 
 ### 1. Install
 
-Download **[Verba-vX.X.X.dmg](https://github.com/Sota-Mikami/Verba/releases/latest)** from Releases, open the DMG, drag to Applications.
+Download **[Verba.zip](https://github.com/Sota-Mikami/Verba/releases/latest)** from Releases, unzip, and drag to Applications.
 
 ### 2. Bypass Gatekeeper
 
