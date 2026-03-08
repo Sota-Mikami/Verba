@@ -7,15 +7,15 @@
         <language>en</language>
         <item>
             <title>Version 0.4.2</title>
-            <description><![CDATA[<h2>What's New in v0.4.2</h2><ul><li>**App icon** — Restored original icon shape, recolored to brand palette (plum-black background, off-white microphone)</li><li>**Radio button contrast** — Selected dot now uses textOnAccent for visibility on accent backgrounds in light mode</li></ul>]]></description>
-            <pubDate>Sun, 08 Mar 2026 18:00:05 +0700</pubDate>
+            <description><![CDATA[<h2>What's New in v0.4.2</h2><ul><li><b>App icon</b> — Restored original icon shape with brand gradient, refined wave arcs</li><li><b>Radio button contrast</b> — Fixed selected dot visibility in light mode</li></ul>]]></description>
+            <pubDate>Sun, 08 Mar 2026 18:12:00 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
                 url="https://github.com/Sota-Mikami/Verba/releases/download/v0.4.2/Verba-v0.4.2.dmg"
                 sparkle:version="11"
                 sparkle:shortVersionString="0.4.2"
-                sparkle:edSignature="1JuSp2ig6ZiRdSpXKLfiTBFra71FkRLIMhs3Jp5+k2H4ERnBDnCKGqSW7EuuMEo99Ruyi6k/XQytkoQxA46PDw=="
-                length="9452904"
+                sparkle:edSignature="ddK8LZJcCV3ALYiLJsmhNtz0BGa5NVw3MvOK98GHnppQqCE3J7cwsiVIZecil94qhkrftY+lxlPhkhFBUYjtBQ=="
+                length="10115329"
                 type="application/octet-stream"
             />
         </item>
