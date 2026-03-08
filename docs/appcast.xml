@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.3.0</title>
-            <description><![CDATA[<h2>What's New in v0.3.0</h2><ul><li>Fixed Picker/Select text invisible in light mode</li><li>System appearance changes now properly tracked</li></ul>]]></description>
-            <pubDate>Sun, 08 Mar 2026 09:08:11 +0700</pubDate>
+            <title>Version 0.3.1</title>
+            <description><![CDATA[<h2>What's New in v0.3.1</h2><ul><li>Release v0.3.1</li></ul>]]></description>
+            <pubDate>Sun, 08 Mar 2026 14:35:36 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.3.0/Verba-v0.3.0.dmg"
-                sparkle:version="4"
-                sparkle:shortVersionString="0.3.0"
-                sparkle:edSignature="n9MADQ+utNqMQiFPOIwFKviPEP30HVp1b1/ciTF5bHbH//DFCLYiZSvqC/NPnLNW8z8/UziZ1icF56Ie0ssXDg=="
-                length="9588449"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.3.1/Verba-v0.3.1.dmg"
+                sparkle:version="5"
+                sparkle:shortVersionString="0.3.1"
+                sparkle:edSignature="NEdhuOotS07Vf2ctOYf8+HB8zLEg+OVkEiaYZpmfa5rBm5ZMeu5ldq8oSs3xQktY8rBt9Qf9wCu6BW7ds9ECBg=="
+                length="9611531"
                 type="application/octet-stream"
             />
         </item>
