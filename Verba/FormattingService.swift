@@ -6,10 +6,10 @@ private let logger = Logger(subsystem: "com.sotamikami.verba", category: "Format
 // MARK: - Provider Definition
 
 enum FormattingProvider: String, CaseIterable {
+    case local = "Local (On-Device)"
     case openRouter = "OpenRouter"
     case openAI = "OpenAI"
     case custom = "Custom Endpoint"
-    case local = "Local (On-Device)"
 
     var baseURL: String {
         switch self {

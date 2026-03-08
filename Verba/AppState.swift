@@ -38,7 +38,7 @@ class AppState: ObservableObject {
     private var appearanceObservation: NSKeyValueObservation?
     @Published var unseenHistoryCount = 0
 
-    @AppStorage("formattingProvider") var formattingProvider: FormattingProvider = .openRouter
+    @AppStorage("formattingProvider") var formattingProvider: FormattingProvider = .local
     @AppStorage("openRouterApiKey") var openRouterApiKey = ""
     @AppStorage("openRouterModel") var openRouterModel = "google/gemma-3-4b-it"
     @AppStorage("openAIApiKey") var openAIApiKey = ""
@@ -46,7 +46,7 @@ class AppState: ObservableObject {
     @AppStorage("customApiKey") var customApiKey = ""
     @AppStorage("customModel") var customModel = ""
     @AppStorage("customEndpoint") var customEndpoint = ""
-    @AppStorage("localModel") var localModel = "gemma3:4b"
+    @AppStorage("localModel") var localModel = "mlx-community/Qwen3-0.6B-4bit"
     @AppStorage("selectedPromptId") var selectedPromptId = FormattingPrompt.builtInGeneral.id.uuidString
     @AppStorage("uiLanguage") var uiLanguage: String = "en" {
         didSet { l10n = L10n(UILanguage(rawValue: uiLanguage) ?? .en) }
@@ -416,6 +416,28 @@ class AppState: ObservableObject {
             logger.error("[AS] initializeServices: FAILED — \(msg)")
         }
         isInitializing = false
+
+        // Auto-prepare local LLM when provider is local
+        if formattingProvider == .local && !localLLMService.isReady {
+            Task { await prepareLocalLLM() }
+        }
+    }
+
+    /// Download (if needed) and load the selected local LLM model
+    func prepareLocalLLM() async {
+        localLLMService.checkModelStatus(modelId: localModel)
+        switch localLLMService.modelState {
+        case .notDownloaded:
+            DebugLog.log("[AS] prepareLocalLLM: downloading \(localModel)")
+            await localLLMService.downloadAndLoad(modelId: localModel)
+        case .downloaded:
+            DebugLog.log("[AS] prepareLocalLLM: loading \(localModel)")
+            await localLLMService.loadModel(modelId: localModel)
+        case .ready:
+            DebugLog.log("[AS] prepareLocalLLM: already ready")
+        default:
+            break
+        }
     }
 
     func reloadWhisperModel() async {
