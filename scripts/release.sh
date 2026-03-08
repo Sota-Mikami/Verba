@@ -53,6 +53,12 @@ done
 echo "==> Bumping version to $VERSION"
 sed -i '' "s/MARKETING_VERSION: \".*\"/MARKETING_VERSION: \"$VERSION\"/" project.yml
 
+# --- Bump build number ---
+CURRENT_BUILD=$(grep 'CURRENT_PROJECT_VERSION' project.yml | head -1 | sed 's/.*: //')
+NEW_BUILD=$((CURRENT_BUILD + 1))
+echo "==> Bumping build number: $CURRENT_BUILD → $NEW_BUILD"
+sed -i '' "s/CURRENT_PROJECT_VERSION: .*/CURRENT_PROJECT_VERSION: $NEW_BUILD/" project.yml
+
 # --- Regenerate Xcode project ---
 echo "==> Regenerating Xcode project"
 xcodegen generate
@@ -149,7 +155,7 @@ cat > "$APPCAST_FILE" << APPCAST_EOF
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
                 url="$DOWNLOAD_URL"
-                sparkle:version="1"
+                sparkle:version="$NEW_BUILD"
                 sparkle:shortVersionString="$VERSION"
                 sparkle:edSignature="$ED_SIGNATURE"
                 length="$LENGTH"
