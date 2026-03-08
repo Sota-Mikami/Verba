@@ -3,8 +3,6 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
 
-    @State private var engineExpanded = false
-
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 24) {
@@ -12,57 +10,22 @@ struct SettingsView: View {
                     .font(.system(size: 24, weight: .bold))
                     .foregroundStyle(DS.textNormal)
 
-                // Tier 1: General settings
+                // General
                 uiLanguageSection
                 appearanceSection
                 generalSection
                 shortcutsSection
 
-                // Tier 2: Voice Engine (collapsed by default)
-                VStack(alignment: .leading, spacing: 4) {
-                    Button {
-                        withAnimation(.easeOut(duration: 0.2)) {
-                            engineExpanded.toggle()
-                        }
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundStyle(DS.textMuted)
-                                .rotationEffect(.degrees(engineExpanded ? 90 : 0))
-                            Text(appState.l10n.voiceEngine)
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(DS.textMuted)
-                            Spacer()
-                            Text(engineSummary)
-                                .font(.system(size: 11))
-                                .foregroundStyle(DS.textFaint)
-                        }
-                    }
-                    .buttonStyle(.plain)
-
-                    if engineExpanded {
-                        modelSection
-                            .transition(.opacity.combined(with: .move(edge: .top)))
-                        promptSection
-                            .transition(.opacity.combined(with: .move(edge: .top)))
-                        formattingSection
-                            .transition(.opacity.combined(with: .move(edge: .top)))
-                    }
-                }
+                // Voice Engine
+                modelSection
+                promptSection
+                formattingSection
             }
             .padding(28)
         }
         .background(DS.bgSecondary)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .onAppear { availableMics = AudioRecorder.availableInputDevices() }
-    }
-
-    private var engineSummary: String {
-        let provider = appState.formattingProvider
-        let model = appState.currentModel
-        let shortModel = model.components(separatedBy: "/").last ?? model
-        return "\(provider.rawValue) · \(shortModel)"
     }
 
     // MARK: - General
