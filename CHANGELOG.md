@@ -2,13 +2,14 @@
 
 All notable changes to Verba will be documented in this file.
 
-## [0.4.2] - 2026-03-08
+## [0.4.3] - 2026-03-08
 
 ### Changed
-- **App icon** — Restored original icon shape, recolored to brand palette (plum-black background, off-white microphone)
+- **App icon** — Brand gradient background (purple + amber), cleaned wave arcs to 2 tiers
 
 ### Fixed
 - **Radio button contrast** — Selected dot now uses textOnAccent for visibility on accent backgrounds in light mode
+- **Clean rebuild** — Full clean build to ensure all v0.4.x features ship correctly
 
 ## [0.4.1] - 2026-03-08
 
