@@ -2,6 +2,11 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [0.4.9] - 2026-03-09
+
+### Fixed
+- **History not persisting across restarts** — Fixed date decoding mismatch that silently prevented history from loading on app launch.
+
 ## [0.4.8] - 2026-03-09
 
 ### Changed
