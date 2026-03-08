@@ -411,7 +411,8 @@ class AppState: ObservableObject {
 
                 if seconds >= 1.0 {
                     do {
-                        let text = try await self.whisperService.transcribe(audioData: buffer, language: nil)
+                        let hint = self.formattingService.dictionaryHint(dictionary: self.dictionaryEntries)
+                        let text = try await self.whisperService.transcribe(audioData: buffer, language: nil, initialPrompt: hint)
                         if !Task.isCancelled && self.isRecording && !text.isEmpty {
                             self.floatingIndicator.updateStreamingText(text)
                         }
@@ -435,7 +436,8 @@ class AppState: ObservableObject {
         }
 
         do {
-            let rawText = try await whisperService.transcribe(audioData: audioData, language: nil)
+            let dictHint = formattingService.dictionaryHint(dictionary: dictionaryEntries)
+            let rawText = try await whisperService.transcribe(audioData: audioData, language: nil, initialPrompt: dictHint)
 
             if rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 updateRecord(record.id) { $0.status = .failed; $0.errorMessage = "No speech detected" }
@@ -464,8 +466,6 @@ class AppState: ObservableObject {
                     localLLMService: localLLMService
                 ) ?? rawText
                 updateRecord(record.id) { $0.formattedText = finalText; $0.status = .success }
-            } else if mode == .fast && !dictionaryEntries.isEmpty {
-                finalText = formattingService.applyDictionary(text: rawText, dictionary: dictionaryEntries)
             }
 
             lastTranscription = finalText

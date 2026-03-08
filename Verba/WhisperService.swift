@@ -66,7 +66,7 @@ class WhisperService {
         }
     }
 
-    func transcribe(audioData: Data, language: String? = nil) async throws -> String {
+    func transcribe(audioData: Data, language: String? = nil, initialPrompt: String? = nil) async throws -> String {
         guard let whisperKit else {
             throw WhisperError.notInitialized
         }
@@ -75,12 +75,21 @@ class WhisperService {
             Array(buffer.bindMemory(to: Float.self))
         }
 
+        // Convert initialPrompt string to token IDs for Whisper conditioning
+        var tokens: [Int]? = nil
+        if let prompt = initialPrompt, !prompt.isEmpty,
+           let tokenizer = whisperKit.tokenizer {
+            let encoded = tokenizer.encode(text: prompt)
+            if !encoded.isEmpty { tokens = encoded }
+        }
+
         let options = DecodingOptions(
             task: .transcribe,
             language: language,
             detectLanguage: language == nil,
             skipSpecialTokens: true,
-            withoutTimestamps: true
+            withoutTimestamps: true,
+            promptTokens: tokens
         )
 
         let results: [TranscriptionResult] = try await whisperKit.transcribe(

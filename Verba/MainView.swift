@@ -46,7 +46,7 @@ struct MainView: View {
                 .transition(.opacity.animation(.easeInOut(duration: 0.15)))
         }
         .background(DS.bgPrimary)
-        .preferredColorScheme(appState.appearance.colorScheme)
+        .preferredColorScheme(appState.resolvedColorScheme)
         .animation(.spring(response: 0.3, dampingFraction: 0.9), value: selectedPage)
         .sheet(isPresented: showOnboarding) {
             OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)

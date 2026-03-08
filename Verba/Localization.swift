@@ -144,15 +144,9 @@ struct L10n {
     var addTerm: String { s("Add Term", "用語を追加") }
     var term: String { s("Term", "用語") }
     var termPlaceholder: String { s("e.g. WhisperKit, Claude", "例: WhisperKit, Claude") }
-    var readings: String { s("Readings", "読み") }
-    var readingsPlaceholder: String { s("Comma-separated: ウィスパーキット, whisper kit", "カンマ区切り: ウィスパーキット, whisper kit") }
-    var readingsDesc: String { s("Possible misrecognitions (comma-separated)", "音声認識で出がちな表記（カンマ区切り）") }
     var noDictionaryEntries: String { s("No terms registered", "用語が登録されていません") }
     var newWord: String { s("New word", "新しい用語") }
     var filterAll: String { s("All", "すべて") }
-    var filterAutoAdded: String { s("Auto-added", "自動追加") }
-    var filterManual: String { s("Manually-added", "手動追加") }
-    var autoAddedBadge: String { s("Auto", "自動") }
 
     // MARK: Onboarding
     var onboardingWelcome: String { s("Welcome to Verba", "Verbaへようこそ") }

@@ -199,20 +199,10 @@ struct FormattingPrompt: Identifiable, Codable, Equatable {
 struct DictionaryEntry: Identifiable, Codable, Equatable {
     let id: UUID
     var term: String
-    var readings: [String]
-    var isAutoAdded: Bool
 
-    init(id: UUID = UUID(), term: String, readings: [String] = [], isAutoAdded: Bool = false) {
+    init(id: UUID = UUID(), term: String) {
         self.id = id
         self.term = term
-        self.readings = readings
-        self.isAutoAdded = isAutoAdded
-    }
-
-    /// Build a line for LLM context injection
-    var promptLine: String {
-        if readings.isEmpty { return term }
-        return "\(term)（読み: \(readings.joined(separator: ", "))）"
     }
 }
 
@@ -240,17 +230,10 @@ class FormattingService {
         }
     }
 
-    /// Apply dictionary replacements for Fast mode (no LLM)
-    func applyDictionary(text: String, dictionary: [DictionaryEntry]) -> String {
-        guard !dictionary.isEmpty else { return text }
-        var result = text
-        for entry in dictionary {
-            for reading in entry.readings {
-                guard !reading.isEmpty else { continue }
-                result = result.replacingOccurrences(of: reading, with: entry.term, options: [.caseInsensitive])
-            }
-        }
-        return result
+    /// Build a hint string of dictionary terms for Whisper initialPrompt
+    func dictionaryHint(dictionary: [DictionaryEntry]) -> String? {
+        guard !dictionary.isEmpty else { return nil }
+        return dictionary.map { $0.term }.joined(separator: ", ")
     }
 
     func format(text: String, provider: FormattingProvider, apiKey: String, model: String, customEndpoint: String = "", prompt: FormattingPrompt = .builtInGeneral, dictionary: [DictionaryEntry] = [], localLLMService: LocalLLMService? = nil) async -> String? {
@@ -260,7 +243,7 @@ class FormattingService {
         // Build system prompt with dictionary injection
         var systemPrompt = prompt.systemPrompt
         if !dictionary.isEmpty {
-            let termLines = dictionary.map { "- \($0.promptLine)" }.joined(separator: "\n")
+            let termLines = dictionary.map { "- \($0.term)" }.joined(separator: "\n")
             systemPrompt += "\n\n【用語辞書】以下の用語は正確にこの表記を使ってください:\n\(termLines)"
         }
 

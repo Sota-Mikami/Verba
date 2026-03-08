@@ -914,8 +914,6 @@ struct DictionaryEditorSheet: View {
     let l10n: L10n
     let onSave: (DictionaryEntry) -> Void
     let onCancel: () -> Void
-    @State private var readingsText: String = ""
-
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(isNew ? l10n.addTerm : l10n.term)
@@ -933,20 +931,7 @@ struct DictionaryEditorSheet: View {
                     .background(DS.inputBg)
                     .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
                     .foregroundStyle(DS.textNormal)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(l10n.readings)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(DS.textMuted)
-                TextField(l10n.readingsPlaceholder, text: $readingsText)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 13))
-                    .padding(8)
-                    .background(DS.inputBg)
-                    .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
-                    .foregroundStyle(DS.textNormal)
-                Text(l10n.readingsDesc)
+                Text(l10n.dictionaryDesc)
                     .font(.system(size: 11))
                     .foregroundStyle(DS.textFaint)
             }
@@ -968,10 +953,6 @@ struct DictionaryEditorSheet: View {
                 Spacer()
 
                 Button {
-                    entry.readings = readingsText
-                        .split(separator: ",")
-                        .map { $0.trimmingCharacters(in: .whitespaces) }
-                        .filter { !$0.isEmpty }
                     onSave(entry)
                 } label: {
                     Text(isNew ? l10n.addTerm : l10n.saveChanges)
@@ -987,11 +968,8 @@ struct DictionaryEditorSheet: View {
             }
         }
         .padding(24)
-        .frame(width: 420, height: 300)
+        .frame(width: 420, height: 220)
         .background(DS.bgSecondary)
-        .onAppear {
-            readingsText = entry.readings.joined(separator: ", ")
-        }
     }
 }
 

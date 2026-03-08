@@ -14,8 +14,7 @@ struct DictionaryView: View {
         if !searchQuery.isEmpty {
             let q = searchQuery.lowercased()
             entries = entries.filter {
-                $0.term.lowercased().contains(q) ||
-                $0.readings.contains(where: { $0.lowercased().contains(q) })
+                $0.term.lowercased().contains(q)
             }
         }
         return entries
