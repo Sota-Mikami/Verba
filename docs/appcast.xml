@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.4.2</title>
-            <description><![CDATA[<h2>What's New in v0.4.2</h2><ul><li><b>App icon</b> — Brand gradient background (purple + amber), refined wave arcs</li><li><b>Radio button contrast</b> — Fixed selected dot visibility in light mode</li></ul>]]></description>
-            <pubDate>Sun, 08 Mar 2026 19:23:00 +0700</pubDate>
+            <title>Version 0.4.3</title>
+            <description><![CDATA[<h2>What's New in v0.4.3</h2><ul><li>**App icon** — Brand gradient background (purple + amber), cleaned wave arcs to 2 tiers</li><li>**Radio button contrast** — Selected dot now uses textOnAccent for visibility on accent backgrounds in light mode</li><li>**Clean rebuild** — Full clean build to ensure all v0.4.x features ship correctly</li></ul>]]></description>
+            <pubDate>Sun, 08 Mar 2026 19:34:01 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.4.2/Verba-v0.4.2.dmg"
-                sparkle:version="11"
-                sparkle:shortVersionString="0.4.2"
-                sparkle:edSignature=""
-                length=""
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.4.3/Verba-v0.4.3.dmg"
+                sparkle:version="12"
+                sparkle:shortVersionString="0.4.3"
+                sparkle:edSignature="okeVSGP6wWKRdbUNGdImC4Sls7sKv3OEOmpwTx1S6Ksv16r+DaqXlxrzm8qZ/7VTCRT4DZixO6G0vG9jfh9GDA=="
+                length="10151202"
                 type="application/octet-stream"
             />
         </item>
