@@ -2,6 +2,14 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [0.4.2] - 2026-03-08
+
+### Changed
+- **App icon** — Restored original icon shape, recolored to brand palette (plum-black background, off-white microphone)
+
+### Fixed
+- **Radio button contrast** — Selected dot now uses textOnAccent for visibility on accent backgrounds in light mode
+
 ## [0.4.1] - 2026-03-08
 
 ### Added
@@ -11,7 +19,7 @@ All notable changes to Verba will be documented in this file.
 - **Timer flip animation** — Elapsed time digits animate with numericText transition
 
 ### Changed
-- **App icon** — Updated to match brand palette (dark plum-black background, purple waves, amber glow)
+- **App icon** — Updated colors to match brand palette
 - **Timer accuracy** — Elapsed time now uses Date-based calculation instead of cumulative increment
 - **Formatting center alignment** — Status text now vertically centered in indicator during transcribing/formatting
 - **Dictionary terminology** — Unified to "Add Term" (was mixed "New word" / "Add Term")
