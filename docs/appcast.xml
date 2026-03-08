@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.4.8</title>
-            <description><![CDATA[<h2>What's New in v0.4.8</h2><ul><li>**Settings layout** — Voice Engine sections (Whisper model, prompt, formatting engine) are now always visible instead of hidden behind a collapsed toggle.</li></ul>]]></description>
-            <pubDate>Mon, 09 Mar 2026 06:47:42 +0700</pubDate>
+            <title>Version 0.4.9</title>
+            <description><![CDATA[<h2>What's New in v0.4.9</h2><ul><li>**History not persisting across restarts** — Fixed date decoding mismatch that silently prevented history from loading on app launch.</li></ul>]]></description>
+            <pubDate>Mon, 09 Mar 2026 06:55:21 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.4.8/Verba-v0.4.8.dmg"
-                sparkle:version="17"
-                sparkle:shortVersionString="0.4.8"
-                sparkle:edSignature="NCbSi425/+BldEFJWmUBwfMTdzexCOTHbpxGPbs2UQRkm/nV9VzSb9WlSc3fec0D1J1Od37bUTQNrZa1sS7VDA=="
-                length="10163721"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.4.9/Verba-v0.4.9.dmg"
+                sparkle:version="18"
+                sparkle:shortVersionString="0.4.9"
+                sparkle:edSignature="wMy2qZunjRwOfUb9w8wzwqtBNdC3656blWKk4K4y32qsCOvu59bxsxdvthxnea1HPS0NjW3DIEZa+wNNqficCg=="
+                length="10164470"
                 type="application/octet-stream"
             />
         </item>
