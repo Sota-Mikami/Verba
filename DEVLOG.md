@@ -16,7 +16,7 @@
 - **Error recovery** — Floating indicator shows error messages with 4-second auto-dismiss
 - **Clear All confirmation** — Alert dialog before clearing transcription history
 - **Custom formatting prompts** — Built-in General/Meeting Notes/Email + custom prompt editor
-- **Dictionary system** — Auto-learned proper nouns + manual term entries with readings
+- **Dictionary system** — Custom term list for improved transcription accuracy
 - **Localization** — Full English and Japanese UI support
 
 ### Technical Changes
