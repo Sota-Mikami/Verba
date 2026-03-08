@@ -36,7 +36,7 @@ struct DashboardView: View {
         .background(DS.bgSecondary)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.85).delay(0.05)) {
+            withAnimation(.easeOut(duration: 0.4).delay(0.05)) {
                 appeared = true
             }
         }
@@ -64,6 +64,7 @@ struct DashboardView: View {
                 icon: "mic.fill",
                 iconColor: DS.blurple,
                 title: appState.l10n.pushToTalk,
+                actionVerb: pttActionVerb,
                 shortcutKeys: [appState.pttShortcut.label],
                 description: appState.l10n.holdToRecord
             )
@@ -71,9 +72,26 @@ struct DashboardView: View {
                 icon: "waveform",
                 iconColor: DS.green,
                 title: appState.l10n.handsFree,
+                actionVerb: hfActionVerb,
                 shortcutKeys: [appState.hfShortcut.label],
                 description: hfCardDescription
             )
+        }
+    }
+
+    private var pttActionVerb: String {
+        switch appState.pttShortcut.kind {
+        case .modifierHold: return "Hold"
+        case .keyCombo: return "Press"
+        case .doubleTap: return "Double-tap"
+        }
+    }
+
+    private var hfActionVerb: String {
+        switch appState.hfShortcut.kind {
+        case .doubleTap: return "Double-tap"
+        case .keyCombo: return "Press"
+        case .modifierHold: return "Tap"
         }
     }
 
@@ -173,6 +191,7 @@ struct ModeCard: View {
     let icon: String
     let iconColor: Color
     let title: String
+    let actionVerb: String
     let shortcutKeys: [String]
     let description: String
 
@@ -188,7 +207,7 @@ struct ModeCard: View {
             }
 
             HStack(spacing: 4) {
-                Text("Hold")
+                Text(actionVerb)
                     .font(.system(size: 12))
                     .foregroundStyle(DS.textMuted)
                 ForEach(Array(shortcutKeys.enumerated()), id: \.offset) { i, key in
@@ -261,7 +280,7 @@ struct RecentRow: View {
                 .frame(width: 8, height: 8)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(record.displayText.isEmpty ? (record.errorMessage ?? "Processing...") : record.displayText)
+                Text(record.displayText.isEmpty ? (record.errorMessage ?? L10n.current.processing) : record.displayText)
                     .font(.system(size: 13))
                     .lineLimit(1)
                     .foregroundStyle(record.displayText.isEmpty ? DS.textFaint : DS.textNormal)

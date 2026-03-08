@@ -34,14 +34,15 @@ Local-first voice input for macOS. Speak naturally, get clean text pasted into a
 - Dictionary for custom term correction
 
 **App**
-- Menu bar native with optional Dock icon
-- Guided first-launch onboarding
+- Menu bar native with mode/prompt quick-switch and recent history
+- 5-step onboarding (mic, accessibility, model, shortcuts, interactive trial)
 - Dashboard with session stats and recent transcriptions
 - Full history with audio playback, copy, retry, delete
+- Floating indicator with stop/cancel buttons and live streaming preview
 - System audio capture option
 - Auto-update via Sparkle
-- Dark, Light, and System themes
-- English and Japanese UI
+- Dark, Light, and System themes (warm plum-black palette)
+- English and Japanese UI (fully localized)
 
 ## Quick Start
 

@@ -47,7 +47,7 @@ struct L10n {
     var activitySubtitle: String { s("Here's your voice input activity", "音声入力のアクティビティ") }
     var pushToTalk: String { s("Push-to-talk", "押して話す") }
     var handsFree: String { s("Hands-free", "ハンズフリー") }
-    var holdToRecord: String { s("Hold to record, release to transcribe.", "長押しで録音、離して文字起こし。") }
+    var holdToRecord: String { s("Hold to record, release to transcribe.", "長押しで録音、離して文字起こし") }
     var sessions: String { s("Sessions", "セッション") }
     var words: String { s("Words", "文字数") }
     var timeSaved: String { s("Time Saved", "節約時間") }
@@ -69,40 +69,40 @@ struct L10n {
     // MARK: Settings
     var general: String { s("GENERAL", "一般") }
     var launchAtLogin: String { s("Launch at Login", "ログイン時に起動") }
-    var launchAtLoginDesc: String { s("Start Verba automatically when you log in.", "ログイン時にVerbaを自動起動します。") }
+    var launchAtLoginDesc: String { s("Start Verba automatically when you log in.", "ログイン時に自動起動する") }
     var showInDock: String { s("Show in Dock", "Dockに表示") }
-    var showInDockDesc: String { s("Display the app icon in the Dock.", "DockにVerbaのアイコンを表示します。") }
+    var showInDockDesc: String { s("Display the app icon in the Dock.", "Dockにアイコンを表示する") }
     var microphone: String { s("Microphone", "マイク") }
-    var microphoneDesc: String { s("Audio input device for recording.", "録音に使用する音声入力デバイス。") }
+    var microphoneDesc: String { s("Audio input device for recording.", "使用する入力デバイス") }
     var systemDefault: String { s("System Default", "システムデフォルト") }
     var systemAudioDuringRecording: String { s("System audio during recording", "録音中のシステム音声") }
     var historyRetention: String { s("History retention", "履歴の保持期間") }
-    var historyRetentionDesc: String { s("Auto-delete old recordings and transcriptions.", "古い録音と文字起こしを自動削除します。") }
+    var historyRetentionDesc: String { s("Auto-delete old recordings and transcriptions.", "古い録音と文字起こしを自動削除") }
     var keyboardShortcuts: String { s("KEYBOARD SHORTCUTS", "キーボードショートカット") }
     var transcription: String { s("TRANSCRIPTION", "文字起こし") }
     var whisperModel: String { s("Whisper model", "Whisperモデル") }
     var loadedAndReady: String { s("Loaded and ready", "読み込み完了") }
     var downloading: String { s("Downloading...", "ダウンロード中...") }
-    var whisperModelDesc: String { s("Speech recognition model. Larger = more accurate, slower.", "音声認識モデル。大きいほど高精度だが遅い。") }
+    var whisperModelDesc: String { s("Speech recognition model. Larger = more accurate, slower.", "大きいほど高精度だが遅い") }
     var reloadModel: String { s("Reload Model", "モデルを再読み込み") }
     var restartRequired: String { s("Model will reload automatically", "モデルは自動で再読み込みされます") }
     var outputMode: String { s("Output mode", "出力モード") }
-    var outputModeDesc: String { s("Fast: raw output. Formatted: AI-cleaned text.", "Fast: そのまま出力。Formatted: AI整形テキスト。") }
+    var outputModeDesc: String { s("Fast: raw output. Formatted: AI-cleaned text.", "Fast: そのまま出力 / Formatted: AI整形") }
     var formattingPrompt: String { s("FORMATTING PROMPT", "整形プロンプト") }
     var addCustomPrompt: String { s("Add Custom Prompt", "カスタムプロンプトを追加") }
     var formattingEngine: String { s("FORMATTING ENGINE", "整形エンジン") }
     var provider: String { s("Provider", "プロバイダー") }
-    var providerDesc: String { s("Choose how text formatting is processed.", "テキスト整形の処理方法を選択。") }
+    var providerDesc: String { s("Choose how text formatting is processed.", "テキスト整形の処理方法を選択") }
     var apiKey: String { s("API Key", "APIキー") }
     var endpointURL: String { s("Endpoint URL", "エンドポイントURL") }
     var model: String { s("Model", "モデル") }
     var orEnterModelId: String { s("Or enter model ID...", "またはモデルIDを入力...") }
-    var localModelDesc: String { s("Run AI formatting on your Mac. No API key or internet needed.", "Mac上でAI整形を実行。APIキーもインターネットも不要。") }
+    var localModelDesc: String { s("Run AI formatting on your Mac. No API key or internet needed.", "Mac上で完全実行。APIキーもネットも不要") }
     var resetAllToDefault: String { s("Reset All to Default", "すべてデフォルトに戻す") }
     var uiLanguage: String { s("UI LANGUAGE", "表示言語") }
-    var uiLanguageDesc: String { s("Language for the app interface.", "アプリの表示言語。") }
+    var uiLanguageDesc: String { s("Language for the app interface.", "アプリの表示言語") }
     var appearance: String { s("APPEARANCE", "外観") }
-    var appearanceDesc: String { s("Choose light, dark, or system theme.", "ライト、ダーク、またはシステムテーマを選択。") }
+    var appearanceDesc: String { s("Choose light, dark, or system theme.", "ライト、ダーク、またはシステムテーマを選択") }
     var theme: String { s("Theme", "テーマ") }
 
     // MARK: Menu Bar
@@ -140,7 +140,7 @@ struct L10n {
     // MARK: Dictionary
     var dictionaryNav: String { s("Dictionary", "用語辞書") }
     var dictionaryTitle: String { s("DICTIONARY", "用語辞書") }
-    var dictionaryDesc: String { s("Register terms for accurate transcription.", "正確な文字起こしのために用語を登録。") }
+    var dictionaryDesc: String { s("Register terms for accurate transcription.", "正確な文字起こしのために用語を登録") }
     var addTerm: String { s("Add Term", "用語を追加") }
     var term: String { s("Term", "用語") }
     var termPlaceholder: String { s("e.g. WhisperKit, Claude", "例: WhisperKit, Claude") }
@@ -162,8 +162,47 @@ struct L10n {
     var onboardingNext: String { s("Next", "次へ") }
     var onboardingGranted: String { s("Granted", "許可済み") }
 
+    // MARK: Sidebar
+    var voiceInput: String { s("Voice Input", "音声入力") }
+    var whisperReady: String { s("Whisper Ready", "Whisper 準備完了") }
+
+    // MARK: Menu Bar (additional)
+    var recent: String { s("Recent", "最近") }
+    var noHistory: String { s("No history", "履歴なし") }
+
+    // MARK: Settings (additional)
+    var voiceEngine: String { s("Voice Engine", "音声エンジン") }
+    var openAICompatibleHint: String { s("Must be OpenAI-compatible (/chat/completions)", "OpenAI互換である必要があります（/chat/completions）") }
+    var pressShortcut: String { s("Press shortcut...", "ショートカットを入力...") }
+    var localModelLongDesc: String { s("Run AI formatting entirely on your Mac. No API key or internet needed.", "AI整形をMac上で完全に実行。APIキーもインターネットも不要") }
+    var loading: String { s("Loading...", "読み込み中...") }
+
+    // MARK: Onboarding (additional)
+    var onboardingShortcutsTitle: String { s("Your Shortcuts", "ショートカットキー") }
+    var onboardingShortcutsDesc: String { s("These keyboard shortcuts control voice input. You can change them later in Settings.", "これらのショートカットキーで音声入力を操作します。設定で後から変更できます。") }
+    var holdToRecordHint: String { s("Hold to record", "長押しで録音") }
+    var doubleTapToToggleHint: String { s("Double-tap to toggle", "ダブルタップで切り替え") }
+    var tryItOut: String { s("Try It Out", "試してみよう") }
+    var tryItOutDesc: String { s("Press the button below and say something. Verba will transcribe it right here.", "下のボタンを押して何か話してください。Verbaがここで文字起こしします。") }
+    var itWorks: String { s("It works!", "動作確認完了！") }
+    var itWorksDesc: String { s("Your voice was transcribed on-device. Nothing left your Mac.", "音声はデバイス上で文字起こしされました。データはMacの外に出ていません。") }
+    var startRecording: String { s("Start Recording", "録音開始") }
+    var tryAgain: String { s("Try Again", "もう一度") }
+    var noSpeechDetectedShort: String { s("(No speech detected)", "（音声が検出されませんでした）") }
+    var transcriptionFailedShort: String { s("(Transcription failed)", "（文字起こしに失敗しました）") }
+
+    // MARK: Dictionary (additional)
+    var search: String { s("Search...", "検索...") }
+
+    // MARK: Floating Indicator (additional)
+    var cancelled: String { s("Cancelled", "キャンセルしました") }
+
     // MARK: Status messages
+    var downloadingModel: String { s("Downloading Whisper model...", "Whisperモデルをダウンロード中...") }
+    var micPermissionDenied: String { s("Microphone permission denied", "マイクの権限が拒否されました") }
+    var retranscribing: String { s("Retranscribing...", "再文字起こし中...") }
     func pastedChars(_ count: Int) -> String { s("Pasted \(count) chars", "\(count)文字をペースト") }
+    func retranscribedChars(_ count: Int) -> String { s("Retranscribed \(count) chars", "\(count)文字を再文字起こし") }
     var noSpeechDetected: String { s("No speech detected", "音声が検出されませんでした") }
     var modelNotLoaded: String { s("Model not loaded yet", "モデルがまだ読み込まれていません") }
     var accessibilityNeeded: String { s("⚠ Accessibility permission needed — text copied to clipboard", "⚠ アクセシビリティ権限が必要です — テキストはクリップボードにコピーされました") }

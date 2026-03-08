@@ -3,6 +3,8 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
 
+    @State private var engineExpanded = false
+
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 24) {
@@ -10,19 +12,57 @@ struct SettingsView: View {
                     .font(.system(size: 24, weight: .bold))
                     .foregroundStyle(DS.textNormal)
 
+                // Tier 1: General settings
                 uiLanguageSection
                 appearanceSection
                 generalSection
                 shortcutsSection
-                modelSection
-                promptSection
-                formattingSection
+
+                // Tier 2: Voice Engine (collapsed by default)
+                VStack(alignment: .leading, spacing: 4) {
+                    Button {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            engineExpanded.toggle()
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(DS.textMuted)
+                                .rotationEffect(.degrees(engineExpanded ? 90 : 0))
+                            Text(appState.l10n.voiceEngine)
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(DS.textMuted)
+                            Spacer()
+                            Text(engineSummary)
+                                .font(.system(size: 11))
+                                .foregroundStyle(DS.textFaint)
+                        }
+                    }
+                    .buttonStyle(.plain)
+
+                    if engineExpanded {
+                        modelSection
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                        promptSection
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                        formattingSection
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
+                }
             }
             .padding(28)
         }
         .background(DS.bgSecondary)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .onAppear { availableMics = AudioRecorder.availableInputDevices() }
+    }
+
+    private var engineSummary: String {
+        let provider = appState.formattingProvider
+        let model = appState.currentModel
+        let shortModel = model.components(separatedBy: "/").last ?? model
+        return "\(provider.rawValue) · \(shortModel)"
     }
 
     // MARK: - General
@@ -385,7 +425,7 @@ struct SettingsView: View {
                             .background(DS.inputBg)
                             .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
                             .foregroundStyle(DS.textNormal)
-                        Text("Must be OpenAI-compatible (/chat/completions)")
+                        Text(appState.l10n.openAICompatibleHint)
                             .font(.system(size: 11))
                             .foregroundStyle(DS.textFaint)
                     }
@@ -506,7 +546,7 @@ struct ModelRow: View {
                         .frame(width: 16, height: 16)
                     if isSelected {
                         Circle()
-                            .fill(.white)
+                            .fill(DS.textNormal)
                             .frame(width: 6, height: 6)
                     }
                 }
@@ -567,7 +607,7 @@ struct EditableShortcutRow: View {
                 if isRecording {
                     HStack(spacing: 6) {
                         Circle().fill(DS.red).frame(width: 6, height: 6)
-                        Text("Press shortcut...")
+                        Text(L10n.current.pressShortcut)
                             .font(.system(size: 12, weight: .medium))
                     }
                     .foregroundStyle(DS.textNormal)
@@ -621,7 +661,7 @@ struct WhisperModelRow: View {
                         .frame(width: 16, height: 16)
                     if isSelected {
                         Circle()
-                            .fill(.white)
+                            .fill(DS.textNormal)
                             .frame(width: 6, height: 6)
                     }
                 }
@@ -675,7 +715,7 @@ struct PromptRow: View {
                         .frame(width: 16, height: 16)
                     if isSelected {
                         Circle()
-                            .fill(.white)
+                            .fill(DS.textNormal)
                             .frame(width: 6, height: 6)
                     }
                 }
@@ -713,7 +753,7 @@ struct PromptRow: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 4))
                             }
                             .buttonStyle(.plain)
-                            .help("Reset to Default")
+                            .help(L10n.current.resetToDefault)
                         }
                         if let onEdit {
                             Button(action: onEdit) {
@@ -781,7 +821,7 @@ struct PromptEditorSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Name")
+                        Text(L10n.current.name)
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(DS.textMuted)
                         TextField("e.g. Code Review, Slack Message...", text: $prompt.name)
@@ -794,7 +834,7 @@ struct PromptEditorSheet: View {
                     }
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("System Prompt")
+                        Text(L10n.current.systemPrompt)
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(DS.textMuted)
                         TextEditor(text: $prompt.systemPrompt)
@@ -810,7 +850,7 @@ struct PromptEditorSheet: View {
                     DisclosureGroup {
                         VStack(alignment: .leading, spacing: 14) {
                             VStack(alignment: .leading, spacing: 6) {
-                                Text("Example Input")
+                                Text(L10n.current.exampleInput)
                                     .font(.system(size: 12, weight: .medium))
                                     .foregroundStyle(DS.textMuted)
                                 TextEditor(text: $prompt.fewShotUser)
@@ -824,7 +864,7 @@ struct PromptEditorSheet: View {
                             }
 
                             VStack(alignment: .leading, spacing: 6) {
-                                Text("Expected Output")
+                                Text(L10n.current.expectedOutput)
                                     .font(.system(size: 12, weight: .medium))
                                     .foregroundStyle(DS.textMuted)
                                 TextEditor(text: $prompt.fewShotAssistant)
@@ -839,7 +879,7 @@ struct PromptEditorSheet: View {
                         }
                         .padding(.top, 8)
                     } label: {
-                        Text("Few-shot Example (optional)")
+                        Text(L10n.current.fewShotExample)
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(DS.textMuted)
                     }
@@ -854,7 +894,7 @@ struct PromptEditorSheet: View {
 
             HStack {
                 Button(action: onCancel) {
-                    Text("Cancel")
+                    Text(L10n.current.cancel)
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(DS.textMuted)
                         .padding(.horizontal, 20)
@@ -871,7 +911,7 @@ struct PromptEditorSheet: View {
                         HStack(spacing: 4) {
                             Image(systemName: "arrow.uturn.backward")
                                 .font(.system(size: 11))
-                            Text("Reset to Default")
+                            Text(L10n.current.resetToDefault)
                                 .font(.system(size: 13, weight: .medium))
                         }
                         .foregroundStyle(DS.orange)
@@ -886,9 +926,9 @@ struct PromptEditorSheet: View {
                 Button {
                     onSave(prompt)
                 } label: {
-                    Text(isNew ? "Add Prompt" : "Save Changes")
+                    Text(isNew ? L10n.current.addPromptBtn : L10n.current.saveChanges)
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(DS.textNormal)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 8)
                         .background(prompt.name.isEmpty ? DS.blurple.opacity(0.4) : DS.blurple)
@@ -957,7 +997,7 @@ struct DictionaryEditorSheet: View {
                 } label: {
                     Text(isNew ? l10n.addTerm : l10n.saveChanges)
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(DS.textNormal)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 8)
                         .background(entry.term.isEmpty ? DS.blurple.opacity(0.4) : DS.blurple)
@@ -1007,7 +1047,7 @@ struct LocalModelSection: View {
                 Image(systemName: "cpu")
                     .font(.system(size: 12))
                     .foregroundStyle(DS.blurple)
-                Text("Run AI formatting entirely on your Mac. No API key, no internet needed.")
+                Text(L10n.current.localModelLongDesc)
                     .font(.system(size: 12))
                     .foregroundStyle(DS.textMuted)
             }
@@ -1017,7 +1057,7 @@ struct LocalModelSection: View {
             .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
 
             // Model list
-            Text("MODEL")
+            Text(L10n.current.model.uppercased())
                 .font(.system(size: 11, weight: .bold))
                 .foregroundStyle(DS.textFaint)
 
@@ -1091,7 +1131,7 @@ struct LocalModelRow: View {
                         .frame(width: 16, height: 16)
                     if isSelected {
                         Circle()
-                            .fill(.white)
+                            .fill(DS.textNormal)
                             .frame(width: 6, height: 6)
                     }
                 }
@@ -1166,7 +1206,7 @@ struct LocalModelRow: View {
             HStack(spacing: 6) {
                 ProgressView()
                     .controlSize(.small)
-                Text("Loading...")
+                Text(L10n.current.loading)
                     .font(.system(size: 11))
                     .foregroundStyle(DS.textMuted)
             }
@@ -1176,7 +1216,7 @@ struct LocalModelRow: View {
                 Circle()
                     .fill(DS.green)
                     .frame(width: 6, height: 6)
-                Text("Ready")
+                Text(L10n.current.ready)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(DS.green)
 
@@ -1215,7 +1255,6 @@ struct HoverPillButton: View {
             .padding(.vertical, 4)
             .background(color.opacity(isHovered ? 0.2 : 0.12))
             .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
-            .scaleEffect(isHovered ? 1.03 : 1.0)
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
@@ -1282,7 +1321,7 @@ struct SettingsActionButton: View {
 
     private var foregroundColor: Color {
         switch style {
-        case .primary: return .white
+        case .primary: return DS.textOnAccent
         case .secondary: return isHovered ? DS.textNormal : DS.textMuted
         case .text: return isHovered ? DS.blurple.opacity(0.7) : DS.blurple
         }

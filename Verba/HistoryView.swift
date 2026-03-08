@@ -70,7 +70,7 @@ struct HistoryView: View {
                     }
                     .padding(.horizontal, 28)
                     .padding(.bottom, 16)
-                    .animation(.spring(response: 0.35, dampingFraction: 0.85), value: appState.history.map(\.id))
+                    .animation(.easeOut(duration: 0.3), value: appState.history.map(\.id))
                 }
             }
         }
@@ -118,13 +118,13 @@ struct HistoryRow: View {
                             .foregroundStyle(DS.textNormal)
                             .onTapGesture { isExpanded.toggle() }
                     } else if record.status == .failed {
-                        Text(record.errorMessage ?? "Transcription failed")
+                        Text(record.errorMessage ?? appState.l10n.transcriptionFailed)
                             .font(.system(size: 13))
                             .foregroundStyle(DS.red)
                     } else {
                         HStack(spacing: 6) {
                             ProgressView().scaleEffect(0.6)
-                            Text("Processing...")
+                            Text(appState.l10n.processing)
                                 .font(.system(size: 13))
                                 .foregroundStyle(DS.textFaint)
                         }
@@ -133,7 +133,7 @@ struct HistoryRow: View {
                     // Raw text (if formatted exists)
                     if isExpanded, let formatted = record.formattedText, let raw = record.rawText, formatted != raw {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("RAW")
+                            Text(appState.l10n.raw)
                                 .font(.system(size: 9, weight: .bold))
                                 .foregroundStyle(DS.textFaint)
                             Text(raw)
@@ -172,13 +172,13 @@ struct HistoryRow: View {
                             }
                         }
                         ActionButton(icon: "trash", destructive: true, tooltip: "Delete") {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            withAnimation(.easeOut(duration: 0.25)) {
                                 appState.deleteRecord(record)
                             }
                         }
                     }
                     .transition(.asymmetric(
-                        insertion: .opacity.combined(with: .move(edge: .trailing)).animation(.spring(response: 0.25, dampingFraction: 0.8)),
+                        insertion: .opacity.combined(with: .move(edge: .trailing)).animation(.easeOut(duration: 0.2)),
                         removal: .opacity.animation(.easeOut(duration: 0.15))
                     ))
                 }
@@ -250,11 +250,11 @@ struct ActionButton: View {
                 .frame(width: 28, height: 28)
                 .background(isHovered ? DS.bgModifierActive : DS.bgTertiary)
                 .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
-                .scaleEffect(isHovered ? 1.1 : 1.0)
+                // Hover feedback via background only
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
-        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: isHovered)
+        .animation(.easeOut(duration: 0.15), value: isHovered)
         .help(tooltip)
     }
 }

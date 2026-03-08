@@ -453,6 +453,35 @@
     .demo-status-dot { width: 6px; height: 6px; border-radius: 50%; }
     .demo-status-label { font-size: 10px; font-weight: 500; color: var(--text-dim); }
 
+    .demo-controls { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+    .demo-pill {
+      font-size: 9px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 20px;
+      padding: 3px 8px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .demo-pill-icon { font-size: 8px; opacity: 0.7; }
+    .demo-btn-cancel, .demo-btn-done {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 700;
+      border: none;
+      cursor: default;
+    }
+    .demo-btn-cancel { background: rgba(255,255,255,0.06); color: var(--text-dim); margin-left: auto; }
+    .demo-btn-done { background: var(--accent); color: white; }
+
     /* ── Split sections ── */
     .split {
       padding: 100px 0;
@@ -873,6 +902,12 @@
               <span class="demo-status-dot"></span>
               <span class="demo-status-label">Listening</span>
             </div>
+            <div class="demo-controls">
+              <span class="demo-pill"><span class="demo-pill-icon">&#x2728;</span> Formatted</span>
+              <span class="demo-pill"><span class="demo-pill-icon">&#x270E;</span> General</span>
+              <span class="demo-btn-cancel">&#x2715;</span>
+              <span class="demo-btn-done">&#x2713;</span>
+            </div>
           </div>
         </div>
       </div>
@@ -986,8 +1021,9 @@
           </p>
           <p data-i18n="ctrl-p2">
             The floating indicator shows real-time streaming preview so you
-            always know what's being recognized. Works in any text field —
-            editors, Slack, email, browser.
+            always know what's being recognized. Switch modes and prompts
+            mid-recording, or tap Done to confirm or Cancel to discard.
+            Works in any text field — editors, Slack, email, browser.
           </p>
         </div>
         <div class="split-visual">
@@ -1038,8 +1074,8 @@
         </div>
         <div class="tech-cell">
           <h3 data-i18n="tech-app-h">Menu Bar App</h3>
-          <p data-i18n="tech-app-p">Dashboard, history, themes</p>
-          <div class="mono">Dark · Light · System</div>
+          <p data-i18n="tech-app-p">Quick-switch mode & prompts, recent history</p>
+          <div class="mono">Dark · Light · System · EN · JA</div>
         </div>
       </div>
     </div>
@@ -1086,7 +1122,7 @@
         'hero-license': 'MITライセンス',
         'demo-title': 'メモ.app',
         'demo-line1': '議事メモ — 2026年3月',
-        'demo-line2': 'Q2のロードマップと優先事項を議論。',
+        'demo-line2': 'Q2のロードマップと優先事項を議論',
         'demo-caption': 'キーを押す。話す。離す。もう入力されている。',
         'privacy-h2': 'あなたの声は、<br>外に出ない。',
         'privacy-p1': 'Verbaは外部と一切通信しません。音声認識は<code>WhisperKit</code>でApple Neural Engine上で実行。テキスト整形は<code>MLX</code>モデルがローカルメモリ上で処理します。サーバーなし、アナリティクスなし、テレメトリなし。',
@@ -1108,7 +1144,7 @@
         'fmt-clean-2': '今期の予算を四半期末までに確定させる必要があります。また、デザインチームがブランドガイドラインを承認済みかの確認も必要です。',
         'ctrl-h2': 'キーひとつで、<br>声が文字になる。',
         'ctrl-p1': '<kbd>fn</kbd>を押しながら話す。離せば、Verbaが音声を文字起こしし、必要に応じてLLMで整形し、使用中のアプリにそのままペーストします。',
-        'ctrl-p2': 'フローティングインジケーターがリアルタイムプレビューを表示。認識内容が常に確認できます。エディタ、Slack、メール、ブラウザ — どのテキストフィールドでも動作します。',
+        'ctrl-p2': 'フローティングインジケーターがリアルタイムプレビューを表示。録音中にモードやプロンプトを切り替えたり、「完了」で確定、「キャンセル」で破棄できます。エディタ、Slack、メール、ブラウザ — どこでも動作します。',
         'kbd-hold': '長押し',
         'mode-hold': 'キーを長押しで録音、離すと文字起こし',
         'mode-tap': 'ダブルタップで開始、もう一度タップで停止',
@@ -1119,7 +1155,7 @@
         'tech-lang-h': '50以上の言語',
         'tech-lang-p': '自動検出または手動設定',
         'tech-app-h': 'メニューバーアプリ',
-        'tech-app-p': 'ダッシュボード、履歴、テーマ',
+        'tech-app-p': 'モード・プロンプト即切替、最近の履歴',
         'cta-h2': 'あなたの声、あなたのMac、あなたのデータ。',
         'cta-lead': '無料、オープンソース、制約なし。',
         'cta-download': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>最新版をダウンロード',

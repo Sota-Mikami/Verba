@@ -22,41 +22,49 @@ enum DS {
     static var activeScheme: ColorScheme = .dark
 
     // Backgrounds
-    //   Dark:  Discord grays
-    //   Light: Subtle warm grays, clear hierarchy
-    static var bgPrimary: Color { activeScheme == .dark ? Color(hex: 0x313338) : Color(hex: 0xFFFFFF) }
-    static var bgSecondary: Color { activeScheme == .dark ? Color(hex: 0x2B2D31) : Color(hex: 0xF0F1F3) }
-    static var bgTertiary: Color { activeScheme == .dark ? Color(hex: 0x1E1F22) : Color(hex: 0xE3E5E8) }
-    static var bgModifierHover: Color { activeScheme == .dark ? Color.white.opacity(0.04) : Color.black.opacity(0.04) }
-    static var bgModifierActive: Color { activeScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.08) }
-    static var bgModifierSelected: Color { activeScheme == .dark ? Color.white.opacity(0.08) : blurple.opacity(0.15) }
+    //   Dark:  warm plum-black (LP palette)
+    //   Light: warm off-whites (not cold gray)
+    static var bgPrimary: Color { activeScheme == .dark ? Color(hex: 0x0c0b0f) : Color(hex: 0xfaf8f5) }
+    static var bgSecondary: Color { activeScheme == .dark ? Color(hex: 0x15141a) : Color(hex: 0xf3f0ec) }
+    static var bgTertiary: Color { activeScheme == .dark ? Color(hex: 0x1c1b23) : Color(hex: 0xe8e4de) }
+    static var bgModifierHover: Color { activeScheme == .dark ? Color.white.opacity(0.04) : Color.black.opacity(0.03) }
+    static var bgModifierActive: Color { activeScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.06) }
+    static var bgModifierSelected: Color { activeScheme == .dark ? Color.white.opacity(0.08) : accent.opacity(0.12) }
 
-    // Text — WCAG AA contrast ratios on respective backgrounds
-    //   textNormal: ≥7:1 (AAA)
-    //   textMuted:  ≥4.5:1 (AA)
-    //   textFaint:  ≥3:1 (AA for large text / UI elements)
-    static var textNormal: Color { activeScheme == .dark ? Color(hex: 0xDBDEE1) : Color(hex: 0x1A1D21) }
-    static var textMuted: Color { activeScheme == .dark ? Color(hex: 0x949BA4) : Color(hex: 0x5C5F66) }
-    static var textFaint: Color { activeScheme == .dark ? Color(hex: 0x6D6F78) : Color(hex: 0x80848E) }
-    static var textLink: Color { activeScheme == .dark ? Color(hex: 0x00A8FC) : Color(hex: 0x0060DF) }
+    // Text
+    //   Dark:  warm off-white (never pure white)
+    //   Light: warm dark (not pure black)
+    static var textNormal: Color { activeScheme == .dark ? Color(hex: 0xede8e1) : Color(hex: 0x2a2520) }
+    static var textMuted: Color { activeScheme == .dark ? Color(hex: 0x9a948a) : Color(hex: 0x6b645a) }
+    static var textFaint: Color { activeScheme == .dark ? Color(hex: 0x5a5650) : Color(hex: 0x9a948a) }
+    static var textLink: Color { activeScheme == .dark ? Color(hex: 0x9b8aff) : Color(hex: 0x5c4ed6) }
 
-    // Card
-    //   Light: white cards on gray background for clear elevation
-    static var cardBg: Color { activeScheme == .dark ? Color(hex: 0x383A40) : Color(hex: 0xFFFFFF) }
-    static var cardBorder: Color { activeScheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.12) }
+    // Text on accent backgrounds (always light for contrast)
+    static var textOnAccent: Color { Color(hex: 0xfaf8f5) }
+
+    // Card — elevated surface
+    static var cardBg: Color { activeScheme == .dark ? Color(hex: 0x1c1b23) : Color(hex: 0xFFFFFF) }
+    static var cardBorder: Color { activeScheme == .dark ? Color.white.opacity(0.06) : Color(hex: 0x2a2520).opacity(0.08) }
 
     // Input
-    static var inputBg: Color { activeScheme == .dark ? Color(hex: 0x1E1F22) : Color(hex: 0xE8EAED) }
+    static var inputBg: Color { activeScheme == .dark ? Color(hex: 0x1c1b23) : Color(hex: 0xe8e4de) }
 
-    // Brand
-    static var blurple: Color { activeScheme == .dark ? Color(hex: 0x5865F2) : Color(hex: 0x4752C4) }
-    static var blurpleLight: Color { activeScheme == .dark ? Color(hex: 0x7289DA) : Color(hex: 0x5865F2) }
+    // Brand — Verba purple (cool accent for machine/tech)
+    static var accent: Color { activeScheme == .dark ? Color(hex: 0x7c6cfc) : Color(hex: 0x5c4ed6) }
+    static var accentLight: Color { activeScheme == .dark ? Color(hex: 0x9b8aff) : Color(hex: 0x7c6cfc) }
 
-    // Status — darker variants in light mode for contrast on white/light backgrounds
-    static var green: Color { activeScheme == .dark ? Color(hex: 0x57F287) : Color(hex: 0x248045) }
-    static var yellow: Color { activeScheme == .dark ? Color(hex: 0xFEE75C) : Color(hex: 0x9B6E1A) }
-    static var red: Color { activeScheme == .dark ? Color(hex: 0xED4245) : Color(hex: 0xD83C3E) }
-    static var orange: Color { activeScheme == .dark ? Color(hex: 0xFAA61A) : Color(hex: 0xC27803) }
+    // Voice — warm amber (for recording, streaming, voice-related feedback)
+    static var warm: Color { activeScheme == .dark ? Color(hex: 0xf0a060) : Color(hex: 0xc47a30) }
+
+    // Legacy aliases (transitional)
+    static var blurple: Color { accent }
+    static var blurpleLight: Color { accentLight }
+
+    // Status
+    static var green: Color { activeScheme == .dark ? Color(hex: 0x3dd68c) : Color(hex: 0x248045) }
+    static var yellow: Color { activeScheme == .dark ? Color(hex: 0xfbbf24) : Color(hex: 0x9B6E1A) }
+    static var red: Color { activeScheme == .dark ? Color(hex: 0xf04747) : Color(hex: 0xD83C3E) }
+    static var orange: Color { activeScheme == .dark ? Color(hex: 0xf0a060) : Color(hex: 0xC27803) }
 
     // Layout
     static let radiusSmall: CGFloat = 4

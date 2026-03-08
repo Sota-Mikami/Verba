@@ -2,6 +2,30 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [0.4.0] - 2026-03-08
+
+### Added
+- **Floating indicator stop/cancel buttons** — "Done" (checkmark, accent) confirms & transcribes, "Cancel" (trash, muted→red on hover) discards recording. Hover reveals label for clarity.
+- **Menu bar enhancements** — Mode picker (Fast/Formatted), prompt selector (greyed in Fast mode), recent history submenu (max 10, copy on click)
+- **5-step onboarding** — Added shortcut confirmation (step 4) and interactive trial recording (step 5) to first-launch wizard
+- **Full EN/JA localization** — 30+ previously hardcoded strings now localized across all views, status messages, and onboarding
+
+### Changed
+- **Design system migration** — Discord-cold grays replaced with warm plum-black palette (#0c0b0f / #15141a / #1c1b23), warm off-white text (#ede8e1), two-accent system (purple #7c6cfc + amber #f0a060)
+- **Light mode tokens** — Warm off-whites (#faf8f5, #f3f0ec, #e8e4de) and warm text grays replace cold Discord grays
+- **DS.textOnAccent** — New token ensures readable text on accent backgrounds in both themes
+- **Floating indicator rebrand** — Branded warm glass (not system material), amber recording dot with breathe animation, two-accent waveform, forced dark mode for consistency
+- **Streaming text layout** — Fixed height (180px) with internal scroll, bottom controls always pinned visible
+- **Settings restructured** — 2-tier layout: basic settings always visible, Voice Engine collapsed by default
+- **ModeCard dynamic labels** — "Hold"/"Press"/"Double-tap" now reflects actual shortcut kind
+- **Animation cleanup** — All `.spring()` replaced with `.easeOut()`, removed bounce `scaleEffect` across all views
+- **Menu bar simplified** — Removed inline status/mode badge, uses macOS-standard system colors
+
+### Fixed
+- Floating indicator controls hidden when streaming text grows (window grew downward off-screen)
+- Light mode text unreadable on accent backgrounds (DS.textNormal on DS.blurple)
+- Light mode backgrounds using cold Discord grays instead of warm palette
+
 ## [0.3.2] - 2026-03-08
 
 ### Changed

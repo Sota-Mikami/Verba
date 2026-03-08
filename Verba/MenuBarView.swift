@@ -5,7 +5,6 @@ struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
     let updater: SPUUpdater
     @StateObject private var updateChecker: UpdateChecker
-
     init(updater: SPUUpdater) {
         self.updater = updater
         self._updateChecker = StateObject(wrappedValue: UpdateChecker(updater: updater))
@@ -13,61 +12,124 @@ struct MenuBarView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Status
-            HStack(spacing: 8) {
-                Circle()
-                    .fill(statusColor)
-                    .frame(width: 8, height: 8)
-                Text(statusLabel)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.primary)
-                Spacer()
-                Text(appState.mode.rawValue)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(.quaternary)
-                    .clipShape(Capsule())
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-
-            // Last transcription
-            if !appState.lastTranscription.isEmpty {
-                Divider()
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(appState.lastTranscription)
-                        .font(.system(size: 12))
-                        .lineLimit(3)
-                        .foregroundStyle(.primary)
-                    Button {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(appState.lastTranscription, forType: .string)
-                    } label: {
-                        Label(appState.l10n.copy, systemImage: "doc.on.doc")
-                            .font(.system(size: 11))
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
+            MenuBarButton(appState.l10n.openVerba, icon: "macwindow") {
+                appState.mainWindow.open(appState: appState)
             }
 
             Divider()
 
-            // Actions
-            MenuBarButton(appState.l10n.openVerba, icon: "macwindow") {
-                appState.mainWindow.open(appState: appState)
+            // Mode picker (same UX as prompt picker)
+            Menu {
+                ForEach(TranscriptionMode.allCases, id: \.self) { mode in
+                    Button {
+                        appState.mode = mode
+                    } label: {
+                        HStack {
+                            Text(mode.rawValue)
+                            if appState.mode == mode {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: appState.mode == .fast ? "bolt.fill" : "sparkles")
+                        .frame(width: 16)
+                        .foregroundStyle(.secondary)
+                    Text(appState.mode.rawValue)
+                        .lineLimit(1)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.tertiary)
+                }
             }
+            .buttonStyle(.plain)
+            .font(.system(size: 12))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+
+            // Prompt picker (greyed out in Fast mode)
+            Menu {
+                ForEach(appState.allPrompts) { prompt in
+                    Button {
+                        appState.selectedPromptId = prompt.id.uuidString
+                    } label: {
+                        HStack {
+                            Text(prompt.name)
+                            if prompt.id.uuidString == appState.selectedPromptId {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "text.quote")
+                        .frame(width: 16)
+                        .foregroundStyle(.secondary)
+                    Text(currentPromptName)
+                        .lineLimit(1)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 12))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+            .opacity(appState.mode == .fast ? 0.4 : 1.0)
+            .disabled(appState.mode == .fast)
+
+            Divider()
+
+            // Recent history (submenu, same UX as mode/prompt)
+            Menu {
+                let recent = Array(appState.history.prefix(10))
+                if recent.isEmpty {
+                    Text(appState.l10n.noHistory)
+                } else {
+                    ForEach(recent) { record in
+                        let text = record.displayText
+                        if !text.isEmpty {
+                            Button {
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString(text, forType: .string)
+                            } label: {
+                                Text(String(text.prefix(50)))
+                            }
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .frame(width: 16)
+                        .foregroundStyle(.secondary)
+                    Text(appState.l10n.recent)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 12))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+
+            Divider()
 
             MenuBarButton(appState.l10n.checkForUpdates, icon: "arrow.triangle.2.circlepath") {
                 updater.checkForUpdates()
             }
             .disabled(!updateChecker.canCheckForUpdates)
-
-            Divider()
 
             MenuBarButton(appState.l10n.quitVerba, icon: "xmark.circle") {
                 NSApplication.shared.terminate(nil)
@@ -77,19 +139,10 @@ struct MenuBarView: View {
         .frame(width: 260)
     }
 
-    private var statusLabel: String {
-        if appState.isRecording { return appState.l10n.stopRecording }
-        if appState.isProcessing { return appState.statusMessage }
-        if !appState.isModelLoaded { return appState.l10n.loadingModel }
-        return appState.l10n.ready
+    private var currentPromptName: String {
+        appState.allPrompts.first(where: { $0.id.uuidString == appState.selectedPromptId })?.name ?? "General"
     }
 
-    private var statusColor: Color {
-        if appState.isRecording { return .red }
-        if appState.isProcessing { return .orange }
-        if !appState.isModelLoaded { return .yellow }
-        return .green
-    }
 }
 
 private struct MenuBarButton: View {

@@ -47,7 +47,7 @@ struct MainView: View {
         }
         .background(DS.bgPrimary)
         .preferredColorScheme(appState.resolvedColorScheme)
-        .animation(.spring(response: 0.3, dampingFraction: 0.9), value: selectedPage)
+        .animation(.easeOut(duration: 0.25), value: selectedPage)
         .sheet(isPresented: showOnboarding) {
             OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
                 .environmentObject(appState)
@@ -67,13 +67,13 @@ struct MainView: View {
                         .frame(width: 36, height: 36)
                     Image(systemName: "mic.fill")
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(DS.textOnAccent)
                 }
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Verba")
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(DS.textNormal)
-                    Text("Voice Input")
+                    Text(appState.l10n.voiceInput)
                         .font(.system(size: 11))
                         .foregroundStyle(DS.textMuted)
                 }
@@ -116,12 +116,12 @@ struct MainView: View {
                         .fill(appState.isModelLoaded ? DS.green : DS.orange)
                         .frame(width: 8, height: 8)
                 }
-                Text(appState.isModelLoaded ? "Whisper Ready" : appState.l10n.loadingModel)
+                Text(appState.isModelLoaded ? appState.l10n.whisperReady : appState.l10n.loadingModel)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(DS.textMuted)
             }
             .padding(16)
-            .animation(.spring(response: 0.4, dampingFraction: 0.7), value: appState.isModelLoaded)
+            .animation(.easeOut(duration: 0.3), value: appState.isModelLoaded)
         }
         .frame(width: 200)
         .background(DS.bgTertiary)
@@ -168,7 +168,7 @@ struct SidebarItem: View {
                 if let badge, badge > 0 {
                     Text("\(badge)")
                         .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(DS.textOnAccent)
                         .padding(.horizontal, 5)
                         .padding(.vertical, 1)
                         .background(DS.blurple)
@@ -182,11 +182,11 @@ struct SidebarItem: View {
                 RoundedRectangle(cornerRadius: DS.radiusMedium)
                     .fill(isSelected ? DS.bgModifierSelected : isHovered ? DS.bgModifierHover : .clear)
             )
-            .scaleEffect(isHovered && !isSelected ? 1.02 : 1.0)
+            // Hover feedback via background only (no scale bounce)
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
-        .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isSelected)
+        .animation(.easeOut(duration: 0.2), value: isSelected)
         .animation(.easeOut(duration: 0.15), value: isHovered)
     }
 }

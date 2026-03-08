@@ -34,12 +34,11 @@ struct DictionaryView: View {
                 } label: {
                     Text(appState.l10n.newWord)
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(DS.textOnAccent)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
                         .background(isNewWordHovered ? DS.blurple.opacity(0.8) : DS.blurple)
                         .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
-                        .scaleEffect(isNewWordHovered ? 1.03 : 1.0)
                 }
                 .buttonStyle(.plain)
                 .onHover { isNewWordHovered = $0 }
@@ -58,7 +57,7 @@ struct DictionaryView: View {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 12))
                             .foregroundStyle(DS.textFaint)
-                        TextField("Search...", text: $searchQuery)
+                        TextField(appState.l10n.search, text: $searchQuery)
                             .textFieldStyle(.plain)
                             .font(.system(size: 13))
                             .foregroundStyle(DS.textNormal)

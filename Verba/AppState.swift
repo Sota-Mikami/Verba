@@ -131,7 +131,7 @@ class AppState: ObservableObject {
         }
         pasteService.onAccessibilityNeeded = { [weak self] in
             Task { @MainActor [weak self] in
-                self?.statusMessage = "⚠ Accessibility permission needed — text copied to clipboard"
+                self?.statusMessage = self?.l10n.accessibilityNeeded ?? "⚠ Accessibility permission needed"
                 // Re-prompt for accessibility
                 let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
                 AXIsProcessTrustedWithOptions(options)
@@ -233,6 +233,24 @@ class AppState: ObservableObject {
                 self?.selectedPromptId = promptId
             }
         }
+        state.onErrorDismissed = { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.floatingIndicator.hide()
+            }
+        }
+        state.onStopRecording = { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self, self.isRecording else { return }
+                self.recordingTrigger = .none
+                self.stopRecording()
+            }
+        }
+        state.onCancelRecording = { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self, self.isRecording else { return }
+                self.cancelRecording()
+            }
+        }
     }
 
     private func syncFloatingIndicatorState() {
@@ -292,6 +310,32 @@ class AppState: ObservableObject {
         )
     }
 
+    /// Quick transcription for onboarding trial — uses already-loaded Whisper model
+    func transcribeAudio(_ audioData: Data) async throws -> String {
+        let dictHint = formattingService.dictionaryHint(dictionary: dictionaryEntries)
+        return try await whisperService.transcribe(audioData: audioData, language: nil, initialPrompt: dictHint)
+    }
+
+    /// Cancel recording without transcribing — discard audio
+    func cancelRecording() {
+        streamingTask?.cancel()
+        streamingTask = nil
+        recordingTrigger = .none
+        isRecording = false
+        _ = audioRecorder.stopRecording() // discard audio data
+        if systemAudioBehavior == .pauseMedia {
+            mediaControlService.resumeIfPaused()
+        }
+        statusMessage = l10n.cancelled
+        floatingIndicator.hide()
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            if !isRecording && !isProcessing {
+                statusMessage = l10n.ready
+            }
+        }
+    }
+
     func toggleRecording() {
         if isRecording {
             recordingTrigger = .none
@@ -305,19 +349,19 @@ class AppState: ObservableObject {
     func initializeServices() async {
         guard !isInitializing && !isModelLoaded else { return }
         isInitializing = true
-        statusMessage = "Downloading Whisper model..."
+        statusMessage = l10n.downloadingModel
 
         do {
             let micGranted = await audioRecorder.requestMicPermission()
             if !micGranted {
-                statusMessage = "Microphone permission denied"
+                statusMessage = l10n.micPermissionDenied
                 isInitializing = false
                 return
             }
 
             try await whisperService.loadModel(variant: whisperModel)
             isModelLoaded = true
-            statusMessage = "Ready"
+            statusMessage = l10n.ready
         } catch {
             let msg = String(describing: error)
             statusMessage = "Error: \(msg.prefix(80))"
@@ -329,12 +373,12 @@ class AppState: ObservableObject {
     func reloadWhisperModel() async {
         isModelLoaded = false
         isInitializing = true
-        statusMessage = "Downloading Whisper model..."
+        statusMessage = l10n.downloadingModel
         whisperService = WhisperService()
         do {
             try await whisperService.loadModel(variant: whisperModel)
             isModelLoaded = true
-            statusMessage = "Ready"
+            statusMessage = l10n.ready
         } catch {
             let msg = String(describing: error)
             statusMessage = "Error: \(msg.prefix(80))"
@@ -345,7 +389,7 @@ class AppState: ObservableObject {
 
     private func startRecording(hint: String) {
         guard isModelLoaded else {
-            statusMessage = "Model not loaded yet"
+            statusMessage = l10n.modelNotLoaded
             return
         }
         guard !isProcessing else { return }
@@ -376,7 +420,7 @@ class AppState: ObservableObject {
         streamingTask = nil
         isRecording = false
         isProcessing = true
-        statusMessage = "Transcribing..."
+        statusMessage = l10n.transcribing
         floatingIndicator.show(isRecording: false, statusMessage: "Transcribing...", mode: mode)
 
         if systemAudioBehavior == .pauseMedia {
@@ -441,7 +485,7 @@ class AppState: ObservableObject {
 
             if rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 updateRecord(record.id) { $0.status = .failed; $0.errorMessage = "No speech detected" }
-                statusMessage = "No speech detected"
+                statusMessage = l10n.noSpeechDetected
                 isProcessing = false
                 floatingIndicator.showError("No speech detected")
                 return
@@ -453,7 +497,7 @@ class AppState: ObservableObject {
 
             if mode == .formatted && formattingProvider.isAvailable && (formattingProvider == .local ? localLLMService.isReady : !currentApiKey.isEmpty) {
                 updateRecord(record.id) { $0.status = .formatting }
-                statusMessage = "Formatting..."
+                statusMessage = l10n.formatting
                 floatingIndicator.show(isRecording: false, statusMessage: "Formatting...", mode: mode)
                 finalText = await formattingService.format(
                     text: rawText,
@@ -473,17 +517,17 @@ class AppState: ObservableObject {
                 let accessibilityOK = AXIsProcessTrusted()
                 pasteService.paste(text: finalText)
                 if accessibilityOK {
-                    statusMessage = "Pasted \(finalText.count) chars"
+                    statusMessage = l10n.pastedChars(finalText.count)
                 }
                 // If not trusted, onAccessibilityNeeded callback already set statusMessage
             } else {
-                statusMessage = "Retranscribed \(finalText.count) chars"
+                statusMessage = l10n.retranscribedChars(finalText.count)
             }
             floatingIndicator.hide()
 
             try? await Task.sleep(for: .seconds(3))
             if !isRecording && !isProcessing {
-                statusMessage = "Ready"
+                statusMessage = l10n.ready
             }
         } catch {
             updateRecord(record.id) { $0.status = .failed; $0.errorMessage = error.localizedDescription }
@@ -504,7 +548,7 @@ class AppState: ObservableObject {
     func retryTranscription(_ record: TranscriptionRecord) {
         guard !isProcessing else { return }
         isProcessing = true
-        statusMessage = "Retranscribing..."
+        statusMessage = l10n.retranscribing
         deleteRecord(record)
         Task {
             await processAudio(record.audioData, paste: false)
