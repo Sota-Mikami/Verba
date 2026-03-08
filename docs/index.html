@@ -4,26 +4,28 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verba — Voice input that stays on your Mac</title>
-  <meta name="description" content="Local-first voice-to-text for macOS. WhisperKit speech recognition, on-device LLM formatting. No cloud, no account, no data leaves your machine.">
+  <meta name="description" content="Local-first voice-to-text for macOS. WhisperKit + MLX, entirely on-device. No cloud, no account, no data leaves your machine.">
   <meta property="og:title" content="Verba — Voice input that stays on your Mac">
   <meta property="og:description" content="Local-first voice-to-text for macOS. WhisperKit + MLX, entirely on-device.">
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0b0b12;
-      --bg-raised: #13131d;
-      --bg-surface: #1a1a28;
-      --accent: #7c5cfc;
-      --accent-light: #9b7dff;
-      --accent-dim: rgba(124, 92, 252, 0.08);
-      --text: #e8e8ed;
-      --text-sub: #8e8ea0;
-      --text-dim: #55556a;
+      --bg: #0c0b0f;
+      --bg-raised: #15141a;
+      --bg-surface: #1c1b23;
+      --accent: #7c6cfc;
+      --accent-light: #9b8aff;
+      --accent-dim: rgba(124, 108, 252, 0.08);
+      --warm: #f0a060;
+      --warm-dim: rgba(240, 160, 96, 0.08);
+      --text: #ede8e1;
+      --text-sub: #9a948a;
+      --text-dim: #5a5650;
       --border: rgba(255, 255, 255, 0.06);
-      --green: #34d399;
+      --green: #3dd68c;
       --red: #f04747;
       --orange: #fbbf24;
     }
@@ -38,7 +40,20 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Layout ── */
+    /* Noise overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      opacity: 0.035;
+      mix-blend-mode: overlay;
+      pointer-events: none;
+      z-index: 9999;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 256px;
+    }
+
     .wrap {
       max-width: 1120px;
       margin: 0 auto;
@@ -51,7 +66,7 @@
       top: 0;
       width: 100%;
       z-index: 100;
-      background: rgba(11, 11, 18, 0.85);
+      background: rgba(12, 11, 15, 0.85);
       backdrop-filter: blur(24px);
       border-bottom: 1px solid var(--border);
     }
@@ -77,6 +92,14 @@
       display: flex;
       gap: 10px;
       align-items: center;
+    }
+
+    .nav-link-mobile {
+      display: none;
+      color: var(--text-sub);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
     }
 
     .btn {
@@ -112,7 +135,7 @@
     .btn-accent:hover {
       background: var(--accent-light);
       transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(124, 92, 252, 0.3);
+      box-shadow: 0 8px 24px rgba(124, 108, 252, 0.3);
     }
 
     .btn-lg {
@@ -124,31 +147,62 @@
     /* ── Hero ── */
     .hero {
       padding: 140px 0 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-waveform {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .hero-waveform .bar {
+      position: absolute;
+      bottom: 50%;
+      width: 2px;
+      border-radius: 1px;
+      transform-origin: bottom;
     }
 
     .hero-content {
+      position: relative;
       max-width: 620px;
     }
 
     .hero h1 {
-      font-size: clamp(40px, 5vw, 60px);
-      font-weight: 900;
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: clamp(44px, 5.5vw, 68px);
+      font-weight: 400;
       line-height: 1.05;
-      letter-spacing: -2.5px;
+      letter-spacing: -1px;
       margin-bottom: 24px;
     }
 
     .hero h1 em {
-      font-style: normal;
-      color: var(--accent-light);
+      font-style: italic;
+      color: var(--warm);
     }
 
     .hero .lead {
-      font-size: 18px;
-      line-height: 1.7;
+      font-size: 17px;
+      line-height: 1.75;
       color: var(--text-sub);
       max-width: 480px;
       margin-bottom: 36px;
+    }
+
+    .hero .lead code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--accent-dim);
+      padding: 1px 6px;
+      border-radius: 4px;
     }
 
     .hero-cta {
@@ -170,13 +224,13 @@
     /* ── Demo ── */
     .demo-section {
       padding: 80px 0 120px;
+      position: relative;
     }
 
     .demo-wrapper {
       position: relative;
       max-width: 640px;
       margin: 0 auto;
-      perspective: 1000px;
     }
 
     .demo-editor {
@@ -184,7 +238,17 @@
       border-radius: 12px;
       border: 1px solid rgba(255,255,255,0.08);
       overflow: hidden;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+      box-shadow:
+        0 24px 80px rgba(0,0,0,0.5),
+        0 0 0 1px rgba(255,255,255,0.04);
+      transition: box-shadow 0.6s;
+    }
+
+    .demo-editor.glow {
+      box-shadow:
+        0 24px 80px rgba(0,0,0,0.5),
+        0 0 0 1px rgba(255,255,255,0.04),
+        0 0 40px rgba(124, 108, 252, 0.12);
     }
 
     .demo-bar {
@@ -196,13 +260,7 @@
     }
 
     .demo-dots { display: flex; gap: 6px; }
-
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-    }
-
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
     .dot-r { background: #ff5f57; }
     .dot-y { background: #febc2e; }
     .dot-g { background: #28c840; }
@@ -224,7 +282,6 @@
 
     .demo-existing { color: var(--text); }
     .demo-existing.dim { color: var(--text-dim); }
-
     .demo-pasted-line { display: inline; }
 
     .demo-cursor {
@@ -236,11 +293,19 @@
       animation: blink 1s step-end infinite;
     }
 
-    .demo-pasted-text { color: var(--accent-light); }
+    .demo-pasted-text { color: var(--warm); }
 
     @keyframes blink {
       0%, 50% { opacity: 1; }
       51%, 100% { opacity: 0; }
+    }
+
+    .demo-caption {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 13px;
+      color: var(--text-dim);
+      letter-spacing: 0.01em;
     }
 
     /* Floating indicator */
@@ -253,13 +318,20 @@
     }
 
     .demo-indicator-inner {
-      background: rgba(16, 16, 28, 0.95);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(16, 14, 24, 0.75);
+      backdrop-filter: blur(24px) saturate(150%);
+      border: 1px solid;
+      border-image: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.12),
+        rgba(255,255,255,0.04)
+      ) 1;
       border-radius: 14px;
       padding: 14px 18px;
       min-width: 240px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      box-shadow:
+        0 8px 32px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.06);
     }
 
     .demo-waveform {
@@ -276,7 +348,7 @@
       display: block;
       width: 3px;
       border-radius: 2px;
-      background: var(--accent);
+      background: var(--warm);
     }
 
     .demo-waveform span:nth-child(1) { animation: wave 0.8s ease-in-out infinite; height: 8px; }
@@ -295,7 +367,13 @@
       50% { transform: scaleY(1); opacity: 1; }
     }
 
-    .demo-stream { font-size: 12px; color: var(--text); line-height: 1.5; min-height: 18px; transition: opacity 0.3s, color 0.3s; }
+    .demo-stream {
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 18px;
+      transition: opacity 0.3s, color 0.3s;
+    }
 
     .demo-status { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
     .demo-status-dot { width: 6px; height: 6px; border-radius: 50%; }
@@ -315,25 +393,28 @@
     }
 
     .split-text h2 {
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing: -1px;
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: 36px;
+      font-weight: 400;
       line-height: 1.15;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
 
     .split-text p {
       font-size: 15px;
-      line-height: 1.75;
+      line-height: 1.8;
       color: var(--text-sub);
     }
 
-    .split-text p + p {
-      margin-top: 12px;
-    }
+    .split-text p + p { margin-top: 12px; }
 
-    .split-visual {
-      position: relative;
+    .split-text p code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--text);
+      background: var(--accent-dim);
+      padding: 1px 6px;
+      border-radius: 4px;
     }
 
     /* Privacy visual */
@@ -350,11 +431,15 @@
       padding: 14px 20px;
       background: var(--bg-raised);
       border: 1px solid var(--border);
+      border-top: 1px solid rgba(255,255,255,0.03);
       font-size: 13px;
       font-weight: 500;
     }
 
-    .p-row:first-child { border-radius: 12px 12px 0 0; }
+    .p-row:first-child {
+      border-radius: 12px 12px 0 0;
+      border-top: 1px solid var(--border);
+    }
     .p-row:last-child { border-radius: 0 0 12px 12px; }
 
     .p-icon {
@@ -364,20 +449,75 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
+      font-size: 13px;
+      font-weight: 700;
       flex-shrink: 0;
     }
 
-    .p-icon-green { background: rgba(52, 211, 153, 0.1); color: var(--green); }
-    .p-icon-accent { background: var(--accent-dim); color: var(--accent-light); }
+    .p-icon-green { background: rgba(61, 214, 140, 0.1); color: var(--green); }
+    .p-icon-accent { background: var(--accent-dim); color: var(--accent-light); font-family: 'JetBrains Mono', monospace; font-size: 10px; }
 
     .p-row span { color: var(--text); }
-    .p-row small { color: var(--text-dim); font-weight: 400; margin-left: auto; font-size: 11px; }
+    .p-row small {
+      color: var(--text-dim);
+      font-weight: 400;
+      margin-left: auto;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Formatting visual */
+    .format-demo {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .format-pair + .format-pair {
+      margin-top: 16px;
+    }
+
+    .format-card {
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+
+    .format-card.formatted {
+      border-color: rgba(240, 160, 96, 0.15);
+    }
+
+    .format-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .format-raw {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-sub);
+    }
+
+    .format-clean {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--warm);
+    }
+
+    .format-arrow {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 14px;
+      padding: 2px 0;
+    }
 
     /* Shortcut visual */
-    .shortcut-demo {
-      text-align: center;
-    }
+    .shortcut-demo { text-align: center; }
 
     .shortcut-keys {
       display: flex;
@@ -406,21 +546,15 @@
     kbd.active {
       background: var(--accent);
       border-color: var(--accent-light);
-      border-bottom-color: rgba(124, 92, 252, 0.5);
+      border-bottom-color: rgba(124, 108, 252, 0.5);
       color: white;
-      box-shadow: 0 0 20px rgba(124, 92, 252, 0.3);
-    }
-
-    .shortcut-label {
-      font-size: 13px;
-      color: var(--text-dim);
-      margin-top: 12px;
+      box-shadow: 0 0 24px rgba(124, 108, 252, 0.25);
     }
 
     .shortcut-modes {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       margin-top: 28px;
     }
 
@@ -448,58 +582,17 @@
 
     .mode-row span { color: var(--text-sub); }
 
-    /* Formatting visual */
-    .format-demo {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .format-card {
-      background: var(--bg-raised);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px 20px;
-    }
-
-    .format-label {
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-dim);
-      margin-bottom: 8px;
-    }
-
-    .format-raw {
-      font-size: 13px;
-      line-height: 1.6;
-      color: var(--text-sub);
-    }
-
-    .format-clean {
-      font-size: 13px;
-      line-height: 1.6;
-      color: var(--accent-light);
-    }
-
-    .format-arrow {
-      text-align: center;
-      color: var(--text-dim);
-      font-size: 18px;
-    }
-
     /* ── Tech strip ── */
     .tech {
       padding: 80px 0;
       border-top: 1px solid var(--border);
     }
 
-    .tech h2 {
-      font-size: 14px;
-      font-weight: 700;
+    .tech-label {
+      font-size: 11px;
+      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
       color: var(--text-dim);
       text-align: center;
       margin-bottom: 40px;
@@ -516,7 +609,7 @@
 
     .tech-cell {
       background: var(--bg-raised);
-      padding: 24px;
+      padding: 28px 24px;
       text-align: center;
     }
 
@@ -536,7 +629,7 @@
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       color: var(--text-sub);
-      margin-top: 6px;
+      margin-top: 8px;
     }
 
     /* ── CTA ── */
@@ -545,6 +638,7 @@
       text-align: center;
       border-top: 1px solid var(--border);
       position: relative;
+      background: linear-gradient(to bottom, var(--bg), #100e12);
     }
 
     .cta::before {
@@ -555,14 +649,14 @@
       transform: translateX(-50%);
       width: min(600px, 100vw);
       height: 400px;
-      background: radial-gradient(circle, var(--accent-dim) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(240, 160, 96, 0.04) 0%, transparent 70%);
       pointer-events: none;
     }
 
     .cta h2 {
-      font-size: clamp(28px, 4vw, 40px);
-      font-weight: 900;
-      letter-spacing: -1.5px;
+      font-family: 'Instrument Serif', Georgia, serif;
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 400;
       margin-bottom: 16px;
       position: relative;
     }
@@ -587,6 +681,7 @@
       font-size: 12px;
       color: var(--text-dim);
       position: relative;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     /* ── Footer ── */
@@ -606,6 +701,11 @@
       font-size: 12px;
     }
 
+    .footer-inner a {
+      color: var(--text-sub);
+      text-decoration: none;
+    }
+
     .footer-links {
       display: flex;
       gap: 20px;
@@ -623,15 +723,17 @@
     /* ── Responsive ── */
     @media (max-width: 768px) {
       .wrap { padding: 0 20px; }
-      .nav-actions { display: none; }
+      .nav-actions .btn { display: none; }
+      .nav-link-mobile { display: block; }
       .hero { padding: 100px 0 0; }
-      .hero h1 { font-size: 36px; letter-spacing: -1.5px; }
+      .hero h1 { font-size: 38px; }
       .split { padding: 64px 0; }
       .split-grid {
         grid-template-columns: 1fr;
         gap: 40px;
       }
       .split-grid.reverse .split-visual { order: -1; }
+      .split-text h2 { font-size: 28px; }
       .tech-grid { grid-template-columns: 1fr 1fr; }
       .demo-indicator { right: -8px; top: -8px; }
       .demo-indicator-inner { min-width: 180px; padding: 10px 14px; }
@@ -641,7 +743,7 @@
     }
 
     @media (max-width: 480px) {
-      .hero h1 { font-size: 30px; letter-spacing: -1px; }
+      .hero h1 { font-size: 32px; }
       .demo-indicator { position: relative; right: auto; top: auto; margin: -20px auto 16px; }
       .tech-grid { grid-template-columns: 1fr; }
       .shortcut-keys kbd { min-width: 40px; height: 40px; font-size: 14px; }
@@ -655,6 +757,7 @@
     <div class="wrap nav-inner">
       <a href="#" class="logo">Verb<span>a</span></a>
       <div class="nav-actions">
+        <a href="https://github.com/Sota-Mikami/Verba" class="nav-link-mobile">GitHub</a>
         <a href="https://github.com/Sota-Mikami/Verba" class="btn btn-ghost">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
           GitHub
@@ -668,12 +771,14 @@
 
   <!-- ── Hero ── -->
   <section class="hero">
+    <div class="hero-waveform" id="heroWaveform"></div>
     <div class="wrap">
       <div class="hero-content">
         <h1>Talk. It types.<br><em>Nothing leaves your Mac.</em></h1>
         <p class="lead">
-          Verba turns your voice into clean, formatted text — using WhisperKit and
-          on-device LLMs. No cloud API, no account, no data uploaded. Ever.
+          Verba turns your voice into clean, formatted text — using
+          <code>WhisperKit</code> and on-device LLMs. No cloud API, no account,
+          no data uploaded. Ever.
         </p>
         <div class="hero-cta">
           <a href="https://github.com/Sota-Mikami/Verba/releases/latest" class="btn btn-accent btn-lg">
@@ -697,7 +802,7 @@
   <section class="demo-section">
     <div class="wrap">
       <div class="demo-wrapper">
-        <div class="demo-editor">
+        <div class="demo-editor" id="demoEditor">
           <div class="demo-bar">
             <div class="demo-dots">
               <span class="dot dot-r"></span>
@@ -731,19 +836,20 @@
           </div>
         </div>
       </div>
+      <p class="demo-caption">Hold a key. Speak. Release. It's already typed.</p>
     </div>
   </section>
 
-  <!-- ── Section: Privacy ── -->
+  <!-- ── Privacy ── -->
   <section class="split">
     <div class="wrap">
       <div class="split-grid">
         <div class="split-text">
           <h2>Your voice stays<br>on your machine.</h2>
           <p>
-            Verba doesn't phone home. Speech recognition runs on WhisperKit via Apple Neural Engine.
-            Text formatting uses MLX models loaded into local memory.
-            There's no server, no analytics, no telemetry.
+            Verba doesn't phone home. Speech recognition runs on <code>WhisperKit</code>
+            via Apple Neural Engine. Text formatting uses <code>MLX</code> models loaded
+            into local memory. There's no server, no analytics, no telemetry.
           </p>
           <p>
             It works on airplane mode. That's the whole point.
@@ -759,7 +865,7 @@
             <div class="p-row">
               <div class="p-icon p-icon-green">&#10003;</div>
               <span>LLM formatting runs locally</span>
-              <small>Apple MLX</small>
+              <small>MLX</small>
             </div>
             <div class="p-row">
               <div class="p-icon p-icon-green">&#10003;</div>
@@ -780,10 +886,70 @@
     </div>
   </section>
 
-  <!-- ── Section: How it works ── -->
+  <!-- ── Formatting (moved up — the "aha" moment) ── -->
   <section class="split">
     <div class="wrap">
       <div class="split-grid reverse">
+        <div class="split-visual">
+          <div class="format-demo">
+            <div class="format-pair">
+              <div class="format-card">
+                <div class="format-label">Raw transcription</div>
+                <div class="format-raw">えーと ですね あの来週の水曜に ミーティングを設定したいんですけど 午後2時からでお願いできますか</div>
+              </div>
+              <div class="format-arrow">&darr;</div>
+              <div class="format-card formatted">
+                <div class="format-label">After formatting</div>
+                <div class="format-clean">来週の水曜にミーティングを設定したいんですけど、午後2時からでお願いできますか。</div>
+              </div>
+            </div>
+            <div class="format-pair">
+              <div class="format-card">
+                <div class="format-label">Raw transcription</div>
+                <div class="format-raw">So um basically what I was thinking is that we should uh probably move the deadline to like Friday or maybe Thursday I don't know</div>
+              </div>
+              <div class="format-arrow">&darr;</div>
+              <div class="format-card formatted">
+                <div class="format-label">After formatting</div>
+                <div class="format-clean">I think we should move the deadline to Thursday or Friday.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="split-text">
+          <h2>Raw speech in,<br>clean text out.</h2>
+          <p>
+            Voice input is messy — fillers, repetition, broken sentences.
+            Verba's on-device LLM cleans it up while preserving what you meant.
+            No cloud API key needed.
+          </p>
+          <p>
+            Choose from built-in prompts (general, meeting notes, email) or write your own.
+            Supports <code>Qwen3</code>, <code>Gemma 3</code>, and <code>SmolLM3</code>
+            models via Apple MLX.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Controls ── -->
+  <section class="split">
+    <div class="wrap">
+      <div class="split-grid">
+        <div class="split-text">
+          <h2>Press a key.<br>Start talking.</h2>
+          <p>
+            Hold <kbd>fn</kbd> and speak. When you release, Verba transcribes
+            your audio, optionally cleans it up with an LLM, and pastes the
+            result into whatever app you're using.
+          </p>
+          <p>
+            The floating indicator shows real-time streaming preview so you
+            always know what's being recognized. Works in any text field —
+            editors, Slack, email, browser.
+          </p>
+        </div>
         <div class="split-visual">
           <div class="shortcut-demo">
             <div class="shortcut-keys">
@@ -806,77 +972,34 @@
             </div>
           </div>
         </div>
-        <div class="split-text">
-          <h2>Press a key.<br>Start talking.</h2>
-          <p>
-            Hold <kbd>fn</kbd> and speak. When you release, Verba transcribes your audio,
-            optionally cleans it up with an LLM, and pastes the result into whatever app you're using.
-          </p>
-          <p>
-            The floating indicator shows real-time streaming preview so you always know what's being recognized.
-            It works in any text field — editors, Slack, email, browser.
-          </p>
-        </div>
       </div>
     </div>
   </section>
 
-  <!-- ── Section: Formatting ── -->
-  <section class="split">
-    <div class="wrap">
-      <div class="split-grid">
-        <div class="split-text">
-          <h2>Raw speech in,<br>clean text out.</h2>
-          <p>
-            Voice input is messy — fillers, repetition, broken sentences. Verba's on-device LLM
-            cleans it up while preserving what you meant. No cloud API key needed.
-          </p>
-          <p>
-            Choose from built-in prompts (general, meeting notes, email) or write your own.
-            Supports Qwen3, Gemma 3, and SmolLM3 models via Apple MLX.
-          </p>
-        </div>
-        <div class="split-visual">
-          <div class="format-demo">
-            <div class="format-card">
-              <div class="format-label">Raw transcription</div>
-              <div class="format-raw">えーと ですね あの来週の水曜に ミーティングを設定したいんですけど 午後2時からでお願いできますか</div>
-            </div>
-            <div class="format-arrow">&darr;</div>
-            <div class="format-card" style="border-color: rgba(124, 92, 252, 0.15);">
-              <div class="format-label">After formatting</div>
-              <div class="format-clean">来週の水曜にミーティングを設定したいんですけど、午後2時からでお願いできますか。</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ── Tech strip ── -->
+  <!-- ── Tech ── -->
   <section class="tech">
     <div class="wrap">
-      <h2>Under the hood</h2>
+      <div class="tech-label">Under the hood</div>
       <div class="tech-grid">
         <div class="tech-cell">
           <h3>WhisperKit</h3>
           <p>Speech-to-text on Apple Neural Engine</p>
-          <div class="mono">Tiny &middot; Base &middot; Small &middot; Large V3 Turbo</div>
+          <div class="mono">Tiny · Base · Small · Large V3 Turbo</div>
         </div>
         <div class="tech-cell">
           <h3>Apple MLX</h3>
           <p>On-device LLM for text formatting</p>
-          <div class="mono">Qwen3 &middot; Gemma 3 &middot; SmolLM3</div>
+          <div class="mono">Qwen3 · Gemma 3 · SmolLM3</div>
         </div>
         <div class="tech-cell">
           <h3>50+ Languages</h3>
           <p>Auto-detect or set manually</p>
-          <div class="mono">JA &middot; EN &middot; VI &middot; and more</div>
+          <div class="mono">JA · EN · VI · and more</div>
         </div>
         <div class="tech-cell">
           <h3>Menu Bar App</h3>
           <p>Dashboard, history, themes</p>
-          <div class="mono">Dark &middot; Light &middot; System</div>
+          <div class="mono">Dark · Light · System</div>
         </div>
       </div>
     </div>
@@ -896,13 +1019,13 @@
           Star on GitHub
         </a>
       </div>
-      <p class="cta-note">macOS 14+ &middot; Apple Silicon &middot; ~75 MB (Tiny model)</p>
+      <p class="cta-note">macOS 14+ · Apple Silicon · ~75 MB</p>
     </div>
   </section>
 
   <footer>
     <div class="wrap footer-inner">
-      <p>Built by <a href="https://github.com/Sota-Mikami" style="color: var(--text-sub); text-decoration: none;">Sota Mikami</a></p>
+      <p>Built by <a href="https://github.com/Sota-Mikami">Sota Mikami</a></p>
       <div class="footer-links">
         <a href="https://github.com/Sota-Mikami/Verba">GitHub</a>
         <a href="https://github.com/Sota-Mikami/Verba/releases">Releases</a>
@@ -912,6 +1035,57 @@
   </footer>
 
   <script>
+    // ── Hero waveform ──
+    (function() {
+      const container = document.getElementById('heroWaveform');
+      if (!container) return;
+
+      const count = 80;
+      const bars = [];
+
+      for (let i = 0; i < count; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        const pct = i / count;
+        const centerDist = Math.abs(pct - 0.5) * 2;
+        // gradient from warm (center) to cool (edges)
+        const r = Math.round(240 - centerDist * 116);
+        const g = Math.round(160 - centerDist * 52);
+        const b = Math.round(96 + centerDist * 156);
+        bar.style.cssText = `
+          left: ${pct * 100}%;
+          width: 2px;
+          opacity: ${0.06 + (1 - centerDist) * 0.08};
+          background: rgb(${r}, ${g}, ${b});
+        `;
+        container.appendChild(bar);
+        bars.push(bar);
+      }
+
+      let scrollFactor = 1;
+      window.addEventListener('scroll', function() {
+        const y = window.scrollY;
+        scrollFactor = Math.max(0, 1 - y / 400);
+        container.style.opacity = scrollFactor;
+      }, { passive: true });
+
+      function animate(time) {
+        const t = time * 0.001;
+        for (let i = 0; i < count; i++) {
+          const noise =
+            Math.sin(t * 0.8 + i * 0.3) *
+            Math.sin(t * 0.5 + i * 0.5) *
+            Math.cos(t * 0.3 + i * 0.1);
+          const h = (40 + noise * 50) * scrollFactor;
+          bars[i].style.height = Math.max(2, h) + 'px';
+        }
+        requestAnimationFrame(animate);
+      }
+
+      requestAnimationFrame(animate);
+    })();
+
+    // ── Demo animation ──
     (function() {
       const raw = "えーと ですね あの来週の水曜に ミーティングを設定したいんですけど 午後2時からでお願いできますか";
       const formatted = "来週の水曜にミーティングを設定したいんですけど、午後2時からでお願いできますか。";
@@ -923,6 +1097,7 @@
       const statusLabel = document.querySelector('.demo-status-label');
       const pastedEl = document.querySelector('.demo-pasted-text');
       const cursorEl = document.querySelector('.demo-cursor');
+      const editor = document.getElementById('demoEditor');
 
       if (!streamEl) return;
 
@@ -937,6 +1112,7 @@
         indicator.style.opacity = '0';
         indicator.style.transform = 'translateY(8px)';
         waveform.style.opacity = '1';
+        editor.classList.remove('glow');
 
         await sleep(800);
 
@@ -965,7 +1141,7 @@
         statusLabel.textContent = 'Done';
         streamEl.style.opacity = '1';
         streamEl.textContent = formatted;
-        streamEl.style.color = 'var(--accent-light)';
+        streamEl.style.color = 'var(--warm)';
 
         await sleep(1000);
 
@@ -974,12 +1150,16 @@
 
         await sleep(400);
 
+        editor.classList.add('glow');
         for (let i = 0; i < formatted.length; i++) {
           pastedEl.textContent = formatted.substring(0, i + 1);
           await sleep(12);
         }
 
-        await sleep(2500);
+        await sleep(600);
+        editor.classList.remove('glow');
+
+        await sleep(2000);
       }
 
       async function loop() {
