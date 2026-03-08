@@ -25,7 +25,9 @@ struct HistoryStore {
 
         do {
             let data = try Data(contentsOf: metadataURL)
-            let decoded = try JSONDecoder().decode([TranscriptionRecord].self, from: data)
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            let decoded = try decoder.decode([TranscriptionRecord].self, from: data)
             // Rehydrate audio data from individual files
             let records: [TranscriptionRecord] = decoded.compactMap { record in
                 let audioFile = audioURL(for: record.id)
