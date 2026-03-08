@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.2.3</title>
-            <description><![CDATA[<h2>What's New in v0.2.3</h2><ul><li>GitHub-style usage heatmap on Dashboard (removed — favoring visible recent transcriptions)</li><li>Hover interactions and tooltips on all actionable buttons across the app</li><li>Dashboard simplified: removed usage trend chart to keep recent transcriptions visible</li><li>DMG is now the standard distribution format (replaced zip)</li></ul>]]></description>
-            <pubDate>Sun, 08 Mar 2026 08:50:58 +0700</pubDate>
+            <title>Version 0.3.0</title>
+            <description><![CDATA[<h2>What's New in v0.3.0</h2><ul><li>Picker/Select text invisible in light mode (color scheme mismatch between DS and native controls)</li><li>System appearance changes now properly tracked via KVO observation</li></ul>]]></description>
+            <pubDate>Sun, 08 Mar 2026 09:04:29 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.2.3/Verba-v0.2.3.dmg"
-                sparkle:version="3"
-                sparkle:shortVersionString="0.2.3"
-                sparkle:edSignature="ZOr52028QneynrzVnwSBDz5IKVdsXGYAzhTsWXLOfbQKSRhI+4cf2w41Jdc9RV8ztRe8QtRH6Q6Y18DxXMfgDw=="
-                length="9596033"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.3.0/Verba-v0.3.0.dmg"
+                sparkle:version="4"
+                sparkle:shortVersionString="0.3.0"
+                sparkle:edSignature="GuVO4pK3WzCh843xVOaT/IeZpmgVPtoDBjtpsij1zv2jYmEzAuq2QAE1h8pDW4Zr/I4st9vkwk8clhIfsTiQAw=="
+                length="9581121"
                 type="application/octet-stream"
             />
         </item>
