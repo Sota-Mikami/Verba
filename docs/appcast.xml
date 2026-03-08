@@ -7,15 +7,15 @@
         <language>en</language>
         <item>
             <title>Version 0.2.2</title>
-            <description><![CDATA[<h2>What's New in v0.2.2</h2><ul><li>Sparkle auto-update now fully functional (EdDSA signed, appcast.xml on GitHub Pages)</li><li>Hover interactions on all actionable buttons across the app</li><li>Tooltips on Dictionary and Settings icon buttons (Edit, Delete, Reset)</li><li>Reusable hover button components (HoverPillButton, HoverIconButton)</li><li>Release automation script (`scripts/release.sh`)</li><li>"Check for Updates" button is now disabled until Sparkle is ready</li><li>Auto-update check enabled on launch for Release builds only</li></ul>]]></description>
+            <description><![CDATA[<h2>What's New in v0.2.2</h2><ul><li>Sparkle auto-update now fully functional (EdDSA signed, appcast.xml on GitHub Pages)</li><li>Hover interactions on all actionable buttons across the app</li><li>Tooltips on Dictionary and Settings icon buttons (Edit, Delete, Reset)</li><li>Reusable hover button components (HoverPillButton, HoverIconButton)</li><li>Release automation script</li><li>"Check for Updates" button is now disabled until Sparkle is ready</li><li>Auto-update check enabled on launch for Release builds only</li></ul>]]></description>
             <pubDate>Sun, 08 Mar 2026 08:25:08 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.2.2/Verba-v0.2.2.zip"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.2.2/Verba-v0.2.2.dmg"
                 sparkle:version="1"
                 sparkle:shortVersionString="0.2.2"
-                sparkle:edSignature="v6hiwb6O0mIRSFkZbauQwTBtzebPQu/3Bsv01x+nxIcCLNamWBOsEXYW+kjKUqpi+/k5b6B0+x4Jq3CwG6mVBQ=="
-                length="9760754"
+                sparkle:edSignature="Hb2g3ftonp6/q2nV7b/WMO66j9+xVl8cvWqw/wZtF8+qHEF+rnniUVw7TuyBLqk3zxRIe6yviiNyh3JZuKopDg=="
+                length="9596857"
                 type="application/octet-stream"
             />
         </item>
