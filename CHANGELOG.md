@@ -2,6 +2,12 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [0.4.7] - 2026-03-09
+
+### Changed
+- **Default formatting to local LLM** — New users get on-device formatting (Qwen3 0.6B) out of the box, no API key needed. Auto-downloads on first launch.
+- **Provider order** — Local (On-Device) is now the primary option in settings; cloud providers are secondary.
+
 ## [0.4.6] - 2026-03-09
 
 ### Added
