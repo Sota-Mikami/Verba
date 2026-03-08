@@ -32,6 +32,8 @@ class AppState: ObservableObject {
     @Published var lastTranscription = ""
     @Published var statusMessage = ""
     @Published var history: [TranscriptionRecord] = []
+    @Published var resolvedColorScheme: ColorScheme = .dark
+    private var appearanceObservation: NSKeyValueObservation?
     @Published var unseenHistoryCount = 0
 
     @AppStorage("formattingProvider") var formattingProvider: FormattingProvider = .openRouter
@@ -99,6 +101,7 @@ class AppState: ObservableObject {
 
     let hotkeyController = HotkeyController()
     private var recordingTrigger: RecordingTrigger = .none
+    private var streamingTask: Task<Void, Never>?
 
     var allPrompts: [FormattingPrompt] {
         let builtIns = FormattingPrompt.allBuiltIn.map { original in
@@ -187,19 +190,35 @@ class AppState: ObservableObject {
     }
 
     func applyAppearance() {
+        appearanceObservation = nil
+
         switch appearance {
         case .system:
             NSApp.appearance = nil
-            let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-            DS.activeScheme = isDark ? .dark : .light
+            updateResolvedSchemeFromSystem()
+            // KVO observe NSApp.effectiveAppearance for system theme changes
+            appearanceObservation = NSApp.observe(\.effectiveAppearance, options: [.new]) { [weak self] _, _ in
+                Task { @MainActor [weak self] in
+                    guard self?.appearance == .system else { return }
+                    self?.updateResolvedSchemeFromSystem()
+                }
+            }
         case .light:
             NSApp.appearance = NSAppearance(named: .aqua)
             DS.activeScheme = .light
+            resolvedColorScheme = .light
         case .dark:
             NSApp.appearance = NSAppearance(named: .darkAqua)
             DS.activeScheme = .dark
+            resolvedColorScheme = .dark
         }
         objectWillChange.send()
+    }
+
+    private func updateResolvedSchemeFromSystem() {
+        let isDark = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        DS.activeScheme = isDark ? .dark : .light
+        resolvedColorScheme = isDark ? .dark : .light
     }
 
     private func setupFloatingIndicatorCallbacks() {
@@ -345,6 +364,7 @@ class AppState: ObservableObject {
             statusMessage = hint
             syncFloatingIndicatorState()
             floatingIndicator.show(isRecording: true, statusMessage: hint, mode: mode)
+            startStreamingTranscription()
         } catch {
             statusMessage = "Mic error: \(error.localizedDescription)"
             logger.error("Recording error: \(error.localizedDescription)")
@@ -352,6 +372,8 @@ class AppState: ObservableObject {
     }
 
     private func stopRecording() {
+        streamingTask?.cancel()
+        streamingTask = nil
         isRecording = false
         isProcessing = true
         statusMessage = "Transcribing..."
@@ -369,6 +391,38 @@ class AppState: ObservableObject {
                 audioData = audioRecorder.stopRecording()
             }
             await processAudio(audioData)
+        }
+    }
+
+    // MARK: - Streaming Transcription
+
+    private func startStreamingTranscription() {
+        streamingTask = Task { [weak self] in
+            // Wait for initial audio to accumulate
+            try? await Task.sleep(for: .seconds(1.5))
+
+            while !Task.isCancelled {
+                guard let self else { return }
+                guard self.isRecording else { return }
+
+                let buffer = self.audioRecorder.getCurrentBuffer()
+                let sampleCount = buffer.count / MemoryLayout<Float>.size
+                let seconds = Float(sampleCount) / 16000.0
+
+                if seconds >= 1.0 {
+                    do {
+                        let text = try await self.whisperService.transcribe(audioData: buffer, language: nil)
+                        if !Task.isCancelled && self.isRecording && !text.isEmpty {
+                            self.floatingIndicator.updateStreamingText(text)
+                        }
+                    } catch {
+                        logger.debug("Streaming transcription error: \(error.localizedDescription)")
+                    }
+                }
+
+                // Wait before next transcription cycle
+                try? await Task.sleep(for: .seconds(1.0))
+            }
         }
     }
 

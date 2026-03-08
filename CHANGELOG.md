@@ -2,6 +2,23 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [0.3.0] - 2026-03-08
+
+### Added
+- Real-time streaming transcription — see text appear in the floating indicator while you speak
+  - Partial transcription updates every ~1 second during recording
+  - Mini waveform + streaming text replaces full waveform when text is available
+  - Auto-scrolling text view with fade mask for readability
+- Thread-safe audio buffer access for concurrent streaming reads
+
+### Changed
+- Floating indicator width increased from 300px to 340px for better text readability
+- Floating indicator dynamically resizes height to accommodate streaming text
+
+### Fixed
+- Picker/Select text invisible in light mode (color scheme mismatch between DS and native controls)
+- System appearance changes now properly tracked via KVO observation
+
 ## [0.2.3] - 2026-03-08
 
 ### Added

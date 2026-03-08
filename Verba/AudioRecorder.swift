@@ -12,6 +12,7 @@ class AudioRecorder {
     private var audioEngine: AVAudioEngine?
     private var systemCapture: SystemAudioCapture?
     private var micData = Data()
+    private let bufferLock = NSLock()
     private let sampleRate: Double = 16000.0
     var onAudioLevel: ((Float) -> Void)?
     var captureSystemAudio = false
@@ -110,7 +111,9 @@ class AudioRecorder {
             interleaved: false
         )!
 
+        bufferLock.lock()
         micData = Data()
+        bufferLock.unlock()
 
         inputNode.installTap(onBus: 0, bufferSize: 4096, format: nil) { [weak self] buffer, _ in
             guard let self else { return }
@@ -130,7 +133,9 @@ class AudioRecorder {
             if status == .haveData, let channelData = convertedBuffer.floatChannelData?[0] {
                 let count = Int(convertedBuffer.frameLength)
                 let bytes = Data(bytes: channelData, count: count * MemoryLayout<Float>.size)
+                self.bufferLock.lock()
                 self.micData.append(bytes)
+                self.bufferLock.unlock()
 
                 // Compute RMS for waveform visualization
                 var sumOfSquares: Float = 0
@@ -156,11 +161,22 @@ class AudioRecorder {
         self.audioEngine = engine
     }
 
+    /// Snapshot the current audio buffer without stopping recording (thread-safe).
+    func getCurrentBuffer() -> Data {
+        bufferLock.lock()
+        let copy = micData
+        bufferLock.unlock()
+        return copy
+    }
+
     func stopRecording() -> Data {
         audioEngine?.inputNode.removeTap(onBus: 0)
         audioEngine?.stop()
         audioEngine = nil
-        return micData
+        bufferLock.lock()
+        let result = micData
+        bufferLock.unlock()
+        return result
     }
 
     /// Stop recording and return audio data. If system audio was captured, mixes both streams.
@@ -169,14 +185,18 @@ class AudioRecorder {
         audioEngine?.stop()
         audioEngine = nil
 
+        bufferLock.lock()
+        let mic = micData
+        bufferLock.unlock()
+
         guard let systemCapture else {
-            return micData
+            return mic
         }
 
         let sysData = await systemCapture.stopCapture()
         self.systemCapture = nil
 
-        return mixAudio(mic: micData, system: sysData)
+        return mixAudio(mic: mic, system: sysData)
     }
 
     /// Mix mic and system audio buffers by adding samples together.
