@@ -10,7 +10,7 @@
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #0c0b0f;
@@ -28,16 +28,66 @@
       --green: #3dd68c;
       --red: #f04747;
       --orange: #fbbf24;
+      --font-display: 'Instrument Serif', Georgia, serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { overflow-x: hidden; }
 
     body {
-      font-family: 'Inter', -apple-system, sans-serif;
+      font-family: var(--font-body);
       background: var(--bg);
       color: var(--text);
       -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Japanese overrides ── */
+    :lang(ja) {
+      --font-display: 'Shippori Mincho', 'YuMincho', 'Yu Mincho', serif;
+      --font-body: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Inter', sans-serif;
+    }
+
+    :lang(ja) body { font-family: var(--font-body); }
+
+    :lang(ja) h1,
+    :lang(ja) .split-text h2,
+    :lang(ja) .cta h2 {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-feature-settings: "palt" 1;
+    }
+
+    :lang(ja) .hero h1 {
+      line-height: 1.35;
+      letter-spacing: 0.04em;
+      font-size: clamp(36px, 4.5vw, 56px);
+    }
+
+    :lang(ja) .hero h1 em {
+      font-style: normal;
+    }
+
+    :lang(ja) .split-text h2 {
+      line-height: 1.4;
+      letter-spacing: 0.04em;
+      font-size: 30px;
+    }
+
+    :lang(ja) .split-text p,
+    :lang(ja) .hero .lead {
+      line-height: 1.9;
+      letter-spacing: 0.02em;
+    }
+
+    :lang(ja) .cta h2 {
+      line-height: 1.4;
+      letter-spacing: 0.04em;
+    }
+
+    @media (max-width: 768px) {
+      :lang(ja) .hero h1 { font-size: 30px; }
+      :lang(ja) .split-text h2 { font-size: 24px; }
     }
 
     /* Noise overlay */
@@ -84,6 +134,7 @@
       color: var(--text);
       text-decoration: none;
       letter-spacing: -0.5px;
+      font-family: 'Inter', sans-serif;
     }
 
     .logo span { color: var(--accent); }
@@ -100,6 +151,40 @@
       text-decoration: none;
       font-size: 13px;
       font-weight: 500;
+    }
+
+    /* Lang switcher */
+    .lang-switcher {
+      display: inline-flex;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.04);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .lang-switcher button {
+      padding: 5px 10px;
+      color: rgba(255, 255, 255, 0.4);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: color 0.2s, background 0.2s;
+      font-family: inherit;
+      font-size: inherit;
+      font-weight: inherit;
+    }
+
+    .lang-switcher button.active {
+      color: #ffffff;
+      background: rgba(124, 108, 252, 0.2);
+    }
+
+    .lang-switcher button:hover:not(.active) {
+      color: rgba(255, 255, 255, 0.7);
     }
 
     .btn {
@@ -175,7 +260,7 @@
     }
 
     .hero h1 {
-      font-family: 'Instrument Serif', Georgia, serif;
+      font-family: var(--font-display);
       font-size: clamp(44px, 5.5vw, 68px);
       font-weight: 400;
       line-height: 1.05;
@@ -238,17 +323,12 @@
       border-radius: 12px;
       border: 1px solid rgba(255,255,255,0.08);
       overflow: hidden;
-      box-shadow:
-        0 24px 80px rgba(0,0,0,0.5),
-        0 0 0 1px rgba(255,255,255,0.04);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
       transition: box-shadow 0.6s;
     }
 
     .demo-editor.glow {
-      box-shadow:
-        0 24px 80px rgba(0,0,0,0.5),
-        0 0 0 1px rgba(255,255,255,0.04),
-        0 0 40px rgba(124, 108, 252, 0.12);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04), 0 0 40px rgba(124, 108, 252, 0.12);
     }
 
     .demo-bar {
@@ -321,17 +401,11 @@
       background: rgba(16, 14, 24, 0.75);
       backdrop-filter: blur(24px) saturate(150%);
       border: 1px solid;
-      border-image: linear-gradient(
-        to bottom,
-        rgba(255,255,255,0.12),
-        rgba(255,255,255,0.04)
-      ) 1;
+      border-image: linear-gradient(to bottom, rgba(255,255,255,0.12), rgba(255,255,255,0.04)) 1;
       border-radius: 14px;
       padding: 14px 18px;
       min-width: 240px;
-      box-shadow:
-        0 8px 32px rgba(0,0,0,0.5),
-        inset 0 1px 0 rgba(255,255,255,0.06);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
     }
 
     .demo-waveform {
@@ -393,7 +467,7 @@
     }
 
     .split-text h2 {
-      font-family: 'Instrument Serif', Georgia, serif;
+      font-family: var(--font-display);
       font-size: 36px;
       font-weight: 400;
       line-height: 1.15;
@@ -457,7 +531,7 @@
     .p-icon-green { background: rgba(61, 214, 140, 0.1); color: var(--green); }
     .p-icon-accent { background: var(--accent-dim); color: var(--accent-light); font-family: 'JetBrains Mono', monospace; font-size: 10px; }
 
-    .p-row span { color: var(--text); }
+    .p-row > span { color: var(--text); }
     .p-row small {
       color: var(--text-dim);
       font-weight: 400;
@@ -473,9 +547,7 @@
       gap: 8px;
     }
 
-    .format-pair + .format-pair {
-      margin-top: 16px;
-    }
+    .format-pair + .format-pair { margin-top: 16px; }
 
     .format-card {
       background: var(--bg-raised);
@@ -484,9 +556,7 @@
       padding: 16px 20px;
     }
 
-    .format-card.formatted {
-      border-color: rgba(240, 160, 96, 0.15);
-    }
+    .format-card.formatted { border-color: rgba(240, 160, 96, 0.15); }
 
     .format-label {
       font-size: 10px;
@@ -497,17 +567,8 @@
       margin-bottom: 8px;
     }
 
-    .format-raw {
-      font-size: 13px;
-      line-height: 1.6;
-      color: var(--text-sub);
-    }
-
-    .format-clean {
-      font-size: 13px;
-      line-height: 1.6;
-      color: var(--warm);
-    }
+    .format-raw { font-size: 13px; line-height: 1.6; color: var(--text-sub); }
+    .format-clean { font-size: 13px; line-height: 1.6; color: var(--warm); }
 
     .format-arrow {
       text-align: center;
@@ -580,7 +641,7 @@
       flex-shrink: 0;
     }
 
-    .mode-row span { color: var(--text-sub); }
+    .mode-row > span { color: var(--text-sub); }
 
     /* ── Tech strip ── */
     .tech {
@@ -613,18 +674,8 @@
       text-align: center;
     }
 
-    .tech-cell h3 {
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .tech-cell p {
-      font-size: 12px;
-      color: var(--text-dim);
-      line-height: 1.5;
-    }
-
+    .tech-cell h3 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .tech-cell p { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
     .tech-cell .mono {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
@@ -654,7 +705,7 @@
     }
 
     .cta h2 {
-      font-family: 'Instrument Serif', Georgia, serif;
+      font-family: var(--font-display);
       font-size: clamp(28px, 4vw, 42px);
       font-weight: 400;
       margin-bottom: 16px;
@@ -696,28 +747,16 @@
       align-items: center;
     }
 
-    .footer-inner p {
-      color: var(--text-dim);
-      font-size: 12px;
-    }
+    .footer-inner p { color: var(--text-dim); font-size: 12px; }
+    .footer-inner a { color: var(--text-sub); text-decoration: none; }
 
-    .footer-inner a {
-      color: var(--text-sub);
-      text-decoration: none;
-    }
-
-    .footer-links {
-      display: flex;
-      gap: 20px;
-    }
-
+    .footer-links { display: flex; gap: 20px; }
     .footer-links a {
       color: var(--text-dim);
       text-decoration: none;
       font-size: 12px;
       transition: color 0.15s;
     }
-
     .footer-links a:hover { color: var(--text-sub); }
 
     /* ── Responsive ── */
@@ -728,10 +767,7 @@
       .hero { padding: 100px 0 0; }
       .hero h1 { font-size: 38px; }
       .split { padding: 64px 0; }
-      .split-grid {
-        grid-template-columns: 1fr;
-        gap: 40px;
-      }
+      .split-grid { grid-template-columns: 1fr; gap: 40px; }
       .split-grid.reverse .split-visual { order: -1; }
       .split-text h2 { font-size: 28px; }
       .tech-grid { grid-template-columns: 1fr 1fr; }
@@ -758,11 +794,15 @@
       <a href="#" class="logo">Verb<span>a</span></a>
       <div class="nav-actions">
         <a href="https://github.com/Sota-Mikami/Verba" class="nav-link-mobile">GitHub</a>
+        <div class="lang-switcher">
+          <button class="active" data-lang="en">EN</button>
+          <button data-lang="ja">JA</button>
+        </div>
         <a href="https://github.com/Sota-Mikami/Verba" class="btn btn-ghost">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
           GitHub
         </a>
-        <a href="https://github.com/Sota-Mikami/Verba/releases/latest" class="btn btn-accent">
+        <a href="https://github.com/Sota-Mikami/Verba/releases/latest" class="btn btn-accent" data-i18n="nav-download">
           Download
         </a>
       </div>
@@ -774,25 +814,25 @@
     <div class="hero-waveform" id="heroWaveform"></div>
     <div class="wrap">
       <div class="hero-content">
-        <h1>Talk. It types.<br><em>Nothing leaves your Mac.</em></h1>
-        <p class="lead">
+        <h1 data-i18n="hero-h1">Talk. It types.<br><em>Nothing leaves your Mac.</em></h1>
+        <p class="lead" data-i18n="hero-lead">
           Verba turns your voice into clean, formatted text — using
           <code>WhisperKit</code> and on-device LLMs. No cloud API, no account,
           no data uploaded. Ever.
         </p>
         <div class="hero-cta">
-          <a href="https://github.com/Sota-Mikami/Verba/releases/latest" class="btn btn-accent btn-lg">
+          <a href="https://github.com/Sota-Mikami/Verba/releases/latest" class="btn btn-accent btn-lg" data-i18n="hero-cta-primary">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Download for macOS
           </a>
-          <a href="https://github.com/Sota-Mikami/Verba" class="btn btn-ghost btn-lg">
+          <a href="https://github.com/Sota-Mikami/Verba" class="btn btn-ghost btn-lg" data-i18n="hero-cta-secondary">
             View source
           </a>
         </div>
         <div class="hero-meta">
           <span>macOS 14+</span>
           <span>Apple Silicon</span>
-          <span>MIT License</span>
+          <span data-i18n="hero-license">MIT License</span>
         </div>
       </div>
     </div>
@@ -809,11 +849,11 @@
               <span class="dot dot-y"></span>
               <span class="dot dot-g"></span>
             </div>
-            <span class="demo-bar-title">Notes.app</span>
+            <span class="demo-bar-title" data-i18n="demo-title">Notes.app</span>
           </div>
           <div class="demo-body">
-            <div class="demo-existing">Meeting notes — March 2026</div>
-            <div class="demo-existing dim">Discussed Q2 roadmap and priorities.</div>
+            <div class="demo-existing" data-i18n="demo-line1">Meeting notes — March 2026</div>
+            <div class="demo-existing dim" data-i18n="demo-line2">Discussed Q2 roadmap and priorities.</div>
             <div class="demo-existing dim">&nbsp;</div>
             <div class="demo-pasted-line">
               <span class="demo-cursor"></span>
@@ -836,7 +876,7 @@
           </div>
         </div>
       </div>
-      <p class="demo-caption">Hold a key. Speak. Release. It's already typed.</p>
+      <p class="demo-caption" data-i18n="demo-caption">Hold a key. Speak. Release. It's already typed.</p>
     </div>
   </section>
 
@@ -845,13 +885,13 @@
     <div class="wrap">
       <div class="split-grid">
         <div class="split-text">
-          <h2>Your voice stays<br>on your machine.</h2>
-          <p>
+          <h2 data-i18n="privacy-h2">Your voice stays<br>on your machine.</h2>
+          <p data-i18n="privacy-p1">
             Verba doesn't phone home. Speech recognition runs on <code>WhisperKit</code>
             via Apple Neural Engine. Text formatting uses <code>MLX</code> models loaded
             into local memory. There's no server, no analytics, no telemetry.
           </p>
-          <p>
+          <p data-i18n="privacy-p2">
             It works on airplane mode. That's the whole point.
           </p>
         </div>
@@ -859,26 +899,26 @@
           <div class="privacy-stack">
             <div class="p-row">
               <div class="p-icon p-icon-green">&#10003;</div>
-              <span>Audio processed on-device</span>
+              <span data-i18n="priv-1">Audio processed on-device</span>
               <small>WhisperKit</small>
             </div>
             <div class="p-row">
               <div class="p-icon p-icon-green">&#10003;</div>
-              <span>LLM formatting runs locally</span>
+              <span data-i18n="priv-2">LLM formatting runs locally</span>
               <small>MLX</small>
             </div>
             <div class="p-row">
               <div class="p-icon p-icon-green">&#10003;</div>
-              <span>No account or signup</span>
+              <span data-i18n="priv-3">No account or signup</span>
             </div>
             <div class="p-row">
               <div class="p-icon p-icon-green">&#10003;</div>
-              <span>Works fully offline</span>
+              <span data-i18n="priv-4">Works fully offline</span>
             </div>
             <div class="p-row">
               <div class="p-icon p-icon-accent">MIT</div>
-              <span>Open source</span>
-              <small>Read every line</small>
+              <span data-i18n="priv-5">Open source</span>
+              <small data-i18n="priv-5-note">Read every line</small>
             </div>
           </div>
         </div>
@@ -886,44 +926,44 @@
     </div>
   </section>
 
-  <!-- ── Formatting (moved up — the "aha" moment) ── -->
+  <!-- ── Formatting ── -->
   <section class="split">
     <div class="wrap">
       <div class="split-grid reverse">
         <div class="split-visual">
-          <div class="format-demo">
+          <div class="format-demo" id="formatDemo">
             <div class="format-pair">
               <div class="format-card">
-                <div class="format-label">Raw transcription</div>
-                <div class="format-raw">So um basically what I was thinking is that we should uh probably move the deadline to like Friday or maybe Thursday I don't know</div>
+                <div class="format-label" data-i18n="fmt-raw-label">Raw transcription</div>
+                <div class="format-raw" data-i18n="fmt-raw-1">So um basically what I was thinking is that we should uh probably move the deadline to like Friday or maybe Thursday I don't know</div>
               </div>
               <div class="format-arrow">&darr;</div>
               <div class="format-card formatted">
-                <div class="format-label">After formatting</div>
-                <div class="format-clean">I think we should move the deadline to Thursday or Friday.</div>
+                <div class="format-label" data-i18n="fmt-clean-label">After formatting</div>
+                <div class="format-clean" data-i18n="fmt-clean-1">I think we should move the deadline to Thursday or Friday.</div>
               </div>
             </div>
             <div class="format-pair">
               <div class="format-card">
-                <div class="format-label">Raw transcription</div>
-                <div class="format-raw">OK so the thing is um we need to like finalize the budget before end of quarter and also make sure that the uh the design team has signed off on the new brand guidelines</div>
+                <div class="format-label" data-i18n="fmt-raw-label">Raw transcription</div>
+                <div class="format-raw" data-i18n="fmt-raw-2">OK so the thing is um we need to like finalize the budget before end of quarter and also make sure that the uh the design team has signed off on the new brand guidelines</div>
               </div>
               <div class="format-arrow">&darr;</div>
               <div class="format-card formatted">
-                <div class="format-label">After formatting</div>
-                <div class="format-clean">We need to finalize the budget before end of quarter and ensure the design team has signed off on the new brand guidelines.</div>
+                <div class="format-label" data-i18n="fmt-clean-label">After formatting</div>
+                <div class="format-clean" data-i18n="fmt-clean-2">We need to finalize the budget before end of quarter and ensure the design team has signed off on the new brand guidelines.</div>
               </div>
             </div>
           </div>
         </div>
         <div class="split-text">
-          <h2>Raw speech in,<br>clean text out.</h2>
-          <p>
+          <h2 data-i18n="fmt-h2">Raw speech in,<br>clean text out.</h2>
+          <p data-i18n="fmt-p1">
             Voice input is messy — fillers, repetition, broken sentences.
             Verba's on-device LLM cleans it up while preserving what you meant.
             No cloud API key needed.
           </p>
-          <p>
+          <p data-i18n="fmt-p2">
             Choose from built-in prompts (general, meeting notes, email) or write your own.
             Supports <code>Qwen3</code>, <code>Gemma 3</code>, and <code>SmolLM3</code>
             models via Apple MLX.
@@ -938,13 +978,13 @@
     <div class="wrap">
       <div class="split-grid">
         <div class="split-text">
-          <h2>Press a key.<br>Start talking.</h2>
-          <p>
+          <h2 data-i18n="ctrl-h2">Press a key.<br>Start talking.</h2>
+          <p data-i18n="ctrl-p1">
             Hold <kbd>fn</kbd> and speak. When you release, Verba transcribes
             your audio, optionally cleans it up with an LLM, and pastes the
             result into whatever app you're using.
           </p>
-          <p>
+          <p data-i18n="ctrl-p2">
             The floating indicator shows real-time streaming preview so you
             always know what's being recognized. Works in any text field —
             editors, Slack, email, browser.
@@ -954,20 +994,20 @@
           <div class="shortcut-demo">
             <div class="shortcut-keys">
               <kbd class="active">fn</kbd>
-              <kbd>hold</kbd>
+              <kbd data-i18n="kbd-hold">hold</kbd>
             </div>
             <div class="shortcut-modes">
               <div class="mode-row">
                 <span class="mode-tag">hold</span>
-                <span>Hold key to record, release to transcribe</span>
+                <span data-i18n="mode-hold">Hold key to record, release to transcribe</span>
               </div>
               <div class="mode-row">
                 <span class="mode-tag">2x tap</span>
-                <span>Double-tap to start, tap again to stop</span>
+                <span data-i18n="mode-tap">Double-tap to start, tap again to stop</span>
               </div>
               <div class="mode-row">
                 <span class="mode-tag">combo</span>
-                <span>Any modifier + key as custom shortcut</span>
+                <span data-i18n="mode-combo">Any modifier + key as custom shortcut</span>
               </div>
             </div>
           </div>
@@ -979,26 +1019,26 @@
   <!-- ── Tech ── -->
   <section class="tech">
     <div class="wrap">
-      <div class="tech-label">Under the hood</div>
+      <div class="tech-label" data-i18n="tech-label">Under the hood</div>
       <div class="tech-grid">
         <div class="tech-cell">
           <h3>WhisperKit</h3>
-          <p>Speech-to-text on Apple Neural Engine</p>
+          <p data-i18n="tech-whisper">Speech-to-text on Apple Neural Engine</p>
           <div class="mono">Tiny · Base · Small · Large V3 Turbo</div>
         </div>
         <div class="tech-cell">
           <h3>Apple MLX</h3>
-          <p>On-device LLM for text formatting</p>
+          <p data-i18n="tech-mlx">On-device LLM for text formatting</p>
           <div class="mono">Qwen3 · Gemma 3 · SmolLM3</div>
         </div>
         <div class="tech-cell">
-          <h3>50+ Languages</h3>
-          <p>Auto-detect or set manually</p>
+          <h3 data-i18n="tech-lang-h">50+ Languages</h3>
+          <p data-i18n="tech-lang-p">Auto-detect or set manually</p>
           <div class="mono">JA · EN · VI · and more</div>
         </div>
         <div class="tech-cell">
-          <h3>Menu Bar App</h3>
-          <p>Dashboard, history, themes</p>
+          <h3 data-i18n="tech-app-h">Menu Bar App</h3>
+          <p data-i18n="tech-app-p">Dashboard, history, themes</p>
           <div class="mono">Dark · Light · System</div>
         </div>
       </div>
@@ -1008,14 +1048,14 @@
   <!-- ── CTA ── -->
   <section class="cta">
     <div class="wrap">
-      <h2>Your voice, your Mac, your data.</h2>
-      <p class="lead">Free, open source, no strings attached.</p>
+      <h2 data-i18n="cta-h2">Your voice, your Mac, your data.</h2>
+      <p class="lead" data-i18n="cta-lead">Free, open source, no strings attached.</p>
       <div class="cta-actions">
-        <a href="https://github.com/Sota-Mikami/Verba/releases/latest" class="btn btn-accent btn-lg">
+        <a href="https://github.com/Sota-Mikami/Verba/releases/latest" class="btn btn-accent btn-lg" data-i18n="cta-download">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download Latest
         </a>
-        <a href="https://github.com/Sota-Mikami/Verba" class="btn btn-ghost btn-lg">
+        <a href="https://github.com/Sota-Mikami/Verba" class="btn btn-ghost btn-lg" data-i18n="cta-star">
           Star on GitHub
         </a>
       </div>
@@ -1025,16 +1065,145 @@
 
   <footer>
     <div class="wrap footer-inner">
-      <p>Built by <a href="https://github.com/Sota-Mikami">Sota Mikami</a></p>
+      <p data-i18n="footer-by">Built by <a href="https://github.com/Sota-Mikami">Sota Mikami</a></p>
       <div class="footer-links">
         <a href="https://github.com/Sota-Mikami/Verba">GitHub</a>
-        <a href="https://github.com/Sota-Mikami/Verba/releases">Releases</a>
-        <a href="https://github.com/Sota-Mikami/Verba/blob/main/CHANGELOG.md">Changelog</a>
+        <a href="https://github.com/Sota-Mikami/Verba/releases" data-i18n="footer-releases">Releases</a>
+        <a href="https://github.com/Sota-Mikami/Verba/blob/main/CHANGELOG.md" data-i18n="footer-changelog">Changelog</a>
       </div>
     </div>
   </footer>
 
   <script>
+    // ── i18n ──
+    const i18n = {
+      ja: {
+        'nav-download': 'ダウンロード',
+        'hero-h1': '話すだけ。あとはVerbaが書く。<br><em>すべて、Macの中で完結する。</em>',
+        'hero-lead': 'Verbaは音声をきれいな文章に変換します。<code>WhisperKit</code>とオンデバイスLLMで処理。クラウドAPI不要、アカウント不要、データのアップロードは一切ありません。',
+        'hero-cta-primary': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>macOS版をダウンロード',
+        'hero-cta-secondary': 'ソースコードを見る',
+        'hero-license': 'MITライセンス',
+        'demo-title': 'メモ.app',
+        'demo-line1': '議事メモ — 2026年3月',
+        'demo-line2': 'Q2のロードマップと優先事項を議論。',
+        'demo-caption': 'キーを押す。話す。離す。もう入力されている。',
+        'privacy-h2': 'あなたの声は、<br>外に出ない。',
+        'privacy-p1': 'Verbaは外部と一切通信しません。音声認識は<code>WhisperKit</code>でApple Neural Engine上で実行。テキスト整形は<code>MLX</code>モデルがローカルメモリ上で処理します。サーバーなし、アナリティクスなし、テレメトリなし。',
+        'privacy-p2': '機内モードでも動きます。それがすべてです。',
+        'priv-1': '音声はデバイス上で処理',
+        'priv-2': 'LLM整形もローカルで実行',
+        'priv-3': 'アカウント登録は不要',
+        'priv-4': '完全オフラインで動作',
+        'priv-5': 'オープンソース',
+        'priv-5-note': 'すべてのコードを公開',
+        'fmt-h2': '話し言葉を、<br>書き言葉に。',
+        'fmt-p1': '音声入力はそのままだと乱雑です。フィラー、繰り返し、途切れた文。VerbaのオンデバイスLLMが意味を保ったまま整えます。クラウドAPIキーは不要です。',
+        'fmt-p2': '組み込みプロンプト（一般、議事録、メール）から選ぶか、自分で書くこともできます。<code>Qwen3</code>、<code>Gemma 3</code>、<code>SmolLM3</code>をApple MLXで実行します。',
+        'fmt-raw-label': '生の文字起こし',
+        'fmt-clean-label': '整形後',
+        'fmt-raw-1': 'えーと ですね あの来週の水曜に ミーティングを設定したいんですけど 午後2時からでお願いできますか',
+        'fmt-clean-1': '来週の水曜にミーティングを設定したいです。午後2時からでお願いできますか。',
+        'fmt-raw-2': 'あのー 今期の予算をですね えっと 四半期末までに確定させないといけなくて あとデザインチームがブランドガイドラインの承認をしたかどうかも確認しないと',
+        'fmt-clean-2': '今期の予算を四半期末までに確定させる必要があります。また、デザインチームがブランドガイドラインを承認済みかの確認も必要です。',
+        'ctrl-h2': 'キーひとつで、<br>声が文字になる。',
+        'ctrl-p1': '<kbd>fn</kbd>を押しながら話す。離せば、Verbaが音声を文字起こしし、必要に応じてLLMで整形し、使用中のアプリにそのままペーストします。',
+        'ctrl-p2': 'フローティングインジケーターがリアルタイムプレビューを表示。認識内容が常に確認できます。エディタ、Slack、メール、ブラウザ — どのテキストフィールドでも動作します。',
+        'kbd-hold': '長押し',
+        'mode-hold': 'キーを長押しで録音、離すと文字起こし',
+        'mode-tap': 'ダブルタップで開始、もう一度タップで停止',
+        'mode-combo': '修飾キー + 任意のキーでカスタムショートカット',
+        'tech-label': '技術スタック',
+        'tech-whisper': 'Apple Neural Engineで音声認識',
+        'tech-mlx': 'オンデバイスLLMでテキスト整形',
+        'tech-lang-h': '50以上の言語',
+        'tech-lang-p': '自動検出または手動設定',
+        'tech-app-h': 'メニューバーアプリ',
+        'tech-app-p': 'ダッシュボード、履歴、テーマ',
+        'cta-h2': 'あなたの声、あなたのMac、あなたのデータ。',
+        'cta-lead': '無料、オープンソース、制約なし。',
+        'cta-download': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>最新版をダウンロード',
+        'cta-star': 'GitHubでスター',
+        'footer-by': '<a href="https://github.com/Sota-Mikami">三上奏太</a>が開発',
+        'footer-releases': 'リリース',
+        'footer-changelog': '変更履歴',
+      }
+    };
+
+    // Store original EN content
+    const enContent = {};
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      enContent[el.dataset.i18n] = el.innerHTML;
+    });
+
+    // Demo texts per language
+    const demoTexts = {
+      en: {
+        raw: "So um basically what I was thinking is that we should uh you know set up a meeting for like next Wednesday at around 2 PM if that works for everyone",
+        formatted: "I'd like to set up a meeting for next Wednesday at 2 PM.",
+        listening: 'Listening',
+        formatting: 'Formatting...',
+        done: 'Done'
+      },
+      ja: {
+        raw: "えーと ですね あの来週の水曜日に ミーティングを設定したいんですけど 午後2時からでお願いできますか",
+        formatted: "来週の水曜日にミーティングを設定したいです。午後2時からでお願いできますか。",
+        listening: '録音中',
+        formatting: '整形中...',
+        done: '完了'
+      }
+    };
+
+    let currentLang = 'en';
+
+    function setLang(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+
+      // Update switcher buttons
+      document.querySelectorAll('.lang-switcher button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+
+      // Update text content
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.dataset.i18n;
+        if (lang === 'ja' && i18n.ja[key]) {
+          el.innerHTML = i18n.ja[key];
+        } else if (lang === 'en' && enContent[key]) {
+          el.innerHTML = enContent[key];
+        }
+      });
+
+      // Update page title & meta
+      if (lang === 'ja') {
+        document.title = 'Verba — Macから出ない音声入力';
+        document.querySelector('meta[name="description"]').content = 'macOS専用のローカル音声入力アプリ。WhisperKit + MLXでデバイス上で完結。クラウド不要。';
+      } else {
+        document.title = 'Verba — Voice input that stays on your Mac';
+        document.querySelector('meta[name="description"]').content = 'Local-first voice-to-text for macOS. WhisperKit + MLX, entirely on-device. No cloud, no account, no data leaves your machine.';
+      }
+
+      // Persist preference
+      try { localStorage.setItem('verba-lang', lang); } catch(e) {}
+    }
+
+    // Switcher event
+    document.querySelectorAll('.lang-switcher button').forEach(btn => {
+      btn.addEventListener('click', () => setLang(btn.dataset.lang));
+    });
+
+    // Auto-detect from saved pref or browser lang
+    (function() {
+      let saved;
+      try { saved = localStorage.getItem('verba-lang'); } catch(e) {}
+      if (saved === 'ja' || saved === 'en') {
+        if (saved !== 'en') setLang(saved);
+      } else if (navigator.language && navigator.language.startsWith('ja')) {
+        setLang('ja');
+      }
+    })();
+
     // ── Hero waveform ──
     (function() {
       const container = document.getElementById('heroWaveform');
@@ -1048,7 +1217,6 @@
         bar.className = 'bar';
         const pct = i / count;
         const centerDist = Math.abs(pct - 0.5) * 2;
-        // gradient from warm (center) to cool (edges)
         const r = Math.round(240 - centerDist * 116);
         const g = Math.round(160 - centerDist * 52);
         const b = Math.round(96 + centerDist * 156);
@@ -1064,8 +1232,7 @@
 
       let scrollFactor = 1;
       window.addEventListener('scroll', function() {
-        const y = window.scrollY;
-        scrollFactor = Math.max(0, 1 - y / 400);
+        scrollFactor = Math.max(0, 1 - window.scrollY / 400);
         container.style.opacity = scrollFactor;
       }, { passive: true });
 
@@ -1087,9 +1254,6 @@
 
     // ── Demo animation ──
     (function() {
-      const raw = "So um basically what I was thinking is that we should uh you know set up a meeting for like next Wednesday at around 2 PM if that works for everyone";
-      const formatted = "I'd like to set up a meeting for next Wednesday at 2 PM.";
-
       const indicator = document.querySelector('.demo-indicator');
       const waveform = document.querySelector('.demo-waveform');
       const streamEl = document.querySelector('.demo-stream');
@@ -1104,6 +1268,8 @@
       function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
       async function runCycle() {
+        const texts = demoTexts[currentLang] || demoTexts.en;
+
         streamEl.textContent = '';
         streamEl.style.opacity = '1';
         streamEl.style.color = '';
@@ -1119,12 +1285,12 @@
         indicator.style.opacity = '1';
         indicator.style.transform = 'translateY(0)';
         statusDot.style.background = 'var(--red)';
-        statusLabel.textContent = 'Listening';
+        statusLabel.textContent = texts.listening;
 
         await sleep(400);
 
-        for (let i = 0; i < raw.length; i++) {
-          streamEl.textContent = raw.substring(0, i + 1);
+        for (let i = 0; i < texts.raw.length; i++) {
+          streamEl.textContent = texts.raw.substring(0, i + 1);
           await sleep(50 + Math.random() * 30);
         }
 
@@ -1132,15 +1298,15 @@
 
         waveform.style.opacity = '0';
         statusDot.style.background = 'var(--orange)';
-        statusLabel.textContent = 'Formatting...';
+        statusLabel.textContent = texts.formatting;
         streamEl.style.opacity = '0.5';
 
         await sleep(1400);
 
         statusDot.style.background = 'var(--green)';
-        statusLabel.textContent = 'Done';
+        statusLabel.textContent = texts.done;
         streamEl.style.opacity = '1';
-        streamEl.textContent = formatted;
+        streamEl.textContent = texts.formatted;
         streamEl.style.color = 'var(--warm)';
 
         await sleep(1000);
@@ -1151,8 +1317,8 @@
         await sleep(400);
 
         editor.classList.add('glow');
-        for (let i = 0; i < formatted.length; i++) {
-          pastedEl.textContent = formatted.substring(0, i + 1);
+        for (let i = 0; i < texts.formatted.length; i++) {
+          pastedEl.textContent = texts.formatted.substring(0, i + 1);
           await sleep(12);
         }
 
