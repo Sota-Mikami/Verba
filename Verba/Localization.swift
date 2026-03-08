@@ -148,6 +148,18 @@ struct L10n {
     var newWord: String { s("New word", "新しい用語") }
     var filterAll: String { s("All", "すべて") }
 
+    // MARK: License
+    var trialExpiredMessage: String { s("Your 48-hour trial has ended.\nEnter a license key to continue using Verba.", "48時間のトライアルが終了しました。\n引き続き利用するにはライセンスキーを入力してください。") }
+    var licenseKey: String { s("License Key", "ライセンスキー") }
+    var activateLicense: String { s("Activate", "有効化") }
+    var purchaseLicense: String { s("Purchase a License", "ライセンスを購入") }
+    var sponsorOnGitHub: String { s("Support via GitHub Sponsors", "GitHub Sponsorsで支援する") }
+    var supportNote: String { s("Support is provided via GitHub Issues only.", "サポートはGitHub Issuesのみで提供しています。") }
+    var licenseActivated: String { s("License activated", "ライセンス有効") }
+    var trialRemaining: String { s("Trial", "トライアル") }
+    var licenseExpired: String { s("Trial expired", "トライアル期限切れ") }
+    var deactivateLicense: String { s("Deactivate License", "ライセンスを無効化") }
+
     // MARK: Onboarding
     var onboardingWelcome: String { s("Welcome to Verba", "Verbaへようこそ") }
     var onboardingMicTitle: String { s("Microphone Access", "マイクへのアクセス") }
