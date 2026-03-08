@@ -2,6 +2,21 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [0.3.2] - 2026-03-08
+
+### Changed
+- Dictionary simplified to term-only list (removed readings/auto-added concepts)
+- Dictionary terms now injected into Whisper as promptTokens for better recognition accuracy
+- Dictionary terms passed directly to LLM formatting prompt
+- Formatting prompt rewritten to be English-based, multilingual-aware, and explicitly prohibit markdown
+- Menu bar simplified: removed Mode/Prompt pickers, cleaner layout with icons
+- Landing page: improved nav button visibility, version-independent download links
+
+### Removed
+- `applyDictionary()` Fast-mode string replacement (replaced by Whisper prompt injection)
+- Readings field from Dictionary editor
+- Auto-added/manual filter from Dictionary
+
 ## [0.3.0] - 2026-03-08
 
 ### Added
