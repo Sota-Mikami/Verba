@@ -23,7 +23,7 @@ struct LicenseView: View {
                     .font(.system(size: 22, weight: .bold))
                     .foregroundStyle(DS.textNormal)
 
-                Text(appState.l10n.trialExpiredMessage)
+                Text(headerMessage)
                     .font(.system(size: 13))
                     .foregroundStyle(DS.textMuted)
                     .multilineTextAlignment(.center)
@@ -128,6 +128,13 @@ struct LicenseView: View {
                 dismiss()
             }
         }
+    }
+
+    private var headerMessage: String {
+        if case .licenseExpired = licenseService.status {
+            return appState.l10n.licenseExpiredMessage
+        }
+        return appState.l10n.trialExpiredMessage
     }
 }
 

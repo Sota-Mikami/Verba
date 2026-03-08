@@ -8,22 +8,27 @@ private let logger = Logger(subsystem: "com.sotamikami.verba", category: "Licens
 
 enum LicenseConstants {
     static let trialDurationSeconds: TimeInterval = 48 * 60 * 60 // 48 hours
+    static let validateIntervalSeconds: TimeInterval = 7 * 24 * 60 * 60 // Re-validate weekly
     static let keychainService = "com.sotamikami.verba.license"
     static let keychainTrialStart = "trialStartDate"
     static let keychainLicenseKey = "licenseKey"
     static let keychainActivated = "activated"
+    static let keychainExpiresAt = "expiresAt"
+    static let keychainLastValidated = "lastValidated"
 
     // LemonSqueezy — these are public-facing, not secrets
     static let lemonSqueezyStoreURL = "https://verba-app.lemonsqueezy.com/buy/YOUR_PRODUCT_ID" // TODO: Replace with actual product URL
     static let lemonSqueezyActivateURL = "https://api.lemonsqueezy.com/v1/licenses/activate"
+    static let lemonSqueezyValidateURL = "https://api.lemonsqueezy.com/v1/licenses/validate"
 }
 
 // MARK: - License Status
 
 enum LicenseStatus: Equatable {
     case trial(remaining: TimeInterval)
-    case expired
-    case activated
+    case trialExpired
+    case activated(expiresAt: Date?)
+    case licenseExpired
 }
 
 // MARK: - Keychain Helper
@@ -90,13 +95,28 @@ class LicenseService: ObservableObject {
 
     func refreshStatus() {
         #if DEBUG
-        status = .activated
+        status = .activated(expiresAt: nil)
         return
         #endif
 
         // Check if already activated
         if KeychainHelper.load(key: LicenseConstants.keychainActivated) == "true" {
-            status = .activated
+            // Check if license has expiration
+            if let expiresString = KeychainHelper.load(key: LicenseConstants.keychainExpiresAt),
+               let expiresTimestamp = Double(expiresString) {
+                let expiresAt = Date(timeIntervalSince1970: expiresTimestamp)
+                if expiresAt > Date() {
+                    status = .activated(expiresAt: expiresAt)
+                    // Trigger background re-validation if due
+                    scheduleValidationIfNeeded()
+                } else {
+                    status = .licenseExpired
+                }
+            } else {
+                // No expiration stored (legacy or lifetime) — treat as active
+                status = .activated(expiresAt: nil)
+                scheduleValidationIfNeeded()
+            }
             return
         }
 
@@ -108,7 +128,7 @@ class LicenseService: ObservableObject {
             if remaining > 0 {
                 status = .trial(remaining: remaining)
             } else {
-                status = .expired
+                status = .trialExpired
             }
         } else {
             // First launch — start trial
@@ -120,8 +140,10 @@ class LicenseService: ObservableObject {
     }
 
     var isLocked: Bool {
-        if case .expired = status { return true }
-        return false
+        switch status {
+        case .trialExpired, .licenseExpired: return true
+        default: return false
+        }
     }
 
     var trialRemainingFormatted: String? {
@@ -132,6 +154,14 @@ class LicenseService: ObservableObject {
             return "\(hours)h \(minutes)m"
         }
         return "\(minutes)m"
+    }
+
+    var licenseExpiresFormatted: String? {
+        guard case .activated(let expiresAt) = status, let date = expiresAt else { return nil }
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
     }
 
     // MARK: - LemonSqueezy Activation
@@ -147,13 +177,17 @@ class LicenseService: ObservableObject {
         activationError = nil
 
         do {
-            let activated = try await callActivateAPI(key: trimmed)
-            if activated {
-                KeychainHelper.save(key: LicenseConstants.keychainLicenseKey, value: trimmed)
-                KeychainHelper.save(key: LicenseConstants.keychainActivated, value: "true")
-                status = .activated
-                logger.info("License activated successfully")
+            let result = try await callActivateAPI(key: trimmed)
+            KeychainHelper.save(key: LicenseConstants.keychainLicenseKey, value: trimmed)
+            KeychainHelper.save(key: LicenseConstants.keychainActivated, value: "true")
+            KeychainHelper.save(key: LicenseConstants.keychainLastValidated, value: String(Date().timeIntervalSince1970))
+            if let expiresAt = result.expiresAt {
+                KeychainHelper.save(key: LicenseConstants.keychainExpiresAt, value: String(expiresAt.timeIntervalSince1970))
+                status = .activated(expiresAt: expiresAt)
+            } else {
+                status = .activated(expiresAt: nil)
             }
+            logger.info("License activated successfully")
         } catch {
             activationError = error.localizedDescription
             logger.error("Activation failed: \(error.localizedDescription)")
@@ -162,12 +196,71 @@ class LicenseService: ObservableObject {
         isActivating = false
     }
 
-    private func callActivateAPI(key: String) async throws -> Bool {
+    // MARK: - Periodic Validation
+
+    private func scheduleValidationIfNeeded() {
+        guard let lastString = KeychainHelper.load(key: LicenseConstants.keychainLastValidated),
+              let lastTimestamp = Double(lastString) else {
+            // Never validated remotely — do it now
+            triggerBackgroundValidation()
+            return
+        }
+        let elapsed = Date().timeIntervalSince1970 - lastTimestamp
+        if elapsed > LicenseConstants.validateIntervalSeconds {
+            triggerBackgroundValidation()
+        }
+    }
+
+    private func triggerBackgroundValidation() {
+        guard let storedKey = KeychainHelper.load(key: LicenseConstants.keychainLicenseKey) else { return }
+        Task {
+            await validateLicense(key: storedKey)
+        }
+    }
+
+    private func validateLicense(key: String) async {
+        do {
+            let result = try await callValidateAPI(key: key)
+            KeychainHelper.save(key: LicenseConstants.keychainLastValidated, value: String(Date().timeIntervalSince1970))
+
+            if !result.valid {
+                // License revoked or invalid
+                KeychainHelper.save(key: LicenseConstants.keychainActivated, value: "false")
+                status = .licenseExpired
+                logger.info("License validation failed — license revoked")
+                return
+            }
+
+            // Update expiration from server
+            if let expiresAt = result.expiresAt {
+                KeychainHelper.save(key: LicenseConstants.keychainExpiresAt, value: String(expiresAt.timeIntervalSince1970))
+                if expiresAt > Date() {
+                    status = .activated(expiresAt: expiresAt)
+                } else {
+                    status = .licenseExpired
+                    logger.info("License expired (server confirmed)")
+                }
+            }
+
+            logger.info("License re-validated successfully")
+        } catch {
+            // Network error during background validation — keep current status (offline grace)
+            logger.debug("Background validation failed (offline?): \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - API Calls
+
+    private struct APIResult {
+        let valid: Bool
+        let expiresAt: Date?
+    }
+
+    private func callActivateAPI(key: String) async throws -> APIResult {
         guard let url = URL(string: LicenseConstants.lemonSqueezyActivateURL) else {
             throw LicenseError.invalidURL
         }
 
-        // Get a machine identifier for instance_name
         let instanceName = Host.current().localizedName ?? "Mac"
 
         var request = URLRequest(url: url)
@@ -188,21 +281,10 @@ class LicenseService: ObservableObject {
         }
 
         if httpResponse.statusCode == 200 {
-            // Parse response to confirm activation
-            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let activated = json["activated"] as? Bool, activated {
-                return true
-            }
-            // Some responses have "valid" instead
-            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let valid = json["valid"] as? Bool, valid {
-                return true
-            }
-            return true // 200 = success
+            return parseAPIResponse(data: data)
         } else if httpResponse.statusCode == 404 {
             throw LicenseError.invalidKey
         } else if httpResponse.statusCode == 422 {
-            // Parse error message
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let error = json["error"] as? String {
                 throw LicenseError.apiError(error)
@@ -213,11 +295,70 @@ class LicenseService: ObservableObject {
         }
     }
 
+    private func callValidateAPI(key: String) async throws -> APIResult {
+        guard let url = URL(string: LicenseConstants.lemonSqueezyValidateURL) else {
+            throw LicenseError.invalidURL
+        }
+
+        let instanceName = Host.current().localizedName ?? "Mac"
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+
+        let body: [String: String] = [
+            "license_key": key,
+            "instance_name": instanceName,
+        ]
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw LicenseError.networkError
+        }
+
+        if httpResponse.statusCode == 200 {
+            return parseAPIResponse(data: data)
+        } else {
+            throw LicenseError.apiError("Validation failed: HTTP \(httpResponse.statusCode)")
+        }
+    }
+
+    /// Parse LemonSqueezy activate/validate response.
+    /// Response shape: { "valid": bool, "license_key": { "expires_at": "ISO8601 | null", ... }, ... }
+    private func parseAPIResponse(data: Data) -> APIResult {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return APIResult(valid: true, expiresAt: nil)
+        }
+
+        let valid = (json["valid"] as? Bool) ?? (json["activated"] as? Bool) ?? true
+
+        // expires_at lives inside license_key object
+        var expiresAt: Date?
+        if let licenseKey = json["license_key"] as? [String: Any],
+           let expiresString = licenseKey["expires_at"] as? String {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            expiresAt = formatter.date(from: expiresString)
+            // Retry without fractional seconds
+            if expiresAt == nil {
+                formatter.formatOptions = [.withInternetDateTime]
+                expiresAt = formatter.date(from: expiresString)
+            }
+        }
+
+        return APIResult(valid: valid, expiresAt: expiresAt)
+    }
+
     // MARK: - Deactivate (for settings)
 
     func deactivate() {
         KeychainHelper.delete(key: LicenseConstants.keychainActivated)
         KeychainHelper.delete(key: LicenseConstants.keychainLicenseKey)
+        KeychainHelper.delete(key: LicenseConstants.keychainExpiresAt)
+        KeychainHelper.delete(key: LicenseConstants.keychainLastValidated)
         refreshStatus()
         logger.info("License deactivated")
     }

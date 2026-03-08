@@ -155,7 +155,9 @@ struct L10n {
     var purchaseLicense: String { s("Purchase a License", "ライセンスを購入") }
     var sponsorOnGitHub: String { s("Support via GitHub Sponsors", "GitHub Sponsorsで支援する") }
     var supportNote: String { s("Support is provided via GitHub Issues only.", "サポートはGitHub Issuesのみで提供しています。") }
+    var licenseExpiredMessage: String { s("Your license has expired.\nRenew to continue using Verba.", "ライセンスの有効期限が切れました。\n引き続き利用するには更新してください。") }
     var licenseActivated: String { s("License activated", "ライセンス有効") }
+    var licenseExpiresOn: String { s("Expires on", "有効期限") }
     var trialRemaining: String { s("Trial", "トライアル") }
     var licenseExpired: String { s("Trial expired", "トライアル期限切れ") }
     var deactivateLicense: String { s("Deactivate License", "ライセンスを無効化") }
