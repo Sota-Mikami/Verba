@@ -61,8 +61,15 @@ struct MainView: View {
                 .interactiveDismissDisabled()
         }
         .onAppear { checkLicense() }
-        .onReceive(appState.licenseService.$status) { status in
-            if case .expired = status { showLicenseModal = true }
+        .onReceive(appState.licenseService.$status) { newStatus in
+            switch newStatus {
+            case .trialExpired, .licenseExpired:
+                showLicenseModal = true
+            case .activated:
+                showLicenseModal = false
+            default:
+                break
+            }
         }
     }
 
