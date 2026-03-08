@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.3.1</title>
-            <description><![CDATA[<h2>What's New in v0.3.1</h2><ul><li>Release v0.3.1</li></ul>]]></description>
-            <pubDate>Sun, 08 Mar 2026 14:35:36 +0700</pubDate>
+            <title>Version 0.3.2</title>
+            <description><![CDATA[<h2>What's New in v0.3.2</h2><ul><li>Dictionary simplified to term-only list (removed readings/auto-added concepts)</li><li>Dictionary terms now injected into Whisper as promptTokens for better recognition accuracy</li><li>Dictionary terms passed directly to LLM formatting prompt</li><li>Formatting prompt rewritten to be English-based, multilingual-aware, and explicitly prohibit markdown</li><li>Menu bar simplified: removed Mode/Prompt pickers, cleaner layout with icons</li><li>Landing page: improved nav button visibility, version-independent download links</li><li>`applyDictionary()` Fast-mode string replacement (replaced by Whisper prompt injection)</li><li>Readings field from Dictionary editor</li><li>Auto-added/manual filter from Dictionary</li></ul>]]></description>
+            <pubDate>Sun, 08 Mar 2026 14:59:00 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.3.1/Verba-v0.3.1.dmg"
-                sparkle:version="5"
-                sparkle:shortVersionString="0.3.1"
-                sparkle:edSignature="NEdhuOotS07Vf2ctOYf8+HB8zLEg+OVkEiaYZpmfa5rBm5ZMeu5ldq8oSs3xQktY8rBt9Qf9wCu6BW7ds9ECBg=="
-                length="9611531"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.3.2/Verba-v0.3.2.dmg"
+                sparkle:version="6"
+                sparkle:shortVersionString="0.3.2"
+                sparkle:edSignature="rNL2R1eeYtz5cuPsGV86a40hNFoDuy58woZBKNaOHpjVPPUGsh6ulqC71u0ceMtq7WZeg0TThW9SbD/949XRBA=="
+                length="9603978"
                 type="application/octet-stream"
             />
         </item>
