@@ -619,6 +619,186 @@
       .btn-large { padding: 12px 24px; font-size: 14px; }
     }
 
+    /* Demo animation */
+    .demo-wrapper {
+      position: relative;
+      max-width: 600px;
+      margin: 56px auto 0;
+      perspective: 1000px;
+    }
+
+    /* Editor window */
+    .demo-editor {
+      background: #1a1a2e;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    .demo-editor-bar {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .demo-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot-red { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green { background: #28c840; }
+
+    .demo-editor-title {
+      flex: 1;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .demo-editor-body {
+      padding: 20px 24px;
+      min-height: 140px;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .demo-line-existing {
+      color: var(--text-primary);
+    }
+
+    .demo-line-existing.dim {
+      color: var(--text-muted);
+    }
+
+    .demo-pasted-line {
+      display: inline;
+      position: relative;
+    }
+
+    .demo-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 18px;
+      background: var(--accent);
+      vertical-align: text-bottom;
+      animation: cursorBlink 1s step-end infinite;
+    }
+
+    .demo-pasted-text {
+      color: var(--accent-light);
+      animation: pasteText 10s infinite;
+    }
+
+    @keyframes cursorBlink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    /* Floating indicator */
+    .demo-indicator {
+      position: absolute;
+      top: -12px;
+      right: -20px;
+      z-index: 10;
+      transition: opacity 0.5s, transform 0.5s;
+    }
+
+    .demo-indicator-inner {
+      background: rgba(20, 20, 32, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 14px 18px;
+      min-width: 240px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .demo-waveform {
+      display: flex;
+      gap: 3px;
+      align-items: center;
+      justify-content: center;
+      height: 24px;
+      margin-bottom: 8px;
+      transition: opacity 0.3s;
+    }
+
+    .demo-waveform span {
+      display: block;
+      width: 3px;
+      border-radius: 2px;
+      background: var(--accent);
+    }
+
+    .demo-waveform span:nth-child(1) { animation: wave 0.8s ease-in-out infinite; height: 8px; }
+    .demo-waveform span:nth-child(2) { animation: wave 0.8s ease-in-out 0.1s infinite; height: 14px; }
+    .demo-waveform span:nth-child(3) { animation: wave 0.8s ease-in-out 0.15s infinite; height: 20px; }
+    .demo-waveform span:nth-child(4) { animation: wave 0.8s ease-in-out 0.2s infinite; height: 12px; }
+    .demo-waveform span:nth-child(5) { animation: wave 0.8s ease-in-out 0.25s infinite; height: 18px; }
+    .demo-waveform span:nth-child(6) { animation: wave 0.8s ease-in-out 0.3s infinite; height: 10px; }
+    .demo-waveform span:nth-child(7) { animation: wave 0.8s ease-in-out 0.35s infinite; height: 16px; }
+    .demo-waveform span:nth-child(8) { animation: wave 0.8s ease-in-out 0.4s infinite; height: 22px; }
+    .demo-waveform span:nth-child(9) { animation: wave 0.8s ease-in-out 0.45s infinite; height: 14px; }
+    .demo-waveform span:nth-child(10) { animation: wave 0.8s ease-in-out 0.5s infinite; height: 8px; }
+
+    @keyframes wave {
+      0%, 100% { transform: scaleY(0.4); opacity: 0.5; }
+      50% { transform: scaleY(1); opacity: 1; }
+    }
+
+    .demo-streaming-text {
+      font-size: 12px;
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 18px;
+      transition: opacity 0.3s, color 0.3s;
+    }
+
+    .demo-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .demo-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      animation: statusDot 10s infinite;
+    }
+
+    .demo-status-label {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 768px) {
+      .demo-wrapper { margin-top: 40px; }
+      .demo-indicator { right: -8px; top: -8px; }
+      .demo-indicator-inner { min-width: 180px; padding: 10px 14px; }
+      .demo-waveform span { width: 2px; }
+      .demo-editor-body { padding: 16px; font-size: 13px; }
+    }
+
+    @media (max-width: 480px) {
+      .demo-indicator { position: relative; right: auto; top: auto; margin: -20px auto 16px; }
+      .demo-wrapper { margin-top: 32px; }
+    }
+
     kbd {
       display: inline-block;
       padding: 2px 7px;
@@ -680,6 +860,46 @@
         <span>Apple Silicon</span>
         <span>MIT License</span>
       </div>
+
+      <!-- Animated Demo -->
+      <div class="demo-wrapper">
+        <!-- Background: fake editor window -->
+        <div class="demo-editor">
+          <div class="demo-editor-bar">
+            <div class="demo-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <span class="demo-editor-title">Notes.app</span>
+          </div>
+          <div class="demo-editor-body">
+            <div class="demo-line-existing">Meeting notes — March 2026</div>
+            <div class="demo-line-existing dim">Discussed Q2 roadmap and priorities.</div>
+            <div class="demo-line-existing dim">&nbsp;</div>
+            <div class="demo-pasted-line">
+              <span class="demo-cursor"></span>
+              <span class="demo-pasted-text"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating indicator overlay -->
+        <div class="demo-indicator">
+          <div class="demo-indicator-inner">
+            <div class="demo-waveform">
+              <span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <div class="demo-streaming-text"></div>
+            <div class="demo-status">
+              <span class="demo-status-dot"></span>
+              <span class="demo-status-label">Listening</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -899,5 +1119,93 @@
     </div>
   </footer>
 
+  <script>
+    (function() {
+      const raw = "えーと ですね あの来週の水曜に ミーティングを設定したいんですけど 午後2時からでお願いできますか";
+      const formatted = "来週の水曜にミーティングを設定したいんですけど、午後2時からでお願いできますか。";
+
+      const indicator = document.querySelector('.demo-indicator');
+      const waveform = document.querySelector('.demo-waveform');
+      const streamEl = document.querySelector('.demo-streaming-text');
+      const statusDot = document.querySelector('.demo-status-dot');
+      const statusLabel = document.querySelector('.demo-status-label');
+      const pastedEl = document.querySelector('.demo-pasted-text');
+      const cursorEl = document.querySelector('.demo-cursor');
+
+      if (!streamEl) return;
+
+      function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+      async function runCycle() {
+        // Reset all
+        streamEl.textContent = '';
+        streamEl.style.opacity = '1';
+        streamEl.style.color = '';
+        pastedEl.textContent = '';
+        cursorEl.style.opacity = '1';
+        indicator.style.opacity = '0';
+        indicator.style.transform = 'translateY(8px)';
+        waveform.style.opacity = '1';
+
+        await sleep(800);
+
+        // Indicator appears
+        indicator.style.opacity = '1';
+        indicator.style.transform = 'translateY(0)';
+        statusDot.style.background = 'var(--red)';
+        statusLabel.textContent = 'Listening';
+
+        await sleep(400);
+
+        // Phase 1: Stream text character by character
+        for (let i = 0; i < raw.length; i++) {
+          streamEl.textContent = raw.substring(0, i + 1);
+          await sleep(50 + Math.random() * 30);
+        }
+
+        await sleep(500);
+
+        // Phase 2: Formatting
+        waveform.style.opacity = '0';
+        statusDot.style.background = 'var(--orange)';
+        statusLabel.textContent = 'Formatting...';
+        streamEl.style.opacity = '0.5';
+
+        await sleep(1400);
+
+        // Phase 3: Show formatted result
+        statusDot.style.background = 'var(--green)';
+        statusLabel.textContent = 'Done';
+        streamEl.style.opacity = '1';
+        streamEl.textContent = formatted;
+        streamEl.style.color = 'var(--accent-light)';
+
+        await sleep(1000);
+
+        // Phase 4: Indicator fades out
+        indicator.style.opacity = '0';
+        indicator.style.transform = 'translateY(-4px)';
+
+        await sleep(400);
+
+        // Phase 5: Text types into editor
+        for (let i = 0; i < formatted.length; i++) {
+          pastedEl.textContent = formatted.substring(0, i + 1);
+          await sleep(12);
+        }
+
+        await sleep(2500);
+      }
+
+      async function loop() {
+        while (true) {
+          await runCycle();
+          await sleep(300);
+        }
+      }
+
+      setTimeout(loop, 1200);
+    })();
+  </script>
 </body>
 </html>
