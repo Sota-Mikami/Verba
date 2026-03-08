@@ -18,150 +18,70 @@ struct MenuBarView: View {
                 Circle()
                     .fill(statusColor)
                     .frame(width: 8, height: 8)
-                Text(appState.statusMessage)
+                Text(statusLabel)
                     .font(.system(size: 12, weight: .medium))
-                    .lineLimit(2)
+                    .foregroundStyle(.primary)
                 Spacer()
-                if appState.isModelLoaded {
-                    Text(appState.mode.rawValue)
-                        .font(.system(size: 10, weight: .medium))
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(.quaternary)
-                        .clipShape(Capsule())
-                }
+                Text(appState.mode.rawValue)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(.quaternary)
+                    .clipShape(Capsule())
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-
-            Divider()
-
-            if appState.isModelLoaded {
-                // Shortcuts hint
-                VStack(spacing: 6) {
-                    shortcutHint(label: appState.l10n.pushToTalk, shortcut: appState.pttShortcut.label)
-                    shortcutHint(label: appState.l10n.handsFree, shortcut: appState.hfShortcut.label)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-
-                if appState.isRecording {
-                    Button {
-                        appState.toggleRecording()
-                    } label: {
-                        HStack {
-                            Image(systemName: "stop.circle.fill")
-                                .foregroundStyle(.red)
-                            Text(appState.l10n.stopRecording)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 4)
-                }
-
-                Divider()
-
-                // Mode picker
-                Picker(appState.l10n.mode, selection: $appState.mode) {
-                    ForEach(TranscriptionMode.allCases, id: \.self) { mode in
-                        Text(mode.rawValue).tag(mode)
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 4)
-
-                // Prompt picker (only in Formatted mode)
-                if appState.mode == .formatted {
-                    Picker(appState.l10n.prompt, selection: $appState.selectedPromptId) {
-                        ForEach(appState.allPrompts) { prompt in
-                            Text(prompt.name).tag(prompt.id.uuidString)
-                        }
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
-                }
-            } else {
-                HStack(spacing: 6) {
-                    ProgressView()
-                        .scaleEffect(0.5)
-                        .frame(width: 12, height: 12)
-                    Text(appState.l10n.loadingModel)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
 
             // Last transcription
             if !appState.lastTranscription.isEmpty {
                 Divider()
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(appState.l10n.lastTranscription)
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.tertiary)
+                VStack(alignment: .leading, spacing: 6) {
                     Text(appState.lastTranscription)
                         .font(.system(size: 12))
                         .lineLimit(3)
+                        .foregroundStyle(.primary)
+                    Button {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(appState.lastTranscription, forType: .string)
+                    } label: {
+                        Label(appState.l10n.copy, systemImage: "doc.on.doc")
+                            .font(.system(size: 11))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-
-                Button(appState.l10n.copy) {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(appState.lastTranscription, forType: .string)
-                }
-                .font(.system(size: 12))
-                .padding(.horizontal, 12)
-                .padding(.bottom, 4)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
             }
 
             Divider()
 
-            Button(appState.l10n.openVerba) {
+            // Actions
+            MenuBarButton(appState.l10n.openVerba, icon: "macwindow") {
                 appState.mainWindow.open(appState: appState)
             }
-            .font(.system(size: 12))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 4)
 
-            Button {
+            MenuBarButton(appState.l10n.checkForUpdates, icon: "arrow.triangle.2.circlepath") {
                 updater.checkForUpdates()
-            } label: {
-                HStack(spacing: 4) {
-                    Text(appState.l10n.checkForUpdates)
-                    if updateChecker.canCheckForUpdates {
-                        // Sparkle is ready — no special indicator needed
-                    }
-                }
             }
             .disabled(!updateChecker.canCheckForUpdates)
-            .font(.system(size: 12))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 4)
 
-            Button(appState.l10n.quitVerba) {
+            Divider()
+
+            MenuBarButton(appState.l10n.quitVerba, icon: "xmark.circle") {
                 NSApplication.shared.terminate(nil)
             }
-            .font(.system(size: 12))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 4)
             .padding(.bottom, 4)
         }
-        .frame(width: 240)
+        .frame(width: 260)
     }
 
-    private func shortcutHint(label: String, shortcut: String) -> some View {
-        HStack {
-            Text(label)
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-            Spacer()
-            Text(shortcut)
-                .font(.system(size: 11, weight: .medium, design: .rounded))
-                .foregroundStyle(.secondary)
-        }
+    private var statusLabel: String {
+        if appState.isRecording { return appState.l10n.stopRecording }
+        if appState.isProcessing { return appState.statusMessage }
+        if !appState.isModelLoaded { return appState.l10n.loadingModel }
+        return appState.l10n.ready
     }
 
     private var statusColor: Color {
@@ -169,5 +89,34 @@ struct MenuBarView: View {
         if appState.isProcessing { return .orange }
         if !appState.isModelLoaded { return .yellow }
         return .green
+    }
+}
+
+private struct MenuBarButton: View {
+    let label: String
+    let icon: String
+    let action: () -> Void
+
+    init(_ label: String, icon: String, action: @escaping () -> Void) {
+        self.label = label
+        self.icon = icon
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .frame(width: 16)
+                    .foregroundStyle(.secondary)
+                Text(label)
+                Spacer()
+            }
+        }
+        .buttonStyle(.plain)
+        .font(.system(size: 12))
+        .padding(.horizontal, 14)
+        .padding(.vertical, 6)
+        .contentShape(Rectangle())
     }
 }
