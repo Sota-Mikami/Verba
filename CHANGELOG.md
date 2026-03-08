@@ -2,6 +2,11 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [0.4.8] - 2026-03-09
+
+### Changed
+- **Settings layout** — Voice Engine sections (Whisper model, prompt, formatting engine) are now always visible instead of hidden behind a collapsed toggle.
+
 ## [0.4.7] - 2026-03-09
 
 ### Changed
