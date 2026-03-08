@@ -51,7 +51,6 @@ struct L10n {
     var sessions: String { s("Sessions", "セッション") }
     var words: String { s("Words", "文字数") }
     var timeSaved: String { s("Time Saved", "節約時間") }
-    var usageTrend: String { s("USAGE TREND", "使用推移") }
     var recentTranscriptions: String { s("RECENT TRANSCRIPTIONS", "最近の文字起こし") }
     var noTranscriptionsYet: String { s("No transcriptions yet", "まだ文字起こしはありません") }
     var holdFnToStart: String { s("Hold fn to start your first recording", "fnキーを長押しして最初の録音を開始") }

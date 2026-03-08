@@ -2,6 +2,16 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [0.2.3] - 2026-03-08
+
+### Added
+- GitHub-style usage heatmap on Dashboard (removed — favoring visible recent transcriptions)
+- Hover interactions and tooltips on all actionable buttons across the app
+
+### Changed
+- Dashboard simplified: removed usage trend chart to keep recent transcriptions visible
+- DMG is now the standard distribution format (replaced zip)
+
 ## [0.2.2] - 2026-03-08
 
 ### Added

@@ -27,9 +27,6 @@ struct DashboardView: View {
                 statsGrid
                     .offset(y: appeared ? 0 : 12)
                     .opacity(appeared ? 1 : 0)
-                usageTrend
-                    .offset(y: appeared ? 0 : 12)
-                    .opacity(appeared ? 1 : 0)
                 recentSection
                     .offset(y: appeared ? 0 : 12)
                     .opacity(appeared ? 1 : 0)
@@ -110,64 +107,6 @@ struct DashboardView: View {
         }
     }
 
-    // MARK: - Usage Trend
-
-    private var last7DaysCounts: [(day: String, count: Int)] {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        var result: [(String, Int)] = []
-        let formatter = DateFormatter()
-        formatter.locale = Locale.current
-        formatter.dateFormat = "EEE"
-        for offset in (0..<7).reversed() {
-            guard let date = calendar.date(byAdding: .day, value: -offset, to: today) else { continue }
-            let nextDay = calendar.date(byAdding: .day, value: 1, to: date)!
-            let count = appState.history.filter { $0.timestamp >= date && $0.timestamp < nextDay }.count
-            let label = formatter.string(from: date)
-            result.append((label, count))
-        }
-        return result
-    }
-
-    private var usageTrend: some View {
-        let data = last7DaysCounts
-        let maxCount = max(data.map(\.count).max() ?? 1, 1)
-
-        return VStack(alignment: .leading, spacing: 12) {
-            Text(appState.l10n.usageTrend)
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(DS.textMuted)
-                .textCase(.uppercase)
-
-            HStack(alignment: .bottom, spacing: 8) {
-                ForEach(Array(data.enumerated()), id: \.offset) { index, entry in
-                    VStack(spacing: 6) {
-                        Text("\(entry.count)")
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
-                            .foregroundStyle(entry.count > 0 ? DS.textNormal : DS.textFaint)
-
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(DS.blurple)
-                            .frame(height: entry.count > 0
-                                ? max(8, CGFloat(entry.count) / CGFloat(maxCount) * 100)
-                                : 4)
-                            .opacity(entry.count > 0 ? 1.0 : 0.25)
-                            .animation(.spring(response: 0.6, dampingFraction: 0.75).delay(Double(index) * 0.05), value: entry.count)
-
-                        Text(entry.day)
-                            .font(.system(size: 10))
-                            .foregroundStyle(DS.textFaint)
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-            }
-            .frame(height: 140)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(DS.cardBg)
-        .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
-    }
 
     // MARK: - Recent
 
