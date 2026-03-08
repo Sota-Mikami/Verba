@@ -26,7 +26,8 @@ class FloatingIndicatorState: ObservableObject {
     var onCancelRecording: (() -> Void)?
 
     @MainActor func pushLevel(_ level: Float) {
-        let normalized = CGFloat(min(level * 5, 1.0))
+        // Typical speech RMS is 0.005–0.05; amplify so it fills the waveform visually
+        let normalized = CGFloat(min(level * 40, 1.0))
         audioLevels.append(normalized)
         if audioLevels.count > 30 {
             audioLevels.removeFirst()
@@ -51,10 +52,9 @@ class FloatingIndicatorController {
         state.isRecording = isRecording
         state.statusMessage = statusMessage
         state.mode = mode
-        if !isRecording {
-            state.audioLevels = Array(repeating: 0, count: 30)
-            state.resetStreaming()
-        }
+        state.errorMessage = nil
+        state.audioLevels = Array(repeating: 0, count: 30)
+        state.resetStreaming()
 
         let indicatorHeight: CGFloat = isRecording ? 96 : 72
 
@@ -678,7 +678,7 @@ struct RecordingActionButton: View {
 }
 
 struct ElapsedTimeView: View {
-    private let startDate = Date()
+    @State private var startDate = Date()
     private let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
     @State private var displaySeconds: Int = 0
 

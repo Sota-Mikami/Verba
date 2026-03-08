@@ -173,9 +173,15 @@ class HotkeyController {
     }
 
     private func handle(_ event: NSEvent) {
-        guard isEnabled else { return }
+        guard isEnabled else {
+            DebugLog.log("[HK] handle: isEnabled=false, ignoring event")
+            return
+        }
         if let until = suppressUntil {
-            if Date() < until { return }
+            if Date() < until {
+                DebugLog.log("[HK] handle: suppressed until \(until)")
+                return
+            }
             suppressUntil = nil
         }
         switch event.type {
@@ -195,6 +201,8 @@ class HotkeyController {
         let wasDown = modDown[kc] ?? false
         modDown[kc] = !wasDown
 
+        DebugLog.log("[HK] flagsChanged: keyCode=\(kc) (\(KeyNames.modifierLabel(for: kc))), wasDown=\(wasDown) → now \(!wasDown)")
+
         if !wasDown {
             onModDown(kc)
         } else {
@@ -203,10 +211,20 @@ class HotkeyController {
     }
 
     private func onModDown(_ kc: UInt16) {
+        DebugLog.log("[HK] onModDown: kc=\(kc), pttShortcut.kind=\(self.pttShortcut.kind.rawValue), pttShortcut.modifierKeyCode=\(self.pttShortcut.modifierKeyCode)")
         if pttShortcut.kind == .modifierHold && pttShortcut.modifierKeyCode == kc {
             pttActive = false
+            DebugLog.log("[HK] onModDown: scheduling PTT hold timer (\(self.holdThreshold)s)")
             let work = DispatchWorkItem { [weak self] in
-                guard let self, self.modDown[kc] == true else { return }
+                guard let self else {
+                    DebugLog.log("[HK] PTT timer fired: self is nil")
+                    return
+                }
+                guard self.modDown[kc] == true else {
+                    DebugLog.log("[HK] PTT timer fired: modDown[\(kc)] is false/nil, key already released")
+                    return
+                }
+                DebugLog.log("[HK] PTT timer fired: activating PTT, calling onPushToTalkStart")
                 self.pttActive = true
                 self.onPushToTalkStart?()
             }
@@ -217,28 +235,37 @@ class HotkeyController {
 
     private func onModUp(_ kc: UInt16) {
         let now = Date()
+        DebugLog.log("[HK] onModUp: kc=\(kc), pttActive=\(self.pttActive), comboPTTActive=\(self.comboPTTActive)")
 
         // PTT modifierHold release
         if pttShortcut.kind == .modifierHold && pttShortcut.modifierKeyCode == kc {
             pttHoldTimer?.cancel()
             pttHoldTimer = nil
             if pttActive {
+                DebugLog.log("[HK] onModUp: PTT was active, calling onPushToTalkStop")
                 pttActive = false
                 onPushToTalkStop?()
                 return
+            } else {
+                DebugLog.log("[HK] onModUp: PTT modifier released but pttActive=false (short tap)")
             }
         }
 
         // Suppress taps right after combo usage
-        if let t = lastComboTime, now.timeIntervalSince(t) < 0.5 { return }
+        if let t = lastComboTime, now.timeIntervalSince(t) < 0.5 {
+            DebugLog.log("[HK] onModUp: suppressed (combo used \(now.timeIntervalSince(t))s ago)")
+            return
+        }
 
         // HF doubleTap
         if hfShortcut.kind == .doubleTap && hfShortcut.modifierKeyCode == kc {
             if lastTapKeyCode == kc, let t = lastTapTime, now.timeIntervalSince(t) < doubleTapWindow {
+                DebugLog.log("[HK] onModUp: DOUBLE TAP detected (\(now.timeIntervalSince(t))s), calling onHandsFreeToggle")
                 lastTapTime = nil
                 lastTapKeyCode = 0
                 onHandsFreeToggle?()
             } else {
+                DebugLog.log("[HK] onModUp: first tap recorded for kc=\(kc)")
                 lastTapKeyCode = kc
                 lastTapTime = now
             }
@@ -249,7 +276,10 @@ class HotkeyController {
         if hfShortcut.kind == .modifierHold && hfShortcut.modifierKeyCode == kc {
             let sharesPTTKey = pttShortcut.kind == .modifierHold && pttShortcut.modifierKeyCode == kc
             if !sharesPTTKey {
+                DebugLog.log("[HK] onModUp: HF modifierHold tap, calling onHandsFreeToggle")
                 onHandsFreeToggle?()
+            } else {
+                DebugLog.log("[HK] onModUp: HF shares PTT key, skipping toggle")
             }
         }
     }

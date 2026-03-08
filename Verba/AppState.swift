@@ -5,7 +5,7 @@ import ServiceManagement
 
 private let logger = Logger(subsystem: "com.sotamikami.verba", category: "AppState")
 
-enum TranscriptionMode: String, CaseIterable {
+enum TranscriptionMode: String, CaseIterable, Codable {
     case fast = "Fast"
     case formatted = "Formatted"
 }
@@ -31,7 +31,9 @@ class AppState: ObservableObject {
     @Published var mode: TranscriptionMode = .formatted
     @Published var lastTranscription = ""
     @Published var statusMessage = ""
-    @Published var history: [TranscriptionRecord] = []
+    @Published var history: [TranscriptionRecord] = [] {
+        didSet { saveHistory() }
+    }
     @Published var resolvedColorScheme: ColorScheme = .dark
     private var appearanceObservation: NSKeyValueObservation?
     @Published var unseenHistoryCount = 0
@@ -116,9 +118,12 @@ class AppState: ObservableObject {
     }
 
     init() {
+        DebugLog.clear()
+        DebugLog.log("[AS] init: AppState initializing")
         loadCustomPrompts()
         loadBuiltInOverrides()
         loadDictionary()
+        loadHistory()
         syncLaunchAtLogin()
         applyAppearance()
         applyDockVisibility()
@@ -265,43 +270,74 @@ class AppState: ObservableObject {
         hotkeyController.start(
             onPushToTalkStart: { [weak self] in
                 Task { @MainActor in
-                    guard let self else { return }
+                    guard let self else {
+                        DebugLog.log("[AS] onPushToTalkStart: self is nil")
+                        return
+                    }
+                    DebugLog.log("[AS] onPushToTalkStart: recordingTrigger=\(String(describing: self.recordingTrigger)), isRecording=\(self.isRecording), isProcessing=\(self.isProcessing), isModelLoaded=\(self.isModelLoaded)")
                     // If hands-free is active, ignore Fn hold
-                    guard self.recordingTrigger != .handsFree else { return }
-                    guard !self.isRecording, !self.isProcessing else { return }
+                    guard self.recordingTrigger != .handsFree else {
+                        DebugLog.log("[AS] onPushToTalkStart: BLOCKED — hands-free active")
+                        return
+                    }
+                    guard !self.isRecording, !self.isProcessing else {
+                        DebugLog.log("[AS] onPushToTalkStart: BLOCKED — isRecording=\(self.isRecording), isProcessing=\(self.isProcessing)")
+                        return
+                    }
+                    DebugLog.log("[AS] onPushToTalkStart: starting push-to-talk recording")
                     self.recordingTrigger = .pushToTalk
                     self.startRecording(hint: "Recording... (release Fn to stop)")
                 }
             },
             onPushToTalkStop: { [weak self] in
                 Task { @MainActor in
-                    guard let self else { return }
+                    guard let self else {
+                        DebugLog.log("[AS] onPushToTalkStop: self is nil")
+                        return
+                    }
+                    DebugLog.log("[AS] onPushToTalkStop: recordingTrigger=\(String(describing: self.recordingTrigger)), isRecording=\(self.isRecording)")
                     // Only stop if it was push-to-talk
-                    guard self.recordingTrigger == .pushToTalk else { return }
+                    guard self.recordingTrigger == .pushToTalk else {
+                        DebugLog.log("[AS] onPushToTalkStop: BLOCKED — trigger is not pushToTalk")
+                        return
+                    }
                     self.recordingTrigger = .none
                     if self.isRecording {
+                        DebugLog.log("[AS] onPushToTalkStop: stopping recording")
                         self.stopRecording()
+                    } else {
+                        DebugLog.log("[AS] onPushToTalkStop: isRecording was already false")
                     }
                 }
             },
             onHandsFreeToggle: { [weak self] in
                 Task { @MainActor in
-                    guard let self else { return }
+                    guard let self else {
+                        DebugLog.log("[AS] onHandsFreeToggle: self is nil")
+                        return
+                    }
+                    DebugLog.log("[AS] onHandsFreeToggle: recordingTrigger=\(String(describing: self.recordingTrigger)), isRecording=\(self.isRecording), isProcessing=\(self.isProcessing), isModelLoaded=\(self.isModelLoaded)")
                     if self.recordingTrigger == .pushToTalk {
                         // Switch from push-to-talk to hands-free (keep recording)
+                        DebugLog.log("[AS] onHandsFreeToggle: switching PTT → hands-free")
                         self.recordingTrigger = .handsFree
                         self.statusMessage = "Recording... (Fn×2 to stop)"
                         self.syncFloatingIndicatorState()
                         self.floatingIndicator.show(isRecording: true, statusMessage: "Recording... (Fn×2 to stop)", mode: self.mode)
                     } else if self.recordingTrigger == .handsFree {
                         // Stop hands-free
+                        DebugLog.log("[AS] onHandsFreeToggle: stopping hands-free")
                         self.recordingTrigger = .none
                         if self.isRecording {
                             self.stopRecording()
                         }
                     } else {
                         // Start hands-free
-                        guard !self.isProcessing else { return }
+                        guard !self.isProcessing else {
+                            DebugLog.log("[AS] onHandsFreeToggle: BLOCKED — isProcessing=true")
+                            return
+                        }
+                        DebugLog.log("[AS] onHandsFreeToggle: starting hands-free recording")
                         self.recordingTrigger = .handsFree
                         self.startRecording(hint: "Recording... (Fn×2 to stop)")
                     }
@@ -318,11 +354,16 @@ class AppState: ObservableObject {
 
     /// Cancel recording without transcribing — discard audio
     func cancelRecording() {
-        streamingTask?.cancel()
+        let pendingStreamingTask = streamingTask
+        pendingStreamingTask?.cancel()
         streamingTask = nil
         recordingTrigger = .none
         isRecording = false
         _ = audioRecorder.stopRecording() // discard audio data
+        // Fire-and-forget: wait for any in-flight WhisperKit call to finish
+        if pendingStreamingTask != nil {
+            Task { await pendingStreamingTask?.value }
+        }
         if systemAudioBehavior == .pauseMedia {
             mediaControlService.resumeIfPaused()
         }
@@ -347,25 +388,32 @@ class AppState: ObservableObject {
     }
 
     func initializeServices() async {
-        guard !isInitializing && !isModelLoaded else { return }
+        DebugLog.log("[AS] initializeServices: isInitializing=\(self.isInitializing), isModelLoaded=\(self.isModelLoaded)")
+        guard !isInitializing && !isModelLoaded else {
+            DebugLog.log("[AS] initializeServices: SKIPPED — already initializing or loaded")
+            return
+        }
         isInitializing = true
         statusMessage = l10n.downloadingModel
 
         do {
             let micGranted = await audioRecorder.requestMicPermission()
+            DebugLog.log("[AS] initializeServices: micPermission=\(micGranted)")
             if !micGranted {
                 statusMessage = l10n.micPermissionDenied
                 isInitializing = false
                 return
             }
 
+            DebugLog.log("[AS] initializeServices: loading Whisper model variant=\(self.whisperModel)")
             try await whisperService.loadModel(variant: whisperModel)
             isModelLoaded = true
             statusMessage = l10n.ready
+            DebugLog.log("[AS] initializeServices: model loaded successfully, isModelLoaded=true")
         } catch {
             let msg = String(describing: error)
             statusMessage = "Error: \(msg.prefix(80))"
-            logger.error("Model load error: \(msg)")
+            logger.error("[AS] initializeServices: FAILED — \(msg)")
         }
         isInitializing = false
     }
@@ -388,14 +436,20 @@ class AppState: ObservableObject {
     }
 
     private func startRecording(hint: String) {
+        DebugLog.log("[AS] startRecording: hint=\(hint), isModelLoaded=\(self.isModelLoaded), isProcessing=\(self.isProcessing)")
         guard isModelLoaded else {
+            DebugLog.log("[AS] startRecording: BLOCKED — model not loaded")
             statusMessage = l10n.modelNotLoaded
             return
         }
-        guard !isProcessing else { return }
+        guard !isProcessing else {
+            DebugLog.log("[AS] startRecording: BLOCKED — isProcessing=true")
+            return
+        }
 
         do {
             pasteService.saveTargetApp()
+            DebugLog.log("[AS] startRecording: target app saved")
 
             if systemAudioBehavior == .pauseMedia {
                 Task { await mediaControlService.pauseIfPlaying() }
@@ -403,6 +457,7 @@ class AppState: ObservableObject {
 
             audioRecorder.captureSystemAudio = (systemAudioBehavior == .captureSystemAudio)
             audioRecorder.selectedDeviceUID = selectedMicDeviceUID
+            DebugLog.log("[AS] startRecording: calling audioRecorder.startRecording(), mic=\(self.selectedMicDeviceUID.isEmpty ? "default" : self.selectedMicDeviceUID), systemAudio=\(self.audioRecorder.captureSystemAudio)")
             try audioRecorder.startRecording()
             isRecording = true
             statusMessage = hint
@@ -410,14 +465,17 @@ class AppState: ObservableObject {
             floatingIndicator.show(isRecording: true, statusMessage: hint, mode: mode)
             SoundFeedback.playRecordingStart()
             startStreamingTranscription()
+            DebugLog.log("[AS] startRecording: SUCCESS — recording started, streaming transcription started")
         } catch {
             statusMessage = "Mic error: \(error.localizedDescription)"
-            logger.error("Recording error: \(error.localizedDescription)")
+            logger.error("[AS] startRecording: FAILED — \(error.localizedDescription)")
         }
     }
 
     private func stopRecording() {
-        streamingTask?.cancel()
+        DebugLog.log("[AS] stopRecording: isRecording=\(self.isRecording), recordingTrigger=\(String(describing: self.recordingTrigger))")
+        let pendingStreamingTask = streamingTask
+        pendingStreamingTask?.cancel()
         streamingTask = nil
         isRecording = false
         isProcessing = true
@@ -430,12 +488,25 @@ class AppState: ObservableObject {
         }
 
         Task {
+            // Wait for streaming transcription to fully finish to avoid
+            // concurrent WhisperKit calls (causes "No speech detected")
+            if pendingStreamingTask != nil {
+                DebugLog.log("[AS] stopRecording: waiting for streaming task to finish...")
+                await pendingStreamingTask?.value
+                DebugLog.log("[AS] stopRecording: streaming task finished")
+            }
+
             let audioData: Data
             if systemAudioBehavior == .captureSystemAudio {
+                DebugLog.log("[AS] stopRecording: stopping with system audio capture (async)")
                 audioData = await audioRecorder.stopRecordingAsync()
             } else {
+                DebugLog.log("[AS] stopRecording: stopping mic-only (sync)")
                 audioData = audioRecorder.stopRecording()
             }
+            let sampleCount = audioData.count / MemoryLayout<Float>.size
+            let duration = Float(sampleCount) / 16000.0
+            DebugLog.log("[AS] stopRecording: audioData=\(audioData.count) bytes, ~\(duration)s, processing...")
             await processAudio(audioData)
         }
     }
@@ -443,37 +514,53 @@ class AppState: ObservableObject {
     // MARK: - Streaming Transcription
 
     private func startStreamingTranscription() {
+        DebugLog.log("[AS] startStreamingTranscription: starting")
         streamingTask = Task { [weak self] in
             // Wait for initial audio to accumulate
+            DebugLog.log("[AS] streaming: waiting 1.5s for initial audio")
             try? await Task.sleep(for: .seconds(1.5))
 
+            var cycle = 0
             while !Task.isCancelled {
-                guard let self else { return }
-                guard self.isRecording else { return }
+                guard let self else {
+                    DebugLog.log("[AS] streaming: self is nil, exiting")
+                    return
+                }
+                guard self.isRecording else {
+                    DebugLog.log("[AS] streaming: isRecording=false, exiting")
+                    return
+                }
 
+                cycle += 1
                 let buffer = self.audioRecorder.getCurrentBuffer()
                 let sampleCount = buffer.count / MemoryLayout<Float>.size
                 let seconds = Float(sampleCount) / 16000.0
+                DebugLog.log("[AS] streaming cycle #\(cycle): buffer=\(buffer.count) bytes, ~\(seconds)s")
 
                 if seconds >= 1.0 {
                     do {
                         let hint = self.formattingService.dictionaryHint(dictionary: self.dictionaryEntries)
                         let text = try await self.whisperService.transcribe(audioData: buffer, language: nil, initialPrompt: hint)
+                        DebugLog.log("[AS] streaming cycle #\(cycle): transcribed '\(text.prefix(50))'")
                         if !Task.isCancelled && self.isRecording && !text.isEmpty {
                             self.floatingIndicator.updateStreamingText(text)
                         }
                     } catch {
-                        logger.debug("Streaming transcription error: \(error.localizedDescription)")
+                        DebugLog.log("[AS] streaming cycle #\(cycle): error — \(error.localizedDescription)")
                     }
+                } else {
+                    DebugLog.log("[AS] streaming cycle #\(cycle): audio too short (\(seconds)s), skipping")
                 }
 
                 // Wait before next transcription cycle
                 try? await Task.sleep(for: .seconds(1.0))
             }
+            DebugLog.log("[AS] streaming: loop exited (cancelled=\(Task.isCancelled))")
         }
     }
 
     private func processAudio(_ audioData: Data, paste: Bool = true) async {
+        DebugLog.log("[AS] processAudio: audioData=\(audioData.count) bytes, paste=\(paste), mode=\(self.mode.rawValue)")
         var record = TranscriptionRecord(audioData: audioData, language: nil, mode: mode)
         history.insert(record, at: 0)
         unseenHistoryCount += 1
@@ -561,6 +648,7 @@ class AppState: ObservableObject {
         AudioPlaybackService.shared.stop()
         history.removeAll()
         unseenHistoryCount = 0
+        HistoryStore.deleteAll()
     }
 
     func markHistorySeen() {
@@ -620,6 +708,19 @@ class AppState: ObservableObject {
 
     func deleteDictionaryEntry(_ entry: DictionaryEntry) {
         dictionaryEntries.removeAll { $0.id == entry.id }
+    }
+
+    private var isSuppressingHistorySave = false
+
+    private func saveHistory() {
+        guard !isSuppressingHistorySave else { return }
+        HistoryStore.save(history)
+    }
+
+    private func loadHistory() {
+        isSuppressingHistorySave = true
+        history = HistoryStore.load()
+        isSuppressingHistorySave = false
     }
 
     private func saveDictionary() {

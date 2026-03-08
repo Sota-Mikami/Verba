@@ -1,6 +1,9 @@
 import AVFoundation
 import CoreAudio
 import Foundation
+import os
+
+private let logger = Logger(subsystem: "com.sotamikami.verba", category: "AudioRecorder")
 
 struct MicDevice: Identifiable, Hashable {
     let id: AudioDeviceID
@@ -82,11 +85,13 @@ class AudioRecorder {
     }
 
     func startRecording() throws {
+        DebugLog.log("[AR] startRecording: begin, selectedDeviceUID=\(self.selectedDeviceUID), captureSystemAudio=\(self.captureSystemAudio)")
         let engine = AVAudioEngine()
 
         // Set input device if specified
         if !selectedDeviceUID.isEmpty {
             let devices = Self.availableInputDevices()
+            DebugLog.log("[AR] startRecording: available devices=\(devices.map { $0.name })")
             if let device = devices.first(where: { $0.uid == selectedDeviceUID }) {
                 var deviceID = device.id
                 let status = AudioUnitSetProperty(
@@ -98,12 +103,19 @@ class AudioRecorder {
                     UInt32(MemoryLayout<AudioDeviceID>.size)
                 )
                 if status != noErr {
-                    print("Failed to set input device: \(status)")
+                    DebugLog.log("[AR] ERROR: startRecording: failed to set input device: \(status)")
+                } else {
+                    DebugLog.log("[AR] startRecording: set input device to \(device.name)")
                 }
+            } else {
+                DebugLog.log("[AR] WARN: startRecording: device UID '\(self.selectedDeviceUID)' not found in available devices")
             }
         }
 
         let inputNode = engine.inputNode
+        let inputFormat = inputNode.inputFormat(forBus: 0)
+        DebugLog.log("[AR] startRecording: inputNode format: sampleRate=\(inputFormat.sampleRate), channels=\(inputFormat.channelCount)")
+
         let targetFormat = AVAudioFormat(
             commonFormat: .pcmFormatFloat32,
             sampleRate: sampleRate,
@@ -115,14 +127,21 @@ class AudioRecorder {
         micData = Data()
         bufferLock.unlock()
 
+        var tapCallbackCount = 0
         inputNode.installTap(onBus: 0, bufferSize: 4096, format: nil) { [weak self] buffer, _ in
             guard let self else { return }
 
-            guard let converter = AVAudioConverter(from: buffer.format, to: targetFormat) else { return }
+            guard let converter = AVAudioConverter(from: buffer.format, to: targetFormat) else {
+                DebugLog.log("[AR] ERROR: tap: failed to create converter from \(buffer.format) to \(targetFormat)")
+                return
+            }
             let frameCapacity = AVAudioFrameCount(
                 Double(buffer.frameLength) * self.sampleRate / buffer.format.sampleRate
             )
-            guard let convertedBuffer = AVAudioPCMBuffer(pcmFormat: targetFormat, frameCapacity: frameCapacity) else { return }
+            guard let convertedBuffer = AVAudioPCMBuffer(pcmFormat: targetFormat, frameCapacity: frameCapacity) else {
+                DebugLog.log("[AR] ERROR: tap: failed to create convertedBuffer")
+                return
+            }
 
             var error: NSError?
             let status = converter.convert(to: convertedBuffer, error: &error) { _, outStatus in
@@ -135,20 +154,32 @@ class AudioRecorder {
                 let bytes = Data(bytes: channelData, count: count * MemoryLayout<Float>.size)
                 self.bufferLock.lock()
                 self.micData.append(bytes)
+                let totalBytes = self.micData.count
                 self.bufferLock.unlock()
 
-                // Compute RMS for waveform visualization
+                // Compute RMS and max for waveform + debugging
                 var sumOfSquares: Float = 0
+                var maxAbs: Float = 0
                 for i in 0..<count {
                     sumOfSquares += channelData[i] * channelData[i]
+                    let a = abs(channelData[i])
+                    if a > maxAbs { maxAbs = a }
                 }
                 let rms = sqrt(sumOfSquares / max(Float(count), 1))
+
+                tapCallbackCount += 1
+                if tapCallbackCount <= 5 || tapCallbackCount % 50 == 0 {
+                    DebugLog.log("[AR] tap #\(tapCallbackCount): +\(count) samples, total=\(totalBytes) bytes (~\(Float(totalBytes / MemoryLayout<Float>.size) / 16000.0)s), rms=\(rms), maxAbs=\(maxAbs)")
+                }
                 self.onAudioLevel?(rms)
+            } else {
+                DebugLog.log("[AR] WARN: tap: convert status=\(status.rawValue), error=\(error?.localizedDescription ?? "nil")")
             }
         }
 
         // Start system audio capture if enabled
         if captureSystemAudio {
+            DebugLog.log("[AR] startRecording: starting system audio capture")
             let capture = SystemAudioCapture()
             self.systemCapture = capture
             Task {
@@ -159,6 +190,7 @@ class AudioRecorder {
         engine.prepare()
         try engine.start()
         self.audioEngine = engine
+        DebugLog.log("[AR] startRecording: engine started successfully")
     }
 
     /// Snapshot the current audio buffer without stopping recording (thread-safe).
@@ -170,12 +202,15 @@ class AudioRecorder {
     }
 
     func stopRecording() -> Data {
+        DebugLog.log("[AR] stopRecording: stopping engine")
         audioEngine?.inputNode.removeTap(onBus: 0)
         audioEngine?.stop()
         audioEngine = nil
         bufferLock.lock()
         let result = micData
         bufferLock.unlock()
+        let sampleCount = result.count / MemoryLayout<Float>.size
+        DebugLog.log("[AR] stopRecording: returned \(result.count) bytes (\(sampleCount) samples, ~\(Float(sampleCount) / 16000.0)s)")
         return result
     }
 

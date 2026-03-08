@@ -2,6 +2,25 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [0.4.6] - 2026-03-09
+
+### Added
+- **History persistence** — Transcription history now survives app quit/restart. Audio and metadata saved to Application Support directory.
+
+### Fixed
+- **Floating indicator not resetting on new recording** — After cancelling a recording, waveform levels, streaming text, and timer now properly reset to zero when starting a new recording.
+
+## [0.4.5] - 2026-03-08
+
+### Fixed
+- **Waveform barely visible** — Increased audio level amplification (×5 → ×40) so waveform bars respond visibly to normal speech
+- **Timer resets to 0:00** — Elapsed time now persists correctly across view re-renders
+
+## [0.4.4] - 2026-03-08
+
+### Fixed
+- **Transcription fails with "No speech detected"** — Fixed race condition where streaming transcription and final transcription ran concurrently on WhisperKit, causing empty results. Now waits for streaming to fully complete before final transcription.
+
 ## [0.4.3] - 2026-03-08
 
 ### Changed

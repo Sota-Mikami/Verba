@@ -25,6 +25,7 @@
 		75B09F55FAAB53A054E1146A /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACC325F13C7DD49EE1B7EE58 /* MainView.swift */; };
 		912801940EC1C00AFAC46B6E /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AF75AE134463854888DCD1A /* DebugLog.swift */; };
 		A25D65BA66B0D3BCAC2270B4 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EA77ECA310FFE0E531FC0F7 /* AppState.swift */; };
+		AB285FB367BD6CFC830285BE /* HistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0649EB9EB53A498A632578C5 /* HistoryStore.swift */; };
 		B956482FABE80ED80F2BF64C /* AudioRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CC3EA34973B424FB3926667 /* AudioRecorder.swift */; };
 		B9AD98961ACF1692D1AD4D85 /* MainWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7871211F5B96EDE67F8F3C1 /* MainWindowController.swift */; };
 		BBEB66EF41089DC05D2A5963 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E2BF24F318F4130AC2AC7BE /* HistoryView.swift */; };
@@ -42,6 +43,7 @@
 
 /* Begin PBXFileReference section */
 		000A9CD486EE8C9E1BC97F44 /* PasteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteService.swift; sourceTree = "<group>"; };
+		0649EB9EB53A498A632578C5 /* HistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryStore.swift; sourceTree = "<group>"; };
 		0AF75AE134463854888DCD1A /* DebugLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
 		1EA77ECA310FFE0E531FC0F7 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		2CFD55B069DC1F99C087C41B /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
@@ -109,6 +111,7 @@
 				30A931301AF9F3C9088D9B56 /* DictionaryView.swift */,
 				D093B938F5AEB01C25CEC8E5 /* FloatingIndicator.swift */,
 				38F6A69F20E7FEEFBAD02D00 /* FormattingService.swift */,
+				0649EB9EB53A498A632578C5 /* HistoryStore.swift */,
 				9E2BF24F318F4130AC2AC7BE /* HistoryView.swift */,
 				B6D37CD0E41D60AE3FBDE5D5 /* HotkeyManager.swift */,
 				C42C936ABE5236721BAD0F86 /* Info.plist */,
@@ -227,6 +230,7 @@
 				28F0F3F2DA7239519282B574 /* DictionaryView.swift in Sources */,
 				F01B966CD6B543DC21417045 /* FloatingIndicator.swift in Sources */,
 				C61E975F54C021B484198124 /* FormattingService.swift in Sources */,
+				AB285FB367BD6CFC830285BE /* HistoryStore.swift in Sources */,
 				BBEB66EF41089DC05D2A5963 /* HistoryView.swift in Sources */,
 				F9475D45981052FD183888EA /* HotkeyManager.swift in Sources */,
 				0D66AAAF7BD222E64993042B /* LocalLLMService.swift in Sources */,

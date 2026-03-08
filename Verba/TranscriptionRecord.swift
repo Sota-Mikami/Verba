@@ -23,7 +23,7 @@ enum HistoryRetention: String, CaseIterable {
     }
 }
 
-struct TranscriptionRecord: Identifiable {
+struct TranscriptionRecord: Identifiable, Codable {
     let id: UUID
     let timestamp: Date
     let audioData: Data
@@ -33,6 +33,37 @@ struct TranscriptionRecord: Identifiable {
     var formattedText: String?
     var status: TranscriptionStatus
     var errorMessage: String?
+
+    // Codable: audioData is stored separately as a .pcm file, not in JSON
+    enum CodingKeys: String, CodingKey {
+        case id, timestamp, language, mode, rawText, formattedText, status, errorMessage
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        timestamp = try c.decode(Date.self, forKey: .timestamp)
+        language = try c.decodeIfPresent(String.self, forKey: .language)
+        mode = try c.decode(TranscriptionMode.self, forKey: .mode)
+        rawText = try c.decodeIfPresent(String.self, forKey: .rawText)
+        formattedText = try c.decodeIfPresent(String.self, forKey: .formattedText)
+        status = try c.decode(TranscriptionStatus.self, forKey: .status)
+        errorMessage = try c.decodeIfPresent(String.self, forKey: .errorMessage)
+        // audioData loaded separately by HistoryStore
+        audioData = Data()
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encode(timestamp, forKey: .timestamp)
+        try c.encodeIfPresent(language, forKey: .language)
+        try c.encode(mode, forKey: .mode)
+        try c.encodeIfPresent(rawText, forKey: .rawText)
+        try c.encodeIfPresent(formattedText, forKey: .formattedText)
+        try c.encode(status, forKey: .status)
+        try c.encodeIfPresent(errorMessage, forKey: .errorMessage)
+    }
 
     var displayText: String {
         formattedText ?? rawText ?? ""
@@ -79,5 +110,18 @@ struct TranscriptionRecord: Identifiable {
         self.language = language
         self.mode = mode
         self.status = .transcribing
+    }
+
+    /// Internal init used by HistoryStore to rehydrate audioData after JSON decode
+    init(restoringAudioData audioData: Data, from decoded: TranscriptionRecord) {
+        self.id = decoded.id
+        self.timestamp = decoded.timestamp
+        self.audioData = audioData
+        self.language = decoded.language
+        self.mode = decoded.mode
+        self.rawText = decoded.rawText
+        self.formattedText = decoded.formattedText
+        self.status = decoded.status
+        self.errorMessage = decoded.errorMessage
     }
 }
