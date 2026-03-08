@@ -53,6 +53,9 @@ class AppState: ObservableObject {
     @Published var customPrompts: [FormattingPrompt] = [] {
         didSet { saveCustomPrompts() }
     }
+    @Published var builtInOverrides: [String: FormattingPrompt] = [:] {
+        didSet { saveBuiltInOverrides() }
+    }
     @Published var dictionaryEntries: [DictionaryEntry] = [] {
         didSet { saveDictionary() }
     }
@@ -98,7 +101,10 @@ class AppState: ObservableObject {
     private var recordingTrigger: RecordingTrigger = .none
 
     var allPrompts: [FormattingPrompt] {
-        FormattingPrompt.allBuiltIn + customPrompts
+        let builtIns = FormattingPrompt.allBuiltIn.map { original in
+            builtInOverrides[original.id.uuidString] ?? original
+        }
+        return builtIns + customPrompts
     }
 
     var selectedPrompt: FormattingPrompt {
@@ -108,6 +114,7 @@ class AppState: ObservableObject {
 
     init() {
         loadCustomPrompts()
+        loadBuiltInOverrides()
         loadDictionary()
         syncLaunchAtLogin()
         applyAppearance()
@@ -403,7 +410,6 @@ class AppState: ObservableObject {
                     localLLMService: localLLMService
                 ) ?? rawText
                 updateRecord(record.id) { $0.formattedText = finalText; $0.status = .success }
-                detectAndAutoAddTerms(raw: rawText, formatted: finalText)
             } else if mode == .fast && !dictionaryEntries.isEmpty {
                 finalText = formattingService.applyDictionary(text: rawText, dictionary: dictionaryEntries)
             }
@@ -488,42 +494,19 @@ class AppState: ObservableObject {
         }
     }
 
+    func updateBuiltInPrompt(_ prompt: FormattingPrompt) {
+        builtInOverrides[prompt.id.uuidString] = prompt
+    }
+
+    func resetBuiltInPrompt(_ prompt: FormattingPrompt) {
+        builtInOverrides.removeValue(forKey: prompt.id.uuidString)
+    }
+
+    func isBuiltInModified(_ prompt: FormattingPrompt) -> Bool {
+        builtInOverrides[prompt.id.uuidString] != nil
+    }
+
     // MARK: - Dictionary Management
-
-    /// Detect words that appeared in formatted but not in raw text — likely proper nouns the LLM corrected.
-    private func detectAndAutoAddTerms(raw: String, formatted: String) {
-        let rawWords = Set(raw.components(separatedBy: .whitespacesAndNewlines).map { $0.lowercased() })
-        let formattedWords = formatted.components(separatedBy: .whitespacesAndNewlines)
-        let existingTerms = Set(dictionaryEntries.map { $0.term.lowercased() })
-
-        for word in formattedWords {
-            let clean = word.trimmingCharacters(in: .punctuationCharacters)
-            guard clean.count >= 2,
-                  !rawWords.contains(clean.lowercased()),
-                  !existingTerms.contains(clean.lowercased()),
-                  looksLikeProperNoun(clean) else { continue }
-            let entry = DictionaryEntry(term: clean, isAutoAdded: true)
-            dictionaryEntries.append(entry)
-        }
-    }
-
-    private func looksLikeProperNoun(_ word: String) -> Bool {
-        guard let first = word.first else { return false }
-        // Capitalized English word (not ALL CAPS which could be an acronym already in raw)
-        if first.isUppercase && first.isASCII && word.count > 1 {
-            let rest = word.dropFirst()
-            if rest.contains(where: { $0.isUppercase }) || rest.allSatisfy({ $0.isLowercase }) {
-                return true
-            }
-        }
-        // CamelCase / brand names like WhisperKit, OpenRouter
-        if word.dropFirst().contains(where: { $0.isUppercase }) && word.first?.isUppercase == true {
-            return true
-        }
-        // Contains non-ASCII (Japanese/Chinese names likely proper nouns if LLM introduced them)
-        // Skip — too noisy
-        return false
-    }
 
     func addDictionaryEntry(_ entry: DictionaryEntry) {
         dictionaryEntries.append(entry)
@@ -561,6 +544,18 @@ class AppState: ObservableObject {
         guard let data = UserDefaults.standard.data(forKey: "customFormattingPrompts"),
               let prompts = try? JSONDecoder().decode([FormattingPrompt].self, from: data) else { return }
         customPrompts = prompts
+    }
+
+    private func saveBuiltInOverrides() {
+        if let data = try? JSONEncoder().encode(builtInOverrides) {
+            UserDefaults.standard.set(data, forKey: "builtInPromptOverrides")
+        }
+    }
+
+    private func loadBuiltInOverrides() {
+        guard let data = UserDefaults.standard.data(forKey: "builtInPromptOverrides"),
+              let overrides = try? JSONDecoder().decode([String: FormattingPrompt].self, from: data) else { return }
+        builtInOverrides = overrides
     }
 
     private func pruneExpiredHistory() {

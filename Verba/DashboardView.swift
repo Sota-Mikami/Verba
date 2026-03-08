@@ -27,7 +27,7 @@ struct DashboardView: View {
                 statsGrid
                     .offset(y: appeared ? 0 : 12)
                     .opacity(appeared ? 1 : 0)
-                usageCards
+                usageTrend
                     .offset(y: appeared ? 0 : 12)
                     .opacity(appeared ? 1 : 0)
                 recentSection
@@ -110,34 +110,58 @@ struct DashboardView: View {
         }
     }
 
-    private var usageCards: some View {
-        HStack(spacing: 12) {
-            usageCard(title: appState.l10n.modeUsage) {
-                UsageBar(label: "Fast", count: appState.history.filter { $0.mode == .fast }.count, total: max(appState.history.count, 1), color: DS.orange)
-                UsageBar(label: "Formatted", count: appState.history.filter { $0.mode == .formatted }.count, total: max(appState.history.count, 1), color: DS.blurple)
-            }
-            usageCard(title: appState.l10n.languages) {
-                let grouped = Dictionary(grouping: appState.history, by: { $0.language ?? "auto" })
-                let sorted = grouped.sorted { $0.value.count > $1.value.count }
-                ForEach(sorted.prefix(3), id: \.key) { lang, records in
-                    UsageBar(label: languageName(lang), count: records.count, total: max(appState.history.count, 1), color: DS.blurpleLight)
-                }
-                if sorted.isEmpty {
-                    Text(appState.l10n.noDataYet)
-                        .font(.system(size: 12))
-                        .foregroundStyle(DS.textFaint)
-                }
-            }
+    // MARK: - Usage Trend
+
+    private var last7DaysCounts: [(day: String, count: Int)] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        var result: [(String, Int)] = []
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        formatter.dateFormat = "EEE"
+        for offset in (0..<7).reversed() {
+            guard let date = calendar.date(byAdding: .day, value: -offset, to: today) else { continue }
+            let nextDay = calendar.date(byAdding: .day, value: 1, to: date)!
+            let count = appState.history.filter { $0.timestamp >= date && $0.timestamp < nextDay }.count
+            let label = formatter.string(from: date)
+            result.append((label, count))
         }
+        return result
     }
 
-    private func usageCard<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
+    private var usageTrend: some View {
+        let data = last7DaysCounts
+        let maxCount = max(data.map(\.count).max() ?? 1, 1)
+
+        return VStack(alignment: .leading, spacing: 12) {
+            Text(appState.l10n.usageTrend)
                 .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(DS.textMuted)
                 .textCase(.uppercase)
-            content()
+
+            HStack(alignment: .bottom, spacing: 8) {
+                ForEach(Array(data.enumerated()), id: \.offset) { index, entry in
+                    VStack(spacing: 6) {
+                        Text("\(entry.count)")
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .foregroundStyle(entry.count > 0 ? DS.textNormal : DS.textFaint)
+
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(DS.blurple)
+                            .frame(height: entry.count > 0
+                                ? max(8, CGFloat(entry.count) / CGFloat(maxCount) * 100)
+                                : 4)
+                            .opacity(entry.count > 0 ? 1.0 : 0.25)
+                            .animation(.spring(response: 0.6, dampingFraction: 0.75).delay(Double(index) * 0.05), value: entry.count)
+
+                        Text(entry.day)
+                            .font(.system(size: 10))
+                            .foregroundStyle(DS.textFaint)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .frame(height: 140)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -202,9 +226,6 @@ struct DashboardView: View {
         return "\(Int(t))s"
     }
 
-    private func languageName(_ code: String) -> String {
-        SpeechLanguage.all.first(where: { $0.code == code })?.displayName ?? appState.l10n.autoDetect
-    }
 }
 
 // MARK: - Subviews
@@ -287,45 +308,6 @@ struct StatCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(DS.cardBg)
         .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
-    }
-}
-
-struct UsageBar: View {
-    let label: String
-    let count: Int
-    let total: Int
-    let color: Color
-    @State private var animatedWidth: CGFloat = 0
-
-    var body: some View {
-        VStack(spacing: 4) {
-            HStack {
-                Text(label)
-                    .font(.system(size: 12))
-                    .foregroundStyle(DS.textMuted)
-                Spacer()
-                Text("\(count)")
-                    .font(.system(size: 12, weight: .bold, design: .monospaced))
-                    .foregroundStyle(DS.textNormal)
-            }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(DS.bgTertiary)
-                        .frame(height: 4)
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(color)
-                        .frame(width: animatedWidth, height: 4)
-                }
-                .onAppear {
-                    let target = max(0, geo.size.width * CGFloat(count) / CGFloat(total))
-                    withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.2)) {
-                        animatedWidth = target
-                    }
-                }
-            }
-            .frame(height: 4)
-        }
     }
 }
 

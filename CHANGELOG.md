@@ -2,6 +2,21 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [0.2.1] - 2026-03-08
+
+### Added
+- Dashboard usage trend chart (7-day bar chart)
+- Tooltips on history action buttons (Play, Copy, Retry, Delete)
+- Built-in formatting prompts are now editable with "Reset to Default" option
+
+### Changed
+- Removed Languages and Mode Usage sections from Dashboard
+- Dictionary is now manual-only (removed auto-add of proper nouns)
+- Simplified Dictionary UI (removed filter tabs)
+
+### Fixed
+- Action buttons in history were not discoverable (no labels on hover)
+
 ## [0.2.0] - 2026-03-07
 
 ### Added

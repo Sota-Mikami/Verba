@@ -51,8 +51,7 @@ struct L10n {
     var sessions: String { s("Sessions", "セッション") }
     var words: String { s("Words", "文字数") }
     var timeSaved: String { s("Time Saved", "節約時間") }
-    var modeUsage: String { s("Mode Usage", "モード使用率") }
-    var languages: String { s("Languages", "言語") }
+    var usageTrend: String { s("USAGE TREND", "使用推移") }
     var recentTranscriptions: String { s("RECENT TRANSCRIPTIONS", "最近の文字起こし") }
     var noTranscriptionsYet: String { s("No transcriptions yet", "まだ文字起こしはありません") }
     var holdFnToStart: String { s("Hold fn to start your first recording", "fnキーを長押しして最初の録音を開始") }
@@ -136,6 +135,8 @@ struct L10n {
     var saveChanges: String { s("Save Changes", "変更を保存") }
 
     var autoDetect: String { s("Auto Detect", "自動検出") }
+    var resetToDefault: String { s("Reset to Default", "デフォルトに戻す") }
+    var modified: String { s("Modified", "変更済み") }
 
     // MARK: Dictionary
     var dictionaryNav: String { s("Dictionary", "用語辞書") }

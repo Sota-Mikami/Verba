@@ -1,14 +1,7 @@
 import SwiftUI
 
-enum DictionaryFilter: String, CaseIterable {
-    case all
-    case autoAdded
-    case manual
-}
-
 struct DictionaryView: View {
     @EnvironmentObject var appState: AppState
-    @State private var filter: DictionaryFilter = .all
     @State private var searchQuery = ""
     @State private var showSearch = false
     @State private var editingEntry: DictionaryEntry? = nil
@@ -16,11 +9,6 @@ struct DictionaryView: View {
 
     private var filteredEntries: [DictionaryEntry] {
         var entries = appState.dictionaryEntries
-        switch filter {
-        case .all: break
-        case .autoAdded: entries = entries.filter { $0.isAutoAdded }
-        case .manual: entries = entries.filter { !$0.isAutoAdded }
-        }
         if !searchQuery.isEmpty {
             let q = searchQuery.lowercased()
             entries = entries.filter {
@@ -57,23 +45,8 @@ struct DictionaryView: View {
             .padding(.top, 28)
             .padding(.bottom, 16)
 
-            // Filter tabs + search
+            // Search
             HStack(spacing: 0) {
-                HStack(spacing: 2) {
-                    ForEach(DictionaryFilter.allCases, id: \.self) { f in
-                        FilterTab(
-                            label: filterLabel(f),
-                            icon: filterIcon(f),
-                            isSelected: filter == f
-                        ) {
-                            withAnimation(.easeOut(duration: 0.15)) { filter = f }
-                        }
-                    }
-                }
-                .padding(3)
-                .background(DS.bgTertiary)
-                .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
-
                 Spacer()
 
                 if showSearch {
@@ -189,57 +162,6 @@ struct DictionaryView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private func filterLabel(_ f: DictionaryFilter) -> String {
-        switch f {
-        case .all: return appState.l10n.filterAll
-        case .autoAdded: return appState.l10n.filterAutoAdded
-        case .manual: return appState.l10n.filterManual
-        }
-    }
-
-    private func filterIcon(_ f: DictionaryFilter) -> String? {
-        switch f {
-        case .all: return nil
-        case .autoAdded: return "sparkles"
-        case .manual: return "pencil"
-        }
-    }
-}
-
-// MARK: - Filter Tab
-
-struct FilterTab: View {
-    let label: String
-    var icon: String? = nil
-    let isSelected: Bool
-    let action: () -> Void
-    @State private var isHovered = false
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                if let icon {
-                    Image(systemName: icon)
-                        .font(.system(size: 10))
-                        .foregroundStyle(isSelected ? DS.blurple : DS.textFaint)
-                }
-                Text(label)
-                    .font(.system(size: 12, weight: isSelected ? .semibold : .regular))
-                    .foregroundStyle(isSelected ? DS.textNormal : DS.textMuted)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(isSelected ? DS.cardBg : isHovered ? DS.bgModifierHover : .clear)
-            )
-            .shadow(color: isSelected ? .black.opacity(0.04) : .clear, radius: 2, y: 1)
-        }
-        .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
-        .animation(.easeOut(duration: 0.12), value: isSelected)
-        .animation(.easeOut(duration: 0.1), value: isHovered)
-    }
 }
 
 // MARK: - Dictionary Card
@@ -252,9 +174,9 @@ struct DictionaryCard: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: entry.isAutoAdded ? "sparkles" : "pencil")
+            Image(systemName: "character.book.closed")
                 .font(.system(size: 10))
-                .foregroundStyle(entry.isAutoAdded ? DS.blurple : DS.textFaint)
+                .foregroundStyle(DS.textFaint)
                 .frame(width: 14)
 
             Text(entry.term)

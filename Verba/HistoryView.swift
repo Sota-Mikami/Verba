@@ -152,7 +152,7 @@ struct HistoryRow: View {
                 if isHovered || playback.isPlaying(record.id) {
                     HStack(spacing: 4) {
                         // Play/Stop audio
-                        ActionButton(icon: playback.isPlaying(record.id) ? "stop.fill" : "play.fill") {
+                        ActionButton(icon: playback.isPlaying(record.id) ? "stop.fill" : "play.fill", tooltip: playback.isPlaying(record.id) ? "Stop" : "Play") {
                             if playback.isPlaying(record.id) {
                                 playback.stop()
                             } else {
@@ -161,17 +161,17 @@ struct HistoryRow: View {
                         }
 
                         if !record.displayText.isEmpty {
-                            ActionButton(icon: "doc.on.doc") {
+                            ActionButton(icon: "doc.on.doc", tooltip: "Copy") {
                                 NSPasteboard.general.clearContents()
                                 NSPasteboard.general.setString(record.displayText, forType: .string)
                             }
                         }
                         if record.status == .failed || record.status == .success {
-                            ActionButton(icon: "arrow.clockwise") {
+                            ActionButton(icon: "arrow.clockwise", tooltip: "Retry") {
                                 appState.retryTranscription(record)
                             }
                         }
-                        ActionButton(icon: "trash", destructive: true) {
+                        ActionButton(icon: "trash", destructive: true, tooltip: "Delete") {
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                                 appState.deleteRecord(record)
                             }
@@ -238,6 +238,7 @@ struct Badge: View {
 struct ActionButton: View {
     let icon: String
     var destructive = false
+    var tooltip: String = ""
     let action: () -> Void
     @State private var isHovered = false
 
@@ -254,5 +255,6 @@ struct ActionButton: View {
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
         .animation(.spring(response: 0.2, dampingFraction: 0.7), value: isHovered)
+        .help(tooltip)
     }
 }

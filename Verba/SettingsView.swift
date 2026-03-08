@@ -291,9 +291,11 @@ struct SettingsView: View {
                     PromptRow(
                         prompt: prompt,
                         isSelected: appState.selectedPromptId == prompt.id.uuidString,
+                        isModified: prompt.isBuiltIn && appState.isBuiltInModified(prompt),
                         onSelect: { appState.selectedPromptId = prompt.id.uuidString },
-                        onEdit: prompt.isBuiltIn ? nil : { editingPrompt = prompt },
-                        onDelete: prompt.isBuiltIn ? nil : { appState.deletePrompt(prompt) }
+                        onEdit: { editingPrompt = prompt },
+                        onDelete: prompt.isBuiltIn ? nil : { appState.deletePrompt(prompt) },
+                        onReset: prompt.isBuiltIn && appState.isBuiltInModified(prompt) ? { appState.resetBuiltInPrompt(prompt) } : nil
                     )
                 }
             }
@@ -325,9 +327,12 @@ struct SettingsView: View {
             PromptEditorSheet(
                 prompt: prompt,
                 isNew: isCreatingPrompt,
+                showResetButton: prompt.isBuiltIn && appState.isBuiltInModified(prompt),
                 onSave: { saved in
                     if isCreatingPrompt {
                         appState.addPrompt(saved)
+                    } else if saved.isBuiltIn {
+                        appState.updateBuiltInPrompt(saved)
                     } else {
                         appState.updatePrompt(saved)
                     }
@@ -337,7 +342,12 @@ struct SettingsView: View {
                 onCancel: {
                     editingPrompt = nil
                     isCreatingPrompt = false
-                }
+                },
+                onReset: prompt.isBuiltIn ? {
+                    appState.resetBuiltInPrompt(prompt)
+                    editingPrompt = nil
+                    isCreatingPrompt = false
+                } : nil
             )
         }
     }
@@ -667,9 +677,11 @@ struct WhisperModelRow: View {
 struct PromptRow: View {
     let prompt: FormattingPrompt
     let isSelected: Bool
+    var isModified: Bool = false
     let onSelect: () -> Void
     let onEdit: (() -> Void)?
     let onDelete: (() -> Void)?
+    let onReset: (() -> Void)?
     @State private var isHovered = false
 
     var body: some View {
@@ -695,7 +707,11 @@ struct PromptRow: View {
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(DS.textNormal)
                         if prompt.isBuiltIn {
-                            Badge(text: "Built-in", color: DS.textFaint)
+                            if isModified {
+                                Badge(text: "Modified", color: DS.orange)
+                            } else {
+                                Badge(text: "Built-in", color: DS.textFaint)
+                            }
                         }
                     }
                     Text(prompt.systemPrompt.prefix(60).replacingOccurrences(of: "\n", with: " ") + "...")
@@ -708,6 +724,18 @@ struct PromptRow: View {
 
                 if isHovered {
                     HStack(spacing: 4) {
+                        if let onReset {
+                            Button(action: onReset) {
+                                Image(systemName: "arrow.uturn.backward")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(DS.orange)
+                                    .padding(4)
+                                    .background(DS.bgTertiary)
+                                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                            }
+                            .buttonStyle(.plain)
+                            .help("Reset to Default")
+                        }
                         if let onEdit {
                             Button(action: onEdit) {
                                 Image(systemName: "pencil")
@@ -751,8 +779,10 @@ struct PromptRow: View {
 struct PromptEditorSheet: View {
     @State var prompt: FormattingPrompt
     let isNew: Bool
+    var showResetButton: Bool = false
     let onSave: (FormattingPrompt) -> Void
     let onCancel: () -> Void
+    var onReset: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -840,6 +870,25 @@ struct PromptEditorSheet: View {
                 .buttonStyle(.plain)
 
                 Spacer()
+
+                if showResetButton, let onReset {
+                    Button(action: onReset) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.uturn.backward")
+                                .font(.system(size: 11))
+                            Text("Reset to Default")
+                                .font(.system(size: 13, weight: .medium))
+                        }
+                        .foregroundStyle(DS.orange)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(DS.orange.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
+                    }
+                    .buttonStyle(.plain)
+
+                    Spacer()
+                }
 
                 Button {
                     onSave(prompt)
