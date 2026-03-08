@@ -91,6 +91,7 @@ class AppState: ObservableObject {
         }
     }
 
+    let licenseService = LicenseService()
     private var audioRecorder = AudioRecorder()
     private var whisperService = WhisperService()
     private let formattingService = FormattingService()
@@ -476,6 +477,15 @@ class AppState: ObservableObject {
 
     private func startRecording(hint: String) {
         DebugLog.log("[AS] startRecording: hint=\(hint), isModelLoaded=\(self.isModelLoaded), isProcessing=\(self.isProcessing)")
+
+        // License check
+        licenseService.refreshStatus()
+        guard !licenseService.isLocked else {
+            statusMessage = l10n.licenseExpired
+            mainWindow.open(appState: self)
+            return
+        }
+
         guard isModelLoaded else {
             DebugLog.log("[AS] startRecording: BLOCKED — model not loaded")
             statusMessage = l10n.modelNotLoaded
