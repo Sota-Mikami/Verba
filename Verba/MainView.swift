@@ -37,8 +37,6 @@ struct MainView: View {
         )
     }
 
-    @State private var showLicenseModal = false
-
     var body: some View {
         HStack(spacing: 0) {
             sidebar
@@ -54,29 +52,6 @@ struct MainView: View {
             OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
                 .environmentObject(appState)
                 .interactiveDismissDisabled()
-        }
-        .sheet(isPresented: $showLicenseModal) {
-            LicenseView(licenseService: appState.licenseService)
-                .environmentObject(appState)
-                .interactiveDismissDisabled()
-        }
-        .onAppear { checkLicense() }
-        .onReceive(appState.licenseService.$status) { newStatus in
-            switch newStatus {
-            case .trialExpired, .licenseExpired:
-                showLicenseModal = true
-            case .activated:
-                showLicenseModal = false
-            default:
-                break
-            }
-        }
-    }
-
-    private func checkLicense() {
-        appState.licenseService.refreshStatus()
-        if appState.licenseService.isLocked {
-            showLicenseModal = true
         }
     }
 
@@ -125,16 +100,6 @@ struct MainView: View {
             .padding(.horizontal, 8)
 
             Spacer()
-
-            // Trial badge
-            if let remaining = appState.licenseService.trialRemainingFormatted {
-                HStack(spacing: 6) {
-                    TrialBadge(remaining: remaining)
-                    Spacer()
-                }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 4)
-            }
 
             // Status
             HStack(spacing: 8) {
