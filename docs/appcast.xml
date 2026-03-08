@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.4.6</title>
-            <description><![CDATA[<h2>What's New in v0.4.6</h2><ul><li>**History persistence** — Transcription history now survives app quit/restart. Audio and metadata saved to Application Support directory.</li><li>**Floating indicator not resetting on new recording** — After cancelling a recording, waveform levels, streaming text, and timer now properly reset to zero when starting a new recording.</li></ul>]]></description>
-            <pubDate>Mon, 09 Mar 2026 06:36:52 +0700</pubDate>
+            <title>Version 0.4.7</title>
+            <description><![CDATA[<h2>What's New in v0.4.7</h2><ul><li>**Default formatting to local LLM** — New users get on-device formatting (Qwen3 0.6B) out of the box, no API key needed. Auto-downloads on first launch.</li><li>**Provider order** — Local (On-Device) is now the primary option in settings; cloud providers are secondary.</li></ul>]]></description>
+            <pubDate>Mon, 09 Mar 2026 06:41:59 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.4.6/Verba-v0.4.6.dmg"
-                sparkle:version="15"
-                sparkle:shortVersionString="0.4.6"
-                sparkle:edSignature="FliFRdQIno135O0JLn2RAm/M4h2U32EJhDPkKVCPc9urJ9kfUhdKhV5oQVRrz6Z/Bkyh2nVLtgcTR7SFQ/KSAg=="
-                length="10175281"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.4.7/Verba-v0.4.7.dmg"
+                sparkle:version="16"
+                sparkle:shortVersionString="0.4.7"
+                sparkle:edSignature="eF7bg/zRnIZGlzix9kmoFh6fQCkCiXctmIDnmusncrwwC8FIN5bRDyngMuPFwN8BMJ/Mssi3fqMMp2TYBXywAQ=="
+                length="10187912"
                 type="application/octet-stream"
             />
         </item>
