@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.3.2</title>
-            <description><![CDATA[<h2>What's New in v0.3.2</h2><ul><li>Dictionary simplified to term-only list (removed readings/auto-added concepts)</li><li>Dictionary terms now injected into Whisper as promptTokens for better recognition accuracy</li><li>Dictionary terms passed directly to LLM formatting prompt</li><li>Formatting prompt rewritten to be English-based, multilingual-aware, and explicitly prohibit markdown</li><li>Menu bar simplified: removed Mode/Prompt pickers, cleaner layout with icons</li><li>Landing page: improved nav button visibility, version-independent download links</li><li>`applyDictionary()` Fast-mode string replacement (replaced by Whisper prompt injection)</li><li>Readings field from Dictionary editor</li><li>Auto-added/manual filter from Dictionary</li></ul>]]></description>
-            <pubDate>Sun, 08 Mar 2026 14:59:00 +0700</pubDate>
+            <title>Version 0.4.0</title>
+            <description><![CDATA[<h2>What's New in v0.4.0</h2><ul><li>**Floating indicator stop/cancel buttons** — "Done" (checkmark, accent) confirms & transcribes, "Cancel" (trash, muted→red on hover) discards recording. Hover reveals label for clarity.</li><li>**Menu bar enhancements** — Mode picker (Fast/Formatted), prompt selector (greyed in Fast mode), recent history submenu (max 10, copy on click)</li><li>**5-step onboarding** — Added shortcut confirmation (step 4) and interactive trial recording (step 5) to first-launch wizard</li><li>**Real-time streaming transcription** — Partial transcription updates during recording, live text preview in floating indicator</li><li>**Full EN/JA localization** — 30+ previously hardcoded strings now localized across all views, status messages, and onboarding</li><li>**Design system migration** — Discord-cold grays replaced with warm plum-black palette, warm off-white text, two-accent system (purple + amber)</li><li>**Light mode overhaul** — Warm off-whites and warm text grays replace cold Discord grays; `DS.textOnAccent` ensures readability on accent backgrounds</li><li>**Floating indicator rebrand** — Branded warm glass, amber recording dot with breathe animation, two-accent waveform, forced dark mode</li><li>**Streaming text layout** — Fixed height (180px) with internal scroll, bottom controls always pinned visible</li><li>**Settings restructured** — 2-tier layout: basic settings always visible, Voice Engine collapsed by default</li><li>**Animation cleanup** — All `.spring()` replaced with `.easeOut()`, removed bounce effects</li><li>**Menu bar simplified** — Removed inline status/mode badge, uses macOS-standard system colors</li><li>**Dictionary simplified** — Term-only list, injected as Whisper prompt tokens for better accuracy</li><li>Floating indicator controls hidden when streaming text grows (window grew downward off-screen)</li><li>Light mode text unreadable on accent backgrounds</li><li>Picker/Select text invisible in light mode (color scheme mismatch)</li></ul>]]></description>
+            <pubDate>Sun, 08 Mar 2026 17:21:56 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.3.2/Verba-v0.3.2.dmg"
-                sparkle:version="6"
-                sparkle:shortVersionString="0.3.2"
-                sparkle:edSignature="rNL2R1eeYtz5cuPsGV86a40hNFoDuy58woZBKNaOHpjVPPUGsh6ulqC71u0ceMtq7WZeg0TThW9SbD/949XRBA=="
-                length="9603978"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.4.0/Verba-v0.4.0.dmg"
+                sparkle:version="8"
+                sparkle:shortVersionString="0.4.0"
+                sparkle:edSignature="3/oXnc7CoA2lWAZEcUjYQAQUqUv0mEeP9HlWlUT9NpkgNTJJQ9/2JHyAgPhqu3okxQKU/3CIS5+fT83pZbCvAQ=="
+                length="9670860"
                 type="application/octet-stream"
             />
         </item>
