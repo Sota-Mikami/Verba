@@ -928,7 +928,7 @@ struct PromptEditorSheet: View {
                 } label: {
                     Text(isNew ? L10n.current.addPromptBtn : L10n.current.saveChanges)
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(DS.textNormal)
+                        .foregroundStyle(DS.textOnAccent)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 8)
                         .background(prompt.name.isEmpty ? DS.blurple.opacity(0.4) : DS.blurple)
@@ -971,6 +971,9 @@ struct DictionaryEditorSheet: View {
                     .background(DS.inputBg)
                     .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
                     .foregroundStyle(DS.textNormal)
+                    .onSubmit {
+                        if !entry.term.isEmpty { onSave(entry) }
+                    }
                 Text(l10n.dictionaryDesc)
                     .font(.system(size: 11))
                     .foregroundStyle(DS.textFaint)
@@ -997,7 +1000,7 @@ struct DictionaryEditorSheet: View {
                 } label: {
                     Text(isNew ? l10n.addTerm : l10n.saveChanges)
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(DS.textNormal)
+                        .foregroundStyle(DS.textOnAccent)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 8)
                         .background(entry.term.isEmpty ? DS.blurple.opacity(0.4) : DS.blurple)

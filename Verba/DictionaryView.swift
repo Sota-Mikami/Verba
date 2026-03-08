@@ -32,7 +32,7 @@ struct DictionaryView: View {
                     isCreatingEntry = true
                     editingEntry = DictionaryEntry(term: "")
                 } label: {
-                    Text(appState.l10n.newWord)
+                    Text(appState.l10n.addTerm)
                         .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(DS.textOnAccent)
                         .padding(.horizontal, 16)

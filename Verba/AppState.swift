@@ -408,6 +408,7 @@ class AppState: ObservableObject {
             statusMessage = hint
             syncFloatingIndicatorState()
             floatingIndicator.show(isRecording: true, statusMessage: hint, mode: mode)
+            SoundFeedback.playRecordingStart()
             startStreamingTranscription()
         } catch {
             statusMessage = "Mic error: \(error.localizedDescription)"
@@ -421,6 +422,7 @@ class AppState: ObservableObject {
         isRecording = false
         isProcessing = true
         statusMessage = l10n.transcribing
+        SoundFeedback.playRecordingStop()
         floatingIndicator.show(isRecording: false, statusMessage: "Transcribing...", mode: mode)
 
         if systemAudioBehavior == .pauseMedia {
@@ -523,7 +525,7 @@ class AppState: ObservableObject {
             } else {
                 statusMessage = l10n.retranscribedChars(finalText.count)
             }
-            floatingIndicator.hide()
+            floatingIndicator.hideWithSuccess()
 
             try? await Task.sleep(for: .seconds(3))
             if !isRecording && !isProcessing {

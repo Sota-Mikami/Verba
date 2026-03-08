@@ -145,7 +145,6 @@ struct L10n {
     var term: String { s("Term", "用語") }
     var termPlaceholder: String { s("e.g. WhisperKit, Claude", "例: WhisperKit, Claude") }
     var noDictionaryEntries: String { s("No terms registered", "用語が登録されていません") }
-    var newWord: String { s("New word", "新しい用語") }
     var filterAll: String { s("All", "すべて") }
 
     // MARK: Onboarding

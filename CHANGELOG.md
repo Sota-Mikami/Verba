@@ -2,6 +2,22 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [0.4.1] - 2026-03-08
+
+### Added
+- **Audio feedback** — Sound cues for recording start (pop), stop (tink), and paste confirmation (morse)
+- **Paste success indicator** — Green checkmark briefly shown in floating indicator before fade-out
+- **Animated formatting dots** — "Formatting..." cycles dots for visible progress
+- **Timer flip animation** — Elapsed time digits animate with numericText transition
+
+### Changed
+- **App icon** — Updated to match brand palette (dark plum-black background, purple waves, amber glow)
+- **Timer accuracy** — Elapsed time now uses Date-based calculation instead of cumulative increment
+- **Formatting center alignment** — Status text now vertically centered in indicator during transcribing/formatting
+- **Dictionary terminology** — Unified to "Add Term" (was mixed "New word" / "Add Term")
+- **Button contrast** — Fixed accent buttons (Add Term, Save) using textOnAccent for readability in light mode
+- **Dictionary Enter key** — Term can be added by pressing Enter
+
 ## [0.4.0] - 2026-03-08
 
 ### Added

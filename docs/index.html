@@ -404,7 +404,7 @@
       border-image: linear-gradient(to bottom, rgba(255,255,255,0.12), rgba(255,255,255,0.04)) 1;
       border-radius: 14px;
       padding: 14px 18px;
-      min-width: 240px;
+      width: 280px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
     }
 
@@ -445,9 +445,24 @@
       font-size: 12px;
       color: var(--text);
       line-height: 1.5;
-      min-height: 18px;
+      height: 36px;
+      overflow: hidden;
       transition: opacity 0.3s, color 0.3s;
     }
+
+    .demo-success {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 36px;
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .demo-success svg { width: 16px; height: 16px; }
 
     .demo-status { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
     .demo-status-dot { width: 6px; height: 6px; border-radius: 50%; }
@@ -801,7 +816,7 @@
       .split-text h2 { font-size: 28px; }
       .tech-grid { grid-template-columns: 1fr 1fr; }
       .demo-indicator { right: -8px; top: -8px; }
-      .demo-indicator-inner { min-width: 180px; padding: 10px 14px; }
+      .demo-indicator-inner { width: 220px; padding: 10px 14px; }
       .demo-waveform span { width: 2px; }
       .demo-body { padding: 16px; font-size: 13px; }
       .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
@@ -898,6 +913,10 @@
               <span></span><span></span><span></span><span></span><span></span>
             </div>
             <div class="demo-stream"></div>
+            <div class="demo-success">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+              Done
+            </div>
             <div class="demo-status">
               <span class="demo-status-dot"></span>
               <span class="demo-status-label">Listening</span>
@@ -1293,31 +1312,54 @@
       const indicator = document.querySelector('.demo-indicator');
       const waveform = document.querySelector('.demo-waveform');
       const streamEl = document.querySelector('.demo-stream');
+      const successEl = document.querySelector('.demo-success');
       const statusDot = document.querySelector('.demo-status-dot');
       const statusLabel = document.querySelector('.demo-status-label');
       const pastedEl = document.querySelector('.demo-pasted-text');
       const cursorEl = document.querySelector('.demo-cursor');
       const editor = document.getElementById('demoEditor');
+      const controlsEl = document.querySelector('.demo-controls');
+      const statusEl = document.querySelector('.demo-status');
 
       if (!streamEl) return;
 
       function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+      // Animated dots for formatting state
+      let dotsInterval = null;
+      function startDots(base) {
+        let count = 1;
+        statusLabel.textContent = base + '.';
+        dotsInterval = setInterval(() => {
+          count = (count % 3) + 1;
+          statusLabel.textContent = base + '.'.repeat(count);
+        }, 400);
+      }
+      function stopDots() {
+        if (dotsInterval) { clearInterval(dotsInterval); dotsInterval = null; }
+      }
+
       async function runCycle() {
         const texts = demoTexts[currentLang] || demoTexts.en;
 
+        // Reset
         streamEl.textContent = '';
         streamEl.style.opacity = '1';
         streamEl.style.color = '';
+        streamEl.style.display = '';
+        successEl.style.opacity = '0';
         pastedEl.textContent = '';
         cursorEl.style.opacity = '1';
         indicator.style.opacity = '0';
         indicator.style.transform = 'translateY(8px)';
         waveform.style.opacity = '1';
+        controlsEl.style.display = '';
+        statusEl.style.display = '';
         editor.classList.remove('glow');
 
         await sleep(800);
 
+        // Show indicator — recording
         indicator.style.opacity = '1';
         indicator.style.transform = 'translateY(0)';
         statusDot.style.background = 'var(--red)';
@@ -1325,6 +1367,7 @@
 
         await sleep(400);
 
+        // Stream text character by character
         for (let i = 0; i < texts.raw.length; i++) {
           streamEl.textContent = texts.raw.substring(0, i + 1);
           await sleep(50 + Math.random() * 30);
@@ -1332,26 +1375,31 @@
 
         await sleep(500);
 
+        // Formatting state — animated dots
         waveform.style.opacity = '0';
+        controlsEl.style.display = 'none';
         statusDot.style.background = 'var(--orange)';
-        statusLabel.textContent = texts.formatting;
+        const fmtBase = texts.formatting.replace(/\.+$/, '');
+        startDots(fmtBase);
         streamEl.style.opacity = '0.5';
 
         await sleep(1400);
+        stopDots();
 
-        statusDot.style.background = 'var(--green)';
-        statusLabel.textContent = texts.done;
-        streamEl.style.opacity = '1';
-        streamEl.textContent = texts.formatted;
-        streamEl.style.color = 'var(--warm)';
+        // Success checkmark
+        streamEl.style.display = 'none';
+        statusEl.style.display = 'none';
+        successEl.style.opacity = '1';
 
-        await sleep(1000);
+        await sleep(800);
 
+        // Fade out indicator
         indicator.style.opacity = '0';
         indicator.style.transform = 'translateY(-4px)';
 
         await sleep(400);
 
+        // Type formatted text into editor
         editor.classList.add('glow');
         for (let i = 0; i < texts.formatted.length; i++) {
           pastedEl.textContent = texts.formatted.substring(0, i + 1);

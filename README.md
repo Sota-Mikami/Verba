@@ -24,6 +24,7 @@ Local-first voice input for macOS. Speak naturally, get clean text pasted into a
 - Custom shortcuts — any modifier key, key combo (e.g. `fn Space`), or double-tap
 - Real-time streaming transcription with live text preview
 - Auto-paste into the active app via Accessibility API
+- Audio feedback — sound cues for recording start, stop, and paste confirmation
 
 **Transcription & Formatting**
 - On-device Whisper models: Tiny, Base, Small, Large-V3-Turbo
@@ -97,8 +98,8 @@ open Verba.xcodeproj
 ## Roadmap
 
 - [x] Real-time streaming transcription
+- [x] Audio feedback (sound cues for start/stop/paste)
 - [ ] Context-aware formatting (read active app content)
-- [ ] Audio feedback (sound effects for start/stop)
 - [ ] Export transcription history
 
 ## License

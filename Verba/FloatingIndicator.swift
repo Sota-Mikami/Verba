@@ -18,6 +18,7 @@ class FloatingIndicatorState: ObservableObject {
     @Published var errorMessage: String?
     @Published var streamingText: String = ""
     @Published var isStreamingActive = false
+    @Published var showSuccess = false
     var onPromptSelected: ((String) -> Void)?
     var onModeChanged: ((TranscriptionMode) -> Void)?
     var onErrorDismissed: (() -> Void)?
@@ -127,7 +128,21 @@ class FloatingIndicatorController {
             window?.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
             self?.window?.orderOut(nil)
+            self?.state.showSuccess = false
         })
+    }
+
+    /// Show green checkmark briefly, then fade out
+    @MainActor
+    func hideWithSuccess() {
+        state.showSuccess = true
+        state.isRecording = false
+        state.statusMessage = ""
+        SoundFeedback.playPasteSuccess()
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.6))
+            hide()
+        }
     }
 
     @MainActor
@@ -237,67 +252,81 @@ struct FloatingIndicatorView: View {
                 .padding(.vertical, 14)
             } else {
                 // Main content row
-                HStack(spacing: 10) {
-                    // Recording dot — warm amber with breath animation
-                    ZStack {
-                        if state.isRecording {
-                            Circle()
-                                .fill(warmAmber.opacity(0.15))
-                                .frame(width: 20, height: 20)
-                                .scaleEffect(breathe ? 1.3 : 1.0)
-                            Circle()
-                                .fill(warmAmber)
-                                .frame(width: 10, height: 10)
-                                .shadow(color: warmAmber.opacity(0.5), radius: 8)
-                        } else {
-                            ProgressView()
-                                .scaleEffect(0.6)
-                                .tint(Color(hex: 0x9a948a))
-                        }
+                Group {
+                if state.showSuccess {
+                    // Success state — green checkmark
+                    HStack(spacing: 8) {
+                        Spacer()
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(Color(hex: 0x3dd68c))
+                        Text("Done")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(Color(hex: 0x3dd68c))
+                        Spacer()
                     }
-                    .frame(width: 20)
-                    .onChange(of: state.isRecording) { recording in
-                        if recording {
-                            withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
-                                breathe = true
+                    .transition(.opacity)
+                } else {
+                    HStack(spacing: 10) {
+                        // Recording dot — warm amber with breath animation
+                        ZStack {
+                            if state.isRecording {
+                                Circle()
+                                    .fill(warmAmber.opacity(0.15))
+                                    .frame(width: 20, height: 20)
+                                    .scaleEffect(breathe ? 1.3 : 1.0)
+                                Circle()
+                                    .fill(warmAmber)
+                                    .frame(width: 10, height: 10)
+                                    .shadow(color: warmAmber.opacity(0.5), radius: 8)
+                            } else {
+                                ProgressView()
+                                    .scaleEffect(0.6)
+                                    .tint(Color(hex: 0x9a948a))
+                            }
+                        }
+                        .frame(width: 20)
+                        .onChange(of: state.isRecording) { recording in
+                            if recording {
+                                withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
+                                    breathe = true
+                                }
+                            } else {
+                                breathe = false
+                            }
+                        }
+
+                        if state.isRecording {
+                            if hasStreamingText {
+                                MiniWaveformView(levels: state.audioLevels)
+                                    .frame(width: 60, height: 16)
+                            } else {
+                                // Minimal waveform — just audio feedback
+                                WaveformView(levels: state.audioLevels)
+                                    .frame(height: 28)
                             }
                         } else {
-                            breathe = false
+                            AnimatedDotsText(base: state.statusMessage)
                         }
-                    }
 
-                    if state.isRecording {
-                        if hasStreamingText {
-                            MiniWaveformView(levels: state.audioLevels)
-                                .frame(width: 60, height: 16)
+                        Spacer(minLength: 4)
+
+                        if state.isRecording {
+                            ElapsedTimeView()
+                                .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                                .foregroundStyle(Color(hex: 0xede8e1).opacity(0.7))
                         } else {
-                            // Minimal waveform — just audio feedback
-                            WaveformView(levels: state.audioLevels)
-                                .frame(height: 28)
+                            Text(state.mode.rawValue)
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundStyle(Color(hex: 0x9a948a))
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.white.opacity(0.08))
+                                .clipShape(Capsule())
                         }
-                    } else {
-                        Text(state.statusMessage)
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(Color(hex: 0xede8e1))
-                            .lineLimit(1)
-                    }
-
-                    Spacer(minLength: 4)
-
-                    if state.isRecording {
-                        ElapsedTimeView()
-                            .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                            .foregroundStyle(Color(hex: 0xede8e1).opacity(0.7))
-                    } else {
-                        Text(state.mode.rawValue)
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(Color(hex: 0x9a948a))
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.white.opacity(0.08))
-                            .clipShape(Capsule())
                     }
                 }
+                } // Group
                 .padding(.horizontal, 16)
                 .padding(.top, hasStreamingText ? 10 : 14)
                 .padding(.bottom, hasStreamingText ? 0 : (state.isRecording ? 6 : 14))
@@ -317,10 +346,9 @@ struct FloatingIndicatorView: View {
                 }
             }
 
-            Spacer(minLength: 0)
-
             // Controls row during recording — always pinned at bottom
             if state.isRecording && state.errorMessage == nil {
+                Spacer(minLength: 0)
                 HStack(spacing: 6) {
                     RecordingControlsRow(state: state)
 
@@ -650,19 +678,91 @@ struct RecordingActionButton: View {
 }
 
 struct ElapsedTimeView: View {
-    @State private var elapsed: TimeInterval = 0
+    private let startDate = Date()
     private let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
+    @State private var displaySeconds: Int = 0
 
     var body: some View {
-        Text(formatTime(elapsed))
-            .onReceive(timer) { _ in
-                elapsed += 0.1
+        HStack(spacing: 0) {
+            // Minutes
+            Text("\(displaySeconds / 60)")
+            Text(":")
+            // Tens digit of seconds
+            FlipDigit(digit: (displaySeconds % 60) / 10)
+            // Ones digit of seconds
+            FlipDigit(digit: (displaySeconds % 60) % 10)
+        }
+        .onReceive(timer) { now in
+            let newSeconds = Int(ceil(now.timeIntervalSince(startDate)))
+            if newSeconds != displaySeconds {
+                displaySeconds = newSeconds
             }
+        }
+    }
+}
+
+/// A single digit that flips (slides up) on change
+private struct FlipDigit: View {
+    let digit: Int
+
+    var body: some View {
+        Text("\(digit)")
+            .contentTransition(.numericText())
+            .animation(.easeOut(duration: 0.2), value: digit)
+    }
+}
+
+/// Animated dots for status messages ending with "..."
+/// "Transcribing..." cycles through 1-3 dots
+struct AnimatedDotsText: View {
+    let base: String
+    @State private var dotCount = 3
+    private let timer = Timer.publish(every: 0.4, on: .main, in: .common).autoconnect()
+
+    private var stripped: String {
+        var s = base
+        while s.hasSuffix(".") { s.removeLast() }
+        return s
     }
 
-    private func formatTime(_ t: TimeInterval) -> String {
-        let minutes = Int(t) / 60
-        let seconds = Int(t) % 60
-        return String(format: "%d:%02d", minutes, seconds)
+    private var hasDots: Bool { base.hasSuffix("...") }
+
+    var body: some View {
+        if hasDots {
+            HStack(spacing: 0) {
+                Text(stripped)
+                Text(String(repeating: ".", count: dotCount))
+                    .frame(width: 16, alignment: .leading)
+            }
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(Color(hex: 0xede8e1))
+            .lineLimit(1)
+            .onReceive(timer) { _ in
+                dotCount = (dotCount % 3) + 1
+            }
+        } else {
+            Text(base)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(Color(hex: 0xede8e1))
+                .lineLimit(1)
+        }
+    }
+}
+
+/// Sound feedback for recording lifecycle
+enum SoundFeedback {
+    /// Soft "pop" on recording start
+    static func playRecordingStart() {
+        NSSound(named: "Pop")?.play()
+    }
+
+    /// Gentle "tock" on recording stop
+    static func playRecordingStop() {
+        NSSound(named: "Tink")?.play()
+    }
+
+    /// Subtle confirmation on paste success
+    static func playPasteSuccess() {
+        NSSound(named: "Morse")?.play()
     }
 }
