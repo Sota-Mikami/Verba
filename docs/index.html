@@ -3,26 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verba — Local-First Voice Input for macOS</title>
-  <meta name="description" content="Speak naturally, get clean text. On-device speech recognition with WhisperKit. No cloud, no subscription, no data leaving your Mac.">
-  <meta property="og:title" content="Verba — Local-First Voice Input for macOS">
-  <meta property="og:description" content="On-device speech recognition powered by WhisperKit. Real-time streaming transcription. Your voice stays on your Mac.">
+  <title>Verba — Voice input that stays on your Mac</title>
+  <meta name="description" content="Local-first voice-to-text for macOS. WhisperKit speech recognition, on-device LLM formatting. No cloud, no account, no data leaves your machine.">
+  <meta property="og:title" content="Verba — Voice input that stays on your Mac">
+  <meta property="og:description" content="Local-first voice-to-text for macOS. WhisperKit + MLX, entirely on-device.">
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-primary: #0f0f17;
-      --bg-secondary: #16161f;
-      --bg-card: #1c1c28;
-      --bg-card-hover: #22222f;
+      --bg: #0b0b12;
+      --bg-raised: #13131d;
+      --bg-surface: #1a1a28;
       --accent: #7c5cfc;
       --accent-light: #9b7dff;
-      --accent-glow: rgba(124, 92, 252, 0.12);
-      --text-primary: #ededf0;
-      --text-secondary: #9898ad;
-      --text-muted: #5c5c72;
+      --accent-dim: rgba(124, 92, 252, 0.08);
+      --text: #e8e8ed;
+      --text-sub: #8e8ea0;
+      --text-dim: #55556a;
       --border: rgba(255, 255, 255, 0.06);
       --green: #34d399;
       --red: #f04747;
@@ -30,33 +29,30 @@
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    html, body {
-      overflow-x: hidden;
-    }
+    html, body { overflow-x: hidden; }
 
     body {
       font-family: 'Inter', -apple-system, sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      line-height: 1.6;
+      background: var(--bg);
+      color: var(--text);
       -webkit-font-smoothing: antialiased;
     }
 
-    .container {
-      max-width: 1080px;
+    /* ── Layout ── */
+    .wrap {
+      max-width: 1120px;
       margin: 0 auto;
-      padding: 0 24px;
+      padding: 0 32px;
     }
 
-    /* Nav */
+    /* ── Nav ── */
     nav {
       position: fixed;
       top: 0;
       width: 100%;
       z-index: 100;
-      background: rgba(15, 15, 23, 0.8);
-      backdrop-filter: blur(20px);
+      background: rgba(11, 11, 18, 0.85);
+      backdrop-filter: blur(24px);
       border-bottom: 1px solid var(--border);
     }
 
@@ -67,587 +63,139 @@
       height: 56px;
     }
 
-    .nav-logo {
+    .logo {
       font-size: 18px;
-      font-weight: 800;
-      color: var(--text-primary);
+      font-weight: 900;
+      color: var(--text);
       text-decoration: none;
       letter-spacing: -0.5px;
     }
 
-    .nav-logo span { color: var(--accent); }
+    .logo span { color: var(--accent); }
 
-    .nav-links {
+    .nav-actions {
       display: flex;
-      gap: 28px;
+      gap: 10px;
       align-items: center;
-    }
-
-    .nav-links a {
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 13px;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-
-    .nav-links a:hover { color: var(--text-primary); }
-
-    .nav-links .btn-primary {
-      box-shadow: 0 2px 10px rgba(124, 92, 252, 0.4);
-    }
-
-    .nav-links .btn-secondary {
-      background: rgba(255,255,255,0.15);
-      border-color: rgba(255,255,255,0.3);
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 9px 20px;
-      border-radius: 10px;
+      padding: 8px 18px;
+      border-radius: 8px;
       font-size: 13px;
       font-weight: 600;
       text-decoration: none;
-      transition: all 0.2s;
+      transition: all 0.15s;
       border: none;
       cursor: pointer;
     }
 
-    .btn-primary {
+    .btn-ghost {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    .btn-accent {
       background: var(--accent);
       color: white;
-      box-shadow: 0 2px 8px rgba(124, 92, 252, 0.3);
     }
 
-    .btn-primary:hover {
+    .btn-accent:hover {
       background: var(--accent-light);
       transform: translateY(-1px);
-      box-shadow: 0 8px 24px rgba(124, 92, 252, 0.35);
+      box-shadow: 0 6px 20px rgba(124, 92, 252, 0.3);
     }
 
-    .btn-secondary {
-      background: rgba(255,255,255,0.12);
-      color: white;
-      border: 1px solid rgba(255,255,255,0.25);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-    }
-
-    .btn-secondary:hover {
-      background: rgba(255,255,255,0.2);
-      border-color: rgba(255,255,255,0.4);
-    }
-
-    .btn-large {
+    .btn-lg {
       padding: 14px 32px;
       font-size: 15px;
-      border-radius: 12px;
+      border-radius: 10px;
     }
 
-    /* Hero */
+    /* ── Hero ── */
     .hero {
-      padding: 140px 0 80px;
-      text-align: center;
-      position: relative;
+      padding: 140px 0 0;
     }
 
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: 40px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(500px, 100vw);
-      height: 500px;
-      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
-      pointer-events: none;
+    .hero-content {
+      max-width: 620px;
     }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 14px;
-      background: var(--accent-glow);
-      border: 1px solid rgba(124, 92, 252, 0.15);
-      border-radius: 100px;
-      font-size: 12px;
-      font-weight: 500;
+    .hero h1 {
+      font-size: clamp(40px, 5vw, 60px);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -2.5px;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 em {
+      font-style: normal;
       color: var(--accent-light);
-      margin-bottom: 28px;
     }
 
-    .badge-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--green);
-    }
-
-    h1 {
-      font-size: clamp(36px, 5.5vw, 56px);
-      font-weight: 800;
-      line-height: 1.1;
-      letter-spacing: -2px;
-      margin-bottom: 20px;
-    }
-
-    h1 .gradient {
-      background: linear-gradient(135deg, var(--accent-light) 0%, #c084fc 50%, #f472b6 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .hero-sub {
+    .hero .lead {
       font-size: 18px;
-      color: var(--text-secondary);
-      max-width: 520px;
-      margin: 0 auto 40px;
       line-height: 1.7;
+      color: var(--text-sub);
+      max-width: 480px;
+      margin-bottom: 36px;
     }
 
-    .hero-actions {
+    .hero-cta {
       display: flex;
       gap: 12px;
-      justify-content: center;
+      align-items: center;
       flex-wrap: wrap;
     }
 
     .hero-meta {
       display: flex;
-      gap: 24px;
-      justify-content: center;
-      margin-top: 40px;
-      color: var(--text-muted);
-      font-size: 12px;
-    }
-
-    .hero-meta span {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    /* Highlight strip */
-    .highlights {
-      padding: 0 0 80px;
-    }
-
-    .highlight-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1px;
-      background: var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-    }
-
-    .highlight-item {
-      background: var(--bg-secondary);
-      padding: 28px 24px;
-      text-align: center;
-    }
-
-    .highlight-item .emoji {
-      font-size: 24px;
-      margin-bottom: 10px;
-      display: block;
-    }
-
-    .highlight-item h3 {
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .highlight-item p {
-      font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-
-    /* Local First Banner */
-    .local-first {
-      padding: 0 0 80px;
-    }
-
-    .local-first-card {
-      background: linear-gradient(135deg, rgba(52, 211, 153, 0.06) 0%, rgba(124, 92, 252, 0.06) 100%);
-      border: 1px solid rgba(52, 211, 153, 0.1);
-      border-radius: 20px;
-      padding: 48px;
-      text-align: center;
-    }
-
-    .local-first-card h2 {
-      font-size: 28px;
-      font-weight: 800;
-      margin-bottom: 12px;
-      letter-spacing: -0.5px;
-    }
-
-    .local-first-card .icon-lock {
-      font-size: 40px;
-      margin-bottom: 20px;
-      display: block;
-    }
-
-    .local-first-card p {
-      color: var(--text-secondary);
-      font-size: 16px;
-      max-width: 560px;
-      margin: 0 auto 32px;
-      line-height: 1.7;
-    }
-
-    .privacy-points {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
-      max-width: 720px;
-      margin: 0 auto;
-    }
-
-    .privacy-point {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      background: rgba(255, 255, 255, 0.02);
-      border-radius: 10px;
-      border: 1px solid var(--border);
-    }
-
-    .privacy-point .check {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: rgba(52, 211, 153, 0.12);
-      color: var(--green);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      flex-shrink: 0;
-    }
-
-    .privacy-point span {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    /* Features */
-    .features {
-      padding: 80px 0;
-    }
-
-    .section-header {
-      text-align: center;
-      margin-bottom: 48px;
-    }
-
-    .section-header h2 {
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing: -1px;
-      margin-bottom: 8px;
-    }
-
-    .section-header p {
-      color: var(--text-secondary);
-      font-size: 15px;
-    }
-
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 16px;
-    }
-
-    .feature-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 28px;
-      transition: all 0.3s;
-    }
-
-    .feature-card:hover {
-      background: var(--bg-card-hover);
-      border-color: rgba(124, 92, 252, 0.15);
-      transform: translateY(-2px);
-    }
-
-    .feature-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 11px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      margin-bottom: 16px;
-    }
-
-    .feature-card h3 {
-      font-size: 16px;
-      font-weight: 700;
-      margin-bottom: 6px;
-      letter-spacing: -0.3px;
-    }
-
-    .feature-card p {
-      color: var(--text-secondary);
-      font-size: 13px;
-      line-height: 1.6;
-    }
-
-    .icon-purple { background: rgba(124, 92, 252, 0.1); }
-    .icon-green { background: rgba(52, 211, 153, 0.1); }
-    .icon-orange { background: rgba(251, 191, 36, 0.1); }
-    .icon-red { background: rgba(240, 71, 71, 0.1); }
-    .icon-blue { background: rgba(88, 148, 252, 0.1); }
-    .icon-pink { background: rgba(244, 114, 182, 0.1); }
-
-    /* How it works */
-    .how-it-works {
-      padding: 80px 0;
-    }
-
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-top: 48px;
-    }
-
-    .step {
-      text-align: center;
-      padding: 24px 16px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-    }
-
-    .step-number {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--accent-glow);
-      border: 1.5px solid rgba(124, 92, 252, 0.3);
-      color: var(--accent-light);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 16px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 16px;
-    }
-
-    .step h3 {
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .step p {
-      color: var(--text-secondary);
-      font-size: 12px;
-      line-height: 1.5;
-    }
-
-    /* Models table */
-    .models {
-      padding: 80px 0;
-    }
-
-    .model-tables {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
-      gap: 16px;
-    }
-
-    .model-table-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      overflow: hidden;
-    }
-
-    .model-table-header {
-      padding: 20px 24px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .model-table-header h3 {
-      font-size: 15px;
-      font-weight: 700;
-    }
-
-    .model-table-header p {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th {
-      text-align: left;
-      padding: 10px 24px;
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border);
-    }
-
-    td {
-      padding: 10px 24px;
-      font-size: 13px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    tr:last-child td { border-bottom: none; }
-
-    .tag {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-
-    .tag-green {
-      background: rgba(52, 211, 153, 0.1);
-      color: var(--green);
-    }
-
-    .tag-orange {
-      background: rgba(251, 191, 36, 0.1);
-      color: var(--orange);
-    }
-
-    /* CTA */
-    .cta {
-      padding: 80px 0;
-      text-align: center;
-    }
-
-    .cta h2 {
-      font-size: 36px;
-      font-weight: 800;
-      letter-spacing: -1.5px;
-      margin-bottom: 12px;
-    }
-
-    .cta p {
-      color: var(--text-secondary);
-      font-size: 16px;
-      margin-bottom: 32px;
-    }
-
-    .cta-actions {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    /* Footer */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 32px 0;
-    }
-
-    .footer-inner {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .footer-inner p {
-      color: var(--text-muted);
-      font-size: 12px;
-    }
-
-    .footer-links {
-      display: flex;
       gap: 20px;
-    }
-
-    .footer-links a {
-      color: var(--text-muted);
-      text-decoration: none;
+      margin-top: 24px;
       font-size: 12px;
-      transition: color 0.2s;
+      color: var(--text-dim);
+      font-weight: 500;
     }
 
-    .footer-links a:hover { color: var(--text-secondary); }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-      .nav-links { display: none; }
-      .hero { padding: 100px 0 60px; }
-      .highlight-grid { grid-template-columns: repeat(2, 1fr); }
-      .local-first-card { padding: 28px 20px; }
-      .feature-grid { grid-template-columns: 1fr; }
-      .steps { grid-template-columns: repeat(2, 1fr); }
-      .model-tables { grid-template-columns: 1fr; }
-      .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
-      table { font-size: 12px; }
-      th, td { padding: 8px 12px; }
-      .privacy-points { grid-template-columns: 1fr; }
+    /* ── Demo ── */
+    .demo-section {
+      padding: 80px 0 120px;
     }
 
-    @media (max-width: 480px) {
-      .highlight-grid { grid-template-columns: 1fr 1fr; }
-      .steps { grid-template-columns: 1fr; }
-      h1 { letter-spacing: -1px; }
-      .cta h2 { font-size: 28px; }
-      .section-header h2 { font-size: 24px; }
-      .local-first-card h2 { font-size: 22px; }
-      .btn-large { padding: 12px 24px; font-size: 14px; }
-    }
-
-    /* Demo animation */
     .demo-wrapper {
       position: relative;
-      max-width: 600px;
-      margin: 56px auto 0;
+      max-width: 640px;
+      margin: 0 auto;
       perspective: 1000px;
     }
 
-    /* Editor window */
     .demo-editor {
-      background: #1a1a2e;
+      background: var(--bg-surface);
       border-radius: 12px;
       border: 1px solid rgba(255,255,255,0.08);
       overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
     }
 
-    .demo-editor-bar {
+    .demo-bar {
       display: flex;
       align-items: center;
       padding: 12px 16px;
-      background: rgba(255,255,255,0.03);
+      background: rgba(255,255,255,0.02);
       border-bottom: 1px solid rgba(255,255,255,0.06);
     }
 
-    .demo-dots {
-      display: flex;
-      gap: 6px;
-    }
+    .demo-dots { display: flex; gap: 6px; }
 
     .dot {
       width: 10px;
@@ -655,37 +203,29 @@
       border-radius: 50%;
     }
 
-    .dot-red { background: #ff5f57; }
-    .dot-yellow { background: #febc2e; }
-    .dot-green { background: #28c840; }
+    .dot-r { background: #ff5f57; }
+    .dot-y { background: #febc2e; }
+    .dot-g { background: #28c840; }
 
-    .demo-editor-title {
+    .demo-bar-title {
       flex: 1;
       text-align: center;
       font-size: 12px;
-      color: var(--text-muted);
+      color: var(--text-dim);
       font-weight: 500;
     }
 
-    .demo-editor-body {
-      padding: 20px 24px;
-      min-height: 140px;
+    .demo-body {
+      padding: 24px;
+      min-height: 160px;
       font-size: 14px;
-      line-height: 1.8;
+      line-height: 1.9;
     }
 
-    .demo-line-existing {
-      color: var(--text-primary);
-    }
+    .demo-existing { color: var(--text); }
+    .demo-existing.dim { color: var(--text-dim); }
 
-    .demo-line-existing.dim {
-      color: var(--text-muted);
-    }
-
-    .demo-pasted-line {
-      display: inline;
-      position: relative;
-    }
+    .demo-pasted-line { display: inline; }
 
     .demo-cursor {
       display: inline-block;
@@ -693,15 +233,12 @@
       height: 18px;
       background: var(--accent);
       vertical-align: text-bottom;
-      animation: cursorBlink 1s step-end infinite;
+      animation: blink 1s step-end infinite;
     }
 
-    .demo-pasted-text {
-      color: var(--accent-light);
-      animation: pasteText 10s infinite;
-    }
+    .demo-pasted-text { color: var(--accent-light); }
 
-    @keyframes cursorBlink {
+    @keyframes blink {
       0%, 50% { opacity: 1; }
       51%, 100% { opacity: 0; }
     }
@@ -709,20 +246,20 @@
     /* Floating indicator */
     .demo-indicator {
       position: absolute;
-      top: -12px;
-      right: -20px;
+      top: -16px;
+      right: -24px;
       z-index: 10;
       transition: opacity 0.5s, transform 0.5s;
     }
 
     .demo-indicator-inner {
-      background: rgba(20, 20, 32, 0.95);
+      background: rgba(16, 16, 28, 0.95);
       backdrop-filter: blur(20px);
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 14px;
       padding: 14px 18px;
       min-width: 240px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
 
     .demo-waveform {
@@ -758,125 +295,421 @@
       50% { transform: scaleY(1); opacity: 1; }
     }
 
-    .demo-streaming-text {
-      font-size: 12px;
-      color: var(--text-primary);
-      line-height: 1.5;
-      min-height: 18px;
-      transition: opacity 0.3s, color 0.3s;
+    .demo-stream { font-size: 12px; color: var(--text); line-height: 1.5; min-height: 18px; transition: opacity 0.3s, color 0.3s; }
+
+    .demo-status { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+    .demo-status-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .demo-status-label { font-size: 10px; font-weight: 500; color: var(--text-dim); }
+
+    /* ── Split sections ── */
+    .split {
+      padding: 100px 0;
+      border-top: 1px solid var(--border);
     }
 
-    .demo-status {
+    .split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .split-text h2 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1.15;
+      margin-bottom: 16px;
+    }
+
+    .split-text p {
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--text-sub);
+    }
+
+    .split-text p + p {
+      margin-top: 12px;
+    }
+
+    .split-visual {
+      position: relative;
+    }
+
+    /* Privacy visual */
+    .privacy-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .p-row {
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-top: 6px;
-    }
-
-    .demo-status-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      animation: statusDot 10s infinite;
-    }
-
-    .demo-status-label {
-      font-size: 10px;
+      gap: 14px;
+      padding: 14px 20px;
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      font-size: 13px;
       font-weight: 500;
-      color: var(--text-muted);
     }
 
-    @media (max-width: 768px) {
-      .demo-wrapper { margin-top: 40px; }
-      .demo-indicator { right: -8px; top: -8px; }
-      .demo-indicator-inner { min-width: 180px; padding: 10px 14px; }
-      .demo-waveform span { width: 2px; }
-      .demo-editor-body { padding: 16px; font-size: 13px; }
+    .p-row:first-child { border-radius: 12px 12px 0 0; }
+    .p-row:last-child { border-radius: 0 0 12px 12px; }
+
+    .p-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
     }
 
-    @media (max-width: 480px) {
-      .demo-indicator { position: relative; right: auto; top: auto; margin: -20px auto 16px; }
-      .demo-wrapper { margin-top: 32px; }
+    .p-icon-green { background: rgba(52, 211, 153, 0.1); color: var(--green); }
+    .p-icon-accent { background: var(--accent-dim); color: var(--accent-light); }
+
+    .p-row span { color: var(--text); }
+    .p-row small { color: var(--text-dim); font-weight: 400; margin-left: auto; font-size: 11px; }
+
+    /* Shortcut visual */
+    .shortcut-demo {
+      text-align: center;
+    }
+
+    .shortcut-keys {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 20px;
     }
 
     kbd {
-      display: inline-block;
-      padding: 2px 7px;
-      background: rgba(255,255,255,0.06);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 48px;
+      height: 48px;
+      padding: 0 16px;
+      background: var(--bg-raised);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 3px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    kbd.active {
+      background: var(--accent);
+      border-color: var(--accent-light);
+      border-bottom-color: rgba(124, 92, 252, 0.5);
+      color: white;
+      box-shadow: 0 0 20px rgba(124, 92, 252, 0.3);
+    }
+
+    .shortcut-label {
+      font-size: 13px;
+      color: var(--text-dim);
+      margin-top: 12px;
+    }
+
+    .shortcut-modes {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .mode-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: var(--bg-raised);
       border: 1px solid var(--border);
-      border-radius: 5px;
+      border-radius: 10px;
+      font-size: 13px;
+    }
+
+    .mode-tag {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      color: var(--text-secondary);
+      font-weight: 500;
+      color: var(--accent-light);
+      background: var(--accent-dim);
+      padding: 3px 8px;
+      border-radius: 5px;
+      flex-shrink: 0;
+    }
+
+    .mode-row span { color: var(--text-sub); }
+
+    /* Formatting visual */
+    .format-demo {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .format-card {
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+
+    .format-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+
+    .format-raw {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-sub);
+    }
+
+    .format-clean {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--accent-light);
+    }
+
+    .format-arrow {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 18px;
+    }
+
+    /* ── Tech strip ── */
+    .tech {
+      padding: 80px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .tech h2 {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2px;
+      background: var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .tech-cell {
+      background: var(--bg-raised);
+      padding: 24px;
+      text-align: center;
+    }
+
+    .tech-cell h3 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .tech-cell p {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    .tech-cell .mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-top: 6px;
+    }
+
+    /* ── CTA ── */
+    .cta {
+      padding: 120px 0 80px;
+      text-align: center;
+      border-top: 1px solid var(--border);
+      position: relative;
+    }
+
+    .cta::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(600px, 100vw);
+      height: 400px;
+      background: radial-gradient(circle, var(--accent-dim) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta h2 {
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 900;
+      letter-spacing: -1.5px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .cta .lead {
+      color: var(--text-sub);
+      font-size: 16px;
+      margin-bottom: 36px;
+      position: relative;
+    }
+
+    .cta-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      position: relative;
+    }
+
+    .cta-note {
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--text-dim);
+      position: relative;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 0;
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-inner p {
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    .footer-links a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 12px;
+      transition: color 0.15s;
+    }
+
+    .footer-links a:hover { color: var(--text-sub); }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .wrap { padding: 0 20px; }
+      .nav-actions { display: none; }
+      .hero { padding: 100px 0 0; }
+      .hero h1 { font-size: 36px; letter-spacing: -1.5px; }
+      .split { padding: 64px 0; }
+      .split-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+      .split-grid.reverse .split-visual { order: -1; }
+      .tech-grid { grid-template-columns: 1fr 1fr; }
+      .demo-indicator { right: -8px; top: -8px; }
+      .demo-indicator-inner { min-width: 180px; padding: 10px 14px; }
+      .demo-waveform span { width: 2px; }
+      .demo-body { padding: 16px; font-size: 13px; }
+      .footer-inner { flex-direction: column; gap: 12px; text-align: center; }
+    }
+
+    @media (max-width: 480px) {
+      .hero h1 { font-size: 30px; letter-spacing: -1px; }
+      .demo-indicator { position: relative; right: auto; top: auto; margin: -20px auto 16px; }
+      .tech-grid { grid-template-columns: 1fr; }
+      .shortcut-keys kbd { min-width: 40px; height: 40px; font-size: 14px; }
+      .cta h2 { font-size: 24px; }
     }
   </style>
 </head>
 <body>
 
   <nav>
-    <div class="container nav-inner">
-      <a href="#" class="nav-logo">Verb<span>a</span></a>
-      <div class="nav-links">
-        <a href="#features">Features</a>
-        <a href="#how-it-works">How It Works</a>
-        <a href="#models">Models</a>
-        <a href="https://github.com/Sota-Mikami/Verba" class="btn btn-secondary">
+    <div class="wrap nav-inner">
+      <a href="#" class="logo">Verb<span>a</span></a>
+      <div class="nav-actions">
+        <a href="https://github.com/Sota-Mikami/Verba" class="btn btn-ghost">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
           GitHub
         </a>
-        <a href="https://github.com/Sota-Mikami/Verba/releases/latest" class="btn btn-primary">
+        <a href="https://github.com/Sota-Mikami/Verba/releases/latest" class="btn btn-accent">
           Download
         </a>
       </div>
     </div>
   </nav>
 
-  <!-- Hero -->
+  <!-- ── Hero ── -->
   <section class="hero">
-    <div class="container">
-      <div class="badge">
-        <span class="badge-dot"></span>
-        100% Local &middot; Open Source &middot; Free
+    <div class="wrap">
+      <div class="hero-content">
+        <h1>Talk. It types.<br><em>Nothing leaves your Mac.</em></h1>
+        <p class="lead">
+          Verba turns your voice into clean, formatted text — using WhisperKit and
+          on-device LLMs. No cloud API, no account, no data uploaded. Ever.
+        </p>
+        <div class="hero-cta">
+          <a href="https://github.com/Sota-Mikami/Verba/releases/latest" class="btn btn-accent btn-lg">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download for macOS
+          </a>
+          <a href="https://github.com/Sota-Mikami/Verba" class="btn btn-ghost btn-lg">
+            View source
+          </a>
+        </div>
+        <div class="hero-meta">
+          <span>macOS 14+</span>
+          <span>Apple Silicon</span>
+          <span>MIT License</span>
+        </div>
       </div>
-      <h1>
-        Voice to text,<br>
-        <span class="gradient">entirely on your Mac.</span>
-      </h1>
-      <p class="hero-sub">
-        Speak naturally and get clean text pasted into any app.
-        Real-time streaming preview. No cloud. No subscription.
-      </p>
-      <div class="hero-actions">
-        <a href="https://github.com/Sota-Mikami/Verba/releases/latest" class="btn btn-primary btn-large">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download for macOS
-        </a>
-        <a href="https://github.com/Sota-Mikami/Verba" class="btn btn-secondary btn-large">
-          View on GitHub
-        </a>
-      </div>
-      <div class="hero-meta">
-        <span>macOS 14+ (Sonoma)</span>
-        <span>Apple Silicon</span>
-        <span>MIT License</span>
-      </div>
+    </div>
+  </section>
 
-      <!-- Animated Demo -->
+  <!-- ── Demo ── -->
+  <section class="demo-section">
+    <div class="wrap">
       <div class="demo-wrapper">
-        <!-- Background: fake editor window -->
         <div class="demo-editor">
-          <div class="demo-editor-bar">
+          <div class="demo-bar">
             <div class="demo-dots">
-              <span class="dot dot-red"></span>
-              <span class="dot dot-yellow"></span>
-              <span class="dot dot-green"></span>
+              <span class="dot dot-r"></span>
+              <span class="dot dot-y"></span>
+              <span class="dot dot-g"></span>
             </div>
-            <span class="demo-editor-title">Notes.app</span>
+            <span class="demo-bar-title">Notes.app</span>
           </div>
-          <div class="demo-editor-body">
-            <div class="demo-line-existing">Meeting notes — March 2026</div>
-            <div class="demo-line-existing dim">Discussed Q2 roadmap and priorities.</div>
-            <div class="demo-line-existing dim">&nbsp;</div>
+          <div class="demo-body">
+            <div class="demo-existing">Meeting notes — March 2026</div>
+            <div class="demo-existing dim">Discussed Q2 roadmap and priorities.</div>
+            <div class="demo-existing dim">&nbsp;</div>
             <div class="demo-pasted-line">
               <span class="demo-cursor"></span>
               <span class="demo-pasted-text"></span>
@@ -884,14 +717,13 @@
           </div>
         </div>
 
-        <!-- Floating indicator overlay -->
         <div class="demo-indicator">
           <div class="demo-indicator-inner">
             <div class="demo-waveform">
               <span></span><span></span><span></span><span></span><span></span>
               <span></span><span></span><span></span><span></span><span></span>
             </div>
-            <div class="demo-streaming-text"></div>
+            <div class="demo-stream"></div>
             <div class="demo-status">
               <span class="demo-status-dot"></span>
               <span class="demo-status-label">Listening</span>
@@ -899,218 +731,178 @@
           </div>
         </div>
       </div>
-
     </div>
   </section>
 
-  <!-- Highlights strip -->
-  <section class="highlights">
-    <div class="container">
-      <div class="highlight-grid">
-        <div class="highlight-item">
-          <span class="emoji">&#127908;</span>
-          <h3>On-Device STT</h3>
-          <p>WhisperKit on Apple Neural Engine</p>
+  <!-- ── Section: Privacy ── -->
+  <section class="split">
+    <div class="wrap">
+      <div class="split-grid">
+        <div class="split-text">
+          <h2>Your voice stays<br>on your machine.</h2>
+          <p>
+            Verba doesn't phone home. Speech recognition runs on WhisperKit via Apple Neural Engine.
+            Text formatting uses MLX models loaded into local memory.
+            There's no server, no analytics, no telemetry.
+          </p>
+          <p>
+            It works on airplane mode. That's the whole point.
+          </p>
         </div>
-        <div class="highlight-item">
-          <span class="emoji">&#9889;</span>
-          <h3>Real-Time Preview</h3>
-          <p>See text as you speak</p>
-        </div>
-        <div class="highlight-item">
-          <span class="emoji">&#129302;</span>
-          <h3>AI Formatting</h3>
-          <p>On-device MLX or cloud LLM</p>
-        </div>
-        <div class="highlight-item">
-          <span class="emoji">&#128274;</span>
-          <h3>Privacy First</h3>
-          <p>No data leaves your Mac</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Local First -->
-  <section class="local-first">
-    <div class="container">
-      <div class="local-first-card">
-        <span class="icon-lock">&#128274;</span>
-        <h2>Local First. Privacy by Design.</h2>
-        <p>
-          Every part of Verba's pipeline runs on your Mac. Speech recognition uses WhisperKit,
-          and text formatting can use on-device MLX models. No audio is ever sent to any server.
-        </p>
-        <div class="privacy-points">
-          <div class="privacy-point">
-            <div class="check">&#10003;</div>
-            <span>Audio processed on-device</span>
-          </div>
-          <div class="privacy-point">
-            <div class="check">&#10003;</div>
-            <span>LLM formatting runs locally</span>
-          </div>
-          <div class="privacy-point">
-            <div class="check">&#10003;</div>
-            <span>No account or signup</span>
-          </div>
-          <div class="privacy-point">
-            <div class="check">&#10003;</div>
-            <span>Works fully offline</span>
-          </div>
-          <div class="privacy-point">
-            <div class="check">&#10003;</div>
-            <span>Open source (MIT)</span>
-          </div>
-          <div class="privacy-point">
-            <div class="check">&#10003;</div>
-            <span>Optional cloud formatting</span>
+        <div class="split-visual">
+          <div class="privacy-stack">
+            <div class="p-row">
+              <div class="p-icon p-icon-green">&#10003;</div>
+              <span>Audio processed on-device</span>
+              <small>WhisperKit</small>
+            </div>
+            <div class="p-row">
+              <div class="p-icon p-icon-green">&#10003;</div>
+              <span>LLM formatting runs locally</span>
+              <small>Apple MLX</small>
+            </div>
+            <div class="p-row">
+              <div class="p-icon p-icon-green">&#10003;</div>
+              <span>No account or signup</span>
+            </div>
+            <div class="p-row">
+              <div class="p-icon p-icon-green">&#10003;</div>
+              <span>Works fully offline</span>
+            </div>
+            <div class="p-row">
+              <div class="p-icon p-icon-accent">MIT</div>
+              <span>Open source</span>
+              <small>Read every line</small>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Features -->
-  <section class="features" id="features">
-    <div class="container">
-      <div class="section-header">
-        <h2>Everything you need</h2>
-        <p>Professional voice input, built for daily use</p>
+  <!-- ── Section: How it works ── -->
+  <section class="split">
+    <div class="wrap">
+      <div class="split-grid reverse">
+        <div class="split-visual">
+          <div class="shortcut-demo">
+            <div class="shortcut-keys">
+              <kbd class="active">fn</kbd>
+              <kbd>hold</kbd>
+            </div>
+            <div class="shortcut-modes">
+              <div class="mode-row">
+                <span class="mode-tag">hold</span>
+                <span>Hold key to record, release to transcribe</span>
+              </div>
+              <div class="mode-row">
+                <span class="mode-tag">2x tap</span>
+                <span>Double-tap to start, tap again to stop</span>
+              </div>
+              <div class="mode-row">
+                <span class="mode-tag">combo</span>
+                <span>Any modifier + key as custom shortcut</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="split-text">
+          <h2>Press a key.<br>Start talking.</h2>
+          <p>
+            Hold <kbd>fn</kbd> and speak. When you release, Verba transcribes your audio,
+            optionally cleans it up with an LLM, and pastes the result into whatever app you're using.
+          </p>
+          <p>
+            The floating indicator shows real-time streaming preview so you always know what's being recognized.
+            It works in any text field — editors, Slack, email, browser.
+          </p>
+        </div>
       </div>
-      <div class="feature-grid">
-        <div class="feature-card">
-          <div class="feature-icon icon-purple">&#127908;</div>
-          <h3>Push-to-Talk & Hands-Free</h3>
-          <p>Hold <kbd>fn</kbd> to record, or double-tap for hands-free. Custom shortcuts with any modifier key or key combo.</p>
+    </div>
+  </section>
+
+  <!-- ── Section: Formatting ── -->
+  <section class="split">
+    <div class="wrap">
+      <div class="split-grid">
+        <div class="split-text">
+          <h2>Raw speech in,<br>clean text out.</h2>
+          <p>
+            Voice input is messy — fillers, repetition, broken sentences. Verba's on-device LLM
+            cleans it up while preserving what you meant. No cloud API key needed.
+          </p>
+          <p>
+            Choose from built-in prompts (general, meeting notes, email) or write your own.
+            Supports Qwen3, Gemma 3, and SmolLM3 models via Apple MLX.
+          </p>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon icon-pink">&#9889;</div>
-          <h3>Real-Time Streaming</h3>
-          <p>See transcribed text appear live in the floating indicator as you speak. Know exactly what's being recognized before you stop.</p>
+        <div class="split-visual">
+          <div class="format-demo">
+            <div class="format-card">
+              <div class="format-label">Raw transcription</div>
+              <div class="format-raw">えーと ですね あの来週の水曜に ミーティングを設定したいんですけど 午後2時からでお願いできますか</div>
+            </div>
+            <div class="format-arrow">&darr;</div>
+            <div class="format-card" style="border-color: rgba(124, 92, 252, 0.15);">
+              <div class="format-label">After formatting</div>
+              <div class="format-clean">来週の水曜にミーティングを設定したいんですけど、午後2時からでお願いできますか。</div>
+            </div>
+          </div>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon icon-green">&#128203;</div>
-          <h3>Instant Auto-Paste</h3>
-          <p>Transcribed text is pasted into the active app automatically. Works with any text field — editors, chat apps, browsers.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Tech strip ── -->
+  <section class="tech">
+    <div class="wrap">
+      <h2>Under the hood</h2>
+      <div class="tech-grid">
+        <div class="tech-cell">
+          <h3>WhisperKit</h3>
+          <p>Speech-to-text on Apple Neural Engine</p>
+          <div class="mono">Tiny &middot; Base &middot; Small &middot; Large V3 Turbo</div>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon icon-orange">&#129302;</div>
-          <h3>AI Formatting</h3>
-          <p>Remove fillers, fix punctuation, and clean up text with on-device MLX models or cloud APIs. Custom prompt templates included.</p>
+        <div class="tech-cell">
+          <h3>Apple MLX</h3>
+          <p>On-device LLM for text formatting</p>
+          <div class="mono">Qwen3 &middot; Gemma 3 &middot; SmolLM3</div>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon icon-blue">&#127760;</div>
+        <div class="tech-cell">
           <h3>50+ Languages</h3>
-          <p>Japanese, English, Vietnamese, and auto-detect. Whisper handles multilingual input and code-switching naturally.</p>
+          <p>Auto-detect or set manually</p>
+          <div class="mono">JA &middot; EN &middot; VI &middot; and more</div>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon icon-red">&#128187;</div>
-          <h3>Menu Bar Native</h3>
-          <p>Lives in your menu bar, always ready. Dashboard with stats, full history with audio playback, dark &amp; light themes.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- How it works -->
-  <section class="how-it-works" id="how-it-works">
-    <div class="container">
-      <div class="section-header">
-        <h2>How it works</h2>
-        <p>From voice to text in seconds, entirely on your device</p>
-      </div>
-      <div class="steps">
-        <div class="step">
-          <div class="step-number">1</div>
-          <h3>Press your shortcut</h3>
-          <p>Hold <kbd>fn</kbd> for push-to-talk or double-tap for hands-free.</p>
-        </div>
-        <div class="step">
-          <div class="step-number">2</div>
-          <h3>Speak naturally</h3>
-          <p>Talk in any language. Live text preview shows what's being recognized.</p>
-        </div>
-        <div class="step">
-          <div class="step-number">3</div>
-          <h3>WhisperKit transcribes</h3>
-          <p>On-device speech recognition on Apple Neural Engine. Fast and private.</p>
-        </div>
-        <div class="step">
-          <div class="step-number">4</div>
-          <h3>Text appears</h3>
-          <p>Optionally formatted by LLM, clean text is pasted into your active app.</p>
+        <div class="tech-cell">
+          <h3>Menu Bar App</h3>
+          <p>Dashboard, history, themes</p>
+          <div class="mono">Dark &middot; Light &middot; System</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Models -->
-  <section class="models" id="models">
-    <div class="container">
-      <div class="section-header">
-        <h2>Choose your models</h2>
-        <p>Pick the right balance of speed, quality, and size</p>
-      </div>
-      <div class="model-tables">
-        <div class="model-table-card">
-          <div class="model-table-header">
-            <h3>Whisper Models (Speech-to-Text)</h3>
-            <p>Powered by WhisperKit on Apple Neural Engine</p>
-          </div>
-          <table>
-            <thead>
-              <tr><th>Model</th><th>Size</th><th>Speed</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>Tiny</td><td>~75 MB</td><td><span class="tag tag-green">Fastest</span></td></tr>
-              <tr><td>Base</td><td>~140 MB</td><td><span class="tag tag-green">Fast</span></td></tr>
-              <tr><td>Small</td><td>~460 MB</td><td><span class="tag tag-orange">Medium</span></td></tr>
-              <tr><td>Large V3 Turbo</td><td>~1.5 GB</td><td><span class="tag tag-orange">Best quality</span></td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="model-table-card">
-          <div class="model-table-header">
-            <h3>LLM Models (Text Formatting)</h3>
-            <p>Powered by Apple MLX &mdash; no API key needed</p>
-          </div>
-          <table>
-            <thead>
-              <tr><th>Model</th><th>Size</th><th>Quality</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>Qwen3 0.6B</td><td>~400 MB</td><td><span class="tag tag-green">Basic</span></td></tr>
-              <tr><td>Gemma 3 1B</td><td>~800 MB</td><td><span class="tag tag-green">Good</span></td></tr>
-              <tr><td>Qwen3 1.7B</td><td>~1 GB</td><td><span class="tag tag-orange">Better</span></td></tr>
-              <tr><td>Qwen3 4B</td><td>~2.5 GB</td><td><span class="tag tag-orange">Best</span></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- CTA -->
+  <!-- ── CTA ── -->
   <section class="cta">
-    <div class="container">
-      <h2>Ready to speak?</h2>
-      <p>Download Verba and start typing with your voice. Free, open source, local first.</p>
+    <div class="wrap">
+      <h2>Your voice, your Mac, your data.</h2>
+      <p class="lead">Free, open source, no strings attached.</p>
       <div class="cta-actions">
-        <a href="https://github.com/Sota-Mikami/Verba/releases/latest" class="btn btn-primary btn-large">
+        <a href="https://github.com/Sota-Mikami/Verba/releases/latest" class="btn btn-accent btn-lg">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download Latest
         </a>
-        <a href="https://github.com/Sota-Mikami/Verba" class="btn btn-secondary btn-large">
+        <a href="https://github.com/Sota-Mikami/Verba" class="btn btn-ghost btn-lg">
           Star on GitHub
         </a>
       </div>
+      <p class="cta-note">macOS 14+ &middot; Apple Silicon &middot; ~75 MB (Tiny model)</p>
     </div>
   </section>
 
   <footer>
-    <div class="container footer-inner">
-      <p>Verba &mdash; Local-first voice input for macOS</p>
+    <div class="wrap footer-inner">
+      <p>Built by <a href="https://github.com/Sota-Mikami" style="color: var(--text-sub); text-decoration: none;">Sota Mikami</a></p>
       <div class="footer-links">
         <a href="https://github.com/Sota-Mikami/Verba">GitHub</a>
         <a href="https://github.com/Sota-Mikami/Verba/releases">Releases</a>
@@ -1126,7 +918,7 @@
 
       const indicator = document.querySelector('.demo-indicator');
       const waveform = document.querySelector('.demo-waveform');
-      const streamEl = document.querySelector('.demo-streaming-text');
+      const streamEl = document.querySelector('.demo-stream');
       const statusDot = document.querySelector('.demo-status-dot');
       const statusLabel = document.querySelector('.demo-status-label');
       const pastedEl = document.querySelector('.demo-pasted-text');
@@ -1137,7 +929,6 @@
       function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
       async function runCycle() {
-        // Reset all
         streamEl.textContent = '';
         streamEl.style.opacity = '1';
         streamEl.style.color = '';
@@ -1149,7 +940,6 @@
 
         await sleep(800);
 
-        // Indicator appears
         indicator.style.opacity = '1';
         indicator.style.transform = 'translateY(0)';
         statusDot.style.background = 'var(--red)';
@@ -1157,7 +947,6 @@
 
         await sleep(400);
 
-        // Phase 1: Stream text character by character
         for (let i = 0; i < raw.length; i++) {
           streamEl.textContent = raw.substring(0, i + 1);
           await sleep(50 + Math.random() * 30);
@@ -1165,7 +954,6 @@
 
         await sleep(500);
 
-        // Phase 2: Formatting
         waveform.style.opacity = '0';
         statusDot.style.background = 'var(--orange)';
         statusLabel.textContent = 'Formatting...';
@@ -1173,7 +961,6 @@
 
         await sleep(1400);
 
-        // Phase 3: Show formatted result
         statusDot.style.background = 'var(--green)';
         statusLabel.textContent = 'Done';
         streamEl.style.opacity = '1';
@@ -1182,13 +969,11 @@
 
         await sleep(1000);
 
-        // Phase 4: Indicator fades out
         indicator.style.opacity = '0';
         indicator.style.transform = 'translateY(-4px)';
 
         await sleep(400);
 
-        // Phase 5: Text types into editor
         for (let i = 0; i < formatted.length; i++) {
           pastedEl.textContent = formatted.substring(0, i + 1);
           await sleep(12);
