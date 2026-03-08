@@ -546,7 +546,7 @@ struct ModelRow: View {
                         .frame(width: 16, height: 16)
                     if isSelected {
                         Circle()
-                            .fill(DS.textNormal)
+                            .fill(DS.textOnAccent)
                             .frame(width: 6, height: 6)
                     }
                 }
@@ -661,7 +661,7 @@ struct WhisperModelRow: View {
                         .frame(width: 16, height: 16)
                     if isSelected {
                         Circle()
-                            .fill(DS.textNormal)
+                            .fill(DS.textOnAccent)
                             .frame(width: 6, height: 6)
                     }
                 }
@@ -715,7 +715,7 @@ struct PromptRow: View {
                         .frame(width: 16, height: 16)
                     if isSelected {
                         Circle()
-                            .fill(DS.textNormal)
+                            .fill(DS.textOnAccent)
                             .frame(width: 6, height: 6)
                     }
                 }
@@ -1134,7 +1134,7 @@ struct LocalModelRow: View {
                         .frame(width: 16, height: 16)
                     if isSelected {
                         Circle()
-                            .fill(DS.textNormal)
+                            .fill(DS.textOnAccent)
                             .frame(width: 6, height: 6)
                     }
                 }
