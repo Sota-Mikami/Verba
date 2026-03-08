@@ -17,6 +17,7 @@
 		26E7011EA8827923FEA45ADC /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6DC5D3DE237E1CD96D64D95 /* SettingsView.swift */; };
 		28B1A7B97CECDB588783C097 /* AudioPlaybackService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74EE96E1C03CC1E8F7F0F45A /* AudioPlaybackService.swift */; };
 		28F0F3F2DA7239519282B574 /* DictionaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30A931301AF9F3C9088D9B56 /* DictionaryView.swift */; };
+		3296E051BB5479FC0769018E /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CD5E7E6D587EBD193737587 /* UpdateChecker.swift */; };
 		35D6F08B85EBD7C8202BD0E9 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = E344613896B089225155A881 /* KeyboardShortcuts */; };
 		411C2836CD6B6BD5523223D2 /* PasteService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000A9CD486EE8C9E1BC97F44 /* PasteService.swift */; };
 		41C6C3BF71D982655CD21416 /* TranscriptionRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 663F65350C4A94975B1BCC00 /* TranscriptionRecord.swift */; };
@@ -50,6 +51,7 @@
 		663F65350C4A94975B1BCC00 /* TranscriptionRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionRecord.swift; sourceTree = "<group>"; };
 		74EE96E1C03CC1E8F7F0F45A /* AudioPlaybackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlaybackService.swift; sourceTree = "<group>"; };
 		7CC3EA34973B424FB3926667 /* AudioRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioRecorder.swift; sourceTree = "<group>"; };
+		7CD5E7E6D587EBD193737587 /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
 		9E2BF24F318F4130AC2AC7BE /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		AC7CA211BFB5DFEBE8913082 /* MediaControlService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaControlService.swift; sourceTree = "<group>"; };
 		ACC325F13C7DD49EE1B7EE58 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
@@ -118,6 +120,7 @@
 				C6DC5D3DE237E1CD96D64D95 /* SettingsView.swift */,
 				612DFE75700F3D141851E895 /* SystemAudioCapture.swift */,
 				663F65350C4A94975B1BCC00 /* TranscriptionRecord.swift */,
+				7CD5E7E6D587EBD193737587 /* UpdateChecker.swift */,
 				C8B1A8B38F138C6B826AE65B /* Verba.entitlements */,
 				F6AB2C5D13D7B6FEE248DA5D /* VerbaApp.swift */,
 				3F3251E406A6533AACE305E4 /* WhisperService.swift */,
@@ -233,6 +236,7 @@
 				26E7011EA8827923FEA45ADC /* SettingsView.swift in Sources */,
 				096A15AAD9FD39264B403B94 /* SystemAudioCapture.swift in Sources */,
 				41C6C3BF71D982655CD21416 /* TranscriptionRecord.swift in Sources */,
+				3296E051BB5479FC0769018E /* UpdateChecker.swift in Sources */,
 				00251C2235C05449A39BB19F /* VerbaApp.swift in Sources */,
 				C70CA86DAB55FD8FDF455402 /* WhisperService.swift in Sources */,
 			);

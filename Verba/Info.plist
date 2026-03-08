@@ -13,9 +13,9 @@
     <key>CFBundleVersion</key>
     <string>$(CURRENT_PROJECT_VERSION)</string>
     <key>SUFeedURL</key>
-    <string>https://verba.example.com/appcast.xml</string>
+    <string>https://sota-mikami.github.io/Verba/appcast.xml</string>
     <key>SUPublicEDKey</key>
-    <string></string>
+    <string>f5pILiFZHi5+8mfdz/rOxV8AhNyl6thddGk5RDHK2D8=</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>Verba needs microphone access to transcribe your speech.</string>
     <key>NSScreenCaptureUsageDescription</key>

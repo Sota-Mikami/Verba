@@ -4,6 +4,12 @@ import Sparkle
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
     let updater: SPUUpdater
+    @StateObject private var updateChecker: UpdateChecker
+
+    init(updater: SPUUpdater) {
+        self.updater = updater
+        self._updateChecker = StateObject(wrappedValue: UpdateChecker(updater: updater))
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -120,9 +126,17 @@ struct MenuBarView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 4)
 
-            Button(appState.l10n.checkForUpdates) {
+            Button {
                 updater.checkForUpdates()
+            } label: {
+                HStack(spacing: 4) {
+                    Text(appState.l10n.checkForUpdates)
+                    if updateChecker.canCheckForUpdates {
+                        // Sparkle is ready — no special indicator needed
+                    }
+                }
             }
+            .disabled(!updateChecker.canCheckForUpdates)
             .font(.system(size: 12))
             .padding(.horizontal, 12)
             .padding(.vertical, 4)

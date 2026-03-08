@@ -351,6 +351,7 @@ struct RecentRow: View {
                         .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
                 }
                 .buttonStyle(.plain)
+                .help("Copy")
                 .transition(.opacity)
             }
         }

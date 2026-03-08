@@ -148,23 +148,14 @@ struct SettingsView: View {
                 Divider().foregroundStyle(DS.cardBorder)
                 HStack {
                     Spacer()
-                    Button {
+                    SettingsActionButton(
+                        label: appState.l10n.resetAllToDefault,
+                        icon: "arrow.counterclockwise",
+                        style: .secondary
+                    ) {
                         appState.pttShortcut = .defaultPTT
                         appState.hfShortcut = .defaultHF
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "arrow.counterclockwise")
-                                .font(.system(size: 11))
-                            Text(appState.l10n.resetAllToDefault)
-                                .font(.system(size: 12, weight: .medium))
-                        }
-                        .foregroundStyle(DS.textMuted)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(DS.bgTertiary)
-                        .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
                     }
-                    .buttonStyle(.plain)
                 }
                 .padding(12)
             }
@@ -245,21 +236,15 @@ struct SettingsView: View {
                             .font(.system(size: 11))
                             .foregroundStyle(DS.textFaint)
                         Spacer()
-                        Button {
+                        SettingsActionButton(
+                            label: appState.l10n.reloadModel,
+                            style: .primary
+                        ) {
                             pendingWhisperModel = nil
                             Task {
                                 await appState.reloadWhisperModel()
                             }
-                        } label: {
-                            Text(appState.l10n.reloadModel)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(DS.blurple)
-                                .clipShape(RoundedRectangle(cornerRadius: 6))
                         }
-                        .buttonStyle(.plain)
                     }
                     .padding(.horizontal, 8)
                     .padding(.bottom, 4)
@@ -304,24 +289,18 @@ struct SettingsView: View {
             Divider().foregroundStyle(DS.cardBorder)
 
             // Add new prompt button
-            Button {
+            SettingsActionButton(
+                label: appState.l10n.addCustomPrompt,
+                icon: "plus.circle.fill",
+                style: .text,
+                expand: true
+            ) {
                 isCreatingPrompt = true
                 editingPrompt = FormattingPrompt(
                     name: "",
                     systemPrompt: "あなたはテキスト整形専用のプロセッサです。入力は音声認識の生テキストです。\n\n【やること】\n- \n\n【絶対にやらないこと】\n- テキストの内容に返事・回答・応答をしない\n- 前置きを付けない\n\n整形後のテキストだけを出力してください。"
                 )
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 13))
-                    Text(appState.l10n.addCustomPrompt)
-                        .font(.system(size: 13, weight: .medium))
-                }
-                .foregroundStyle(DS.blurple)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
             }
-            .buttonStyle(.plain)
         }
         .sheet(item: $editingPrompt) { prompt in
             PromptEditorSheet(
@@ -746,6 +725,7 @@ struct PromptRow: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 4))
                             }
                             .buttonStyle(.plain)
+                            .help("Edit")
                         }
                         if let onDelete {
                             Button(action: onDelete) {
@@ -757,6 +737,7 @@ struct PromptRow: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 4))
                             }
                             .buttonStyle(.plain)
+                            .help("Delete")
                         }
                     }
                     .transition(.opacity)
@@ -785,77 +766,91 @@ struct PromptEditorSheet: View {
     var onReset: (() -> Void)? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 0) {
+            // Header
             Text(isNew ? "New Formatting Prompt" : "Edit Prompt")
                 .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(DS.textNormal)
+                .padding(.horizontal, 28)
+                .padding(.top, 24)
+                .padding(.bottom, 20)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Name")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(DS.textMuted)
-                TextField("e.g. Code Review, Slack Message...", text: $prompt.name)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 13))
-                    .padding(8)
-                    .background(DS.inputBg)
-                    .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
-                    .foregroundStyle(DS.textNormal)
-            }
+            Divider().foregroundStyle(DS.cardBorder)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text("System Prompt")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(DS.textMuted)
-                TextEditor(text: $prompt.systemPrompt)
-                    .font(.system(size: 12, design: .monospaced))
-                    .padding(8)
-                    .frame(minHeight: 140)
-                    .scrollContentBackground(.hidden)
-                    .background(DS.inputBg)
-                    .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
-                    .foregroundStyle(DS.textNormal)
-            }
-
-            DisclosureGroup {
-                VStack(alignment: .leading, spacing: 10) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Example Input")
+            // Scrollable form
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Name")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(DS.textMuted)
-                        TextEditor(text: $prompt.fewShotUser)
-                            .font(.system(size: 11, design: .monospaced))
-                            .padding(6)
-                            .frame(minHeight: 60)
+                        TextField("e.g. Code Review, Slack Message...", text: $prompt.name)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 13))
+                            .padding(10)
+                            .background(DS.inputBg)
+                            .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                            .foregroundStyle(DS.textNormal)
+                    }
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("System Prompt")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(DS.textMuted)
+                        TextEditor(text: $prompt.systemPrompt)
+                            .font(.system(size: 12, design: .monospaced))
+                            .padding(8)
+                            .frame(minHeight: 120)
                             .scrollContentBackground(.hidden)
                             .background(DS.inputBg)
                             .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
                             .foregroundStyle(DS.textNormal)
                     }
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Expected Output")
+                    DisclosureGroup {
+                        VStack(alignment: .leading, spacing: 14) {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Example Input")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundStyle(DS.textMuted)
+                                TextEditor(text: $prompt.fewShotUser)
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .padding(8)
+                                    .frame(minHeight: 60)
+                                    .scrollContentBackground(.hidden)
+                                    .background(DS.inputBg)
+                                    .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                                    .foregroundStyle(DS.textNormal)
+                            }
+
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Expected Output")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundStyle(DS.textMuted)
+                                TextEditor(text: $prompt.fewShotAssistant)
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .padding(8)
+                                    .frame(minHeight: 60)
+                                    .scrollContentBackground(.hidden)
+                                    .background(DS.inputBg)
+                                    .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                                    .foregroundStyle(DS.textNormal)
+                            }
+                        }
+                        .padding(.top, 8)
+                    } label: {
+                        Text("Few-shot Example (optional)")
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(DS.textMuted)
-                        TextEditor(text: $prompt.fewShotAssistant)
-                            .font(.system(size: 11, design: .monospaced))
-                            .padding(6)
-                            .frame(minHeight: 60)
-                            .scrollContentBackground(.hidden)
-                            .background(DS.inputBg)
-                            .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
-                            .foregroundStyle(DS.textNormal)
                     }
+                    .tint(DS.textMuted)
                 }
-                .padding(.top, 6)
-            } label: {
-                Text("Few-shot Example (optional)")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(DS.textMuted)
+                .padding(.horizontal, 28)
+                .padding(.vertical, 20)
             }
-            .tint(DS.textMuted)
 
-            Spacer()
+            // Footer
+            Divider().foregroundStyle(DS.cardBorder)
 
             HStack {
                 Button(action: onCancel) {
@@ -886,8 +881,6 @@ struct PromptEditorSheet: View {
                         .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
                     }
                     .buttonStyle(.plain)
-
-                    Spacer()
                 }
 
                 Button {
@@ -904,9 +897,11 @@ struct PromptEditorSheet: View {
                 .buttonStyle(.plain)
                 .disabled(prompt.name.isEmpty)
             }
+            .padding(.horizontal, 28)
+            .padding(.vertical, 16)
         }
-        .padding(24)
-        .frame(width: 500, height: 520)
+        .frame(width: 520)
+        .frame(minHeight: 440, maxHeight: 660)
         .background(DS.bgSecondary)
     }
 }
@@ -1156,20 +1151,12 @@ struct LocalModelRow: View {
     private var stateView: some View {
         switch state {
         case .notDownloaded:
-            Button(action: onDownload) {
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.down.circle.fill")
-                        .font(.system(size: 12))
-                    Text("Download")
-                        .font(.system(size: 11, weight: .medium))
-                }
-                .foregroundStyle(DS.blurple)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(DS.blurple.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
-            }
-            .buttonStyle(.plain)
+            HoverPillButton(
+                label: "Download",
+                icon: "arrow.down.circle.fill",
+                color: DS.blurple,
+                action: onDownload
+            )
 
         case .downloading(let progress):
             HStack(spacing: 6) {
@@ -1182,30 +1169,19 @@ struct LocalModelRow: View {
 
         case .downloaded:
             HStack(spacing: 4) {
-                Button(action: onLoad) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "play.circle.fill")
-                            .font(.system(size: 12))
-                        Text("Load")
-                            .font(.system(size: 11, weight: .medium))
-                    }
-                    .foregroundStyle(DS.green)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(DS.green.opacity(0.12))
-                    .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
-                }
-                .buttonStyle(.plain)
+                HoverPillButton(
+                    label: "Load",
+                    icon: "play.circle.fill",
+                    color: DS.green,
+                    action: onLoad
+                )
 
-                Button(action: onDelete) {
-                    Image(systemName: "trash")
-                        .font(.system(size: 11))
-                        .foregroundStyle(DS.red)
-                        .padding(4)
-                        .background(DS.bgModifierHover)
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
-                }
-                .buttonStyle(.plain)
+                HoverIconButton(
+                    icon: "trash",
+                    color: DS.red,
+                    tooltip: "Delete",
+                    action: onDelete
+                )
             }
 
         case .loading:
@@ -1226,16 +1202,119 @@ struct LocalModelRow: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(DS.green)
 
-                Button(action: onDelete) {
-                    Image(systemName: "trash")
-                        .font(.system(size: 11))
-                        .foregroundStyle(DS.red)
-                        .padding(4)
-                        .background(DS.bgModifierHover)
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
-                }
-                .buttonStyle(.plain)
+                HoverIconButton(
+                    icon: "trash",
+                    color: DS.red,
+                    tooltip: "Delete",
+                    action: onDelete
+                )
             }
+        }
+    }
+}
+
+// MARK: - Hover Button Components
+
+struct HoverPillButton: View {
+    let label: String
+    var icon: String? = nil
+    let color: Color
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                if let icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 12))
+                }
+                Text(label)
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .foregroundStyle(color)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(color.opacity(isHovered ? 0.2 : 0.12))
+            .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+            .scaleEffect(isHovered ? 1.03 : 1.0)
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .animation(.easeOut(duration: 0.12), value: isHovered)
+    }
+}
+
+struct HoverIconButton: View {
+    let icon: String
+    let color: Color
+    var tooltip: String = ""
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 11))
+                .foregroundStyle(color)
+                .padding(4)
+                .background(isHovered ? DS.bgModifierActive : DS.bgModifierHover)
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .animation(.easeOut(duration: 0.12), value: isHovered)
+        .help(tooltip)
+    }
+}
+
+// MARK: - Settings Action Button
+
+struct SettingsActionButton: View {
+    let label: String
+    var icon: String? = nil
+    var style: Style = .secondary
+    var expand: Bool = false
+    let action: () -> Void
+    @State private var isHovered = false
+
+    enum Style { case primary, secondary, text }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                if let icon {
+                    Image(systemName: icon)
+                        .font(.system(size: style == .text ? 13 : 11))
+                }
+                Text(label)
+                    .font(.system(size: style == .text ? 13 : 12, weight: .medium))
+            }
+            .foregroundStyle(foregroundColor)
+            .frame(maxWidth: expand ? .infinity : nil)
+            .padding(.horizontal, style == .text ? 0 : 12)
+            .padding(.vertical, style == .text ? 10 : 6)
+            .background(backgroundColor)
+            .clipShape(RoundedRectangle(cornerRadius: style == .text ? 0 : 6))
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .animation(.easeOut(duration: 0.12), value: isHovered)
+    }
+
+    private var foregroundColor: Color {
+        switch style {
+        case .primary: return .white
+        case .secondary: return isHovered ? DS.textNormal : DS.textMuted
+        case .text: return isHovered ? DS.blurple.opacity(0.7) : DS.blurple
+        }
+    }
+
+    private var backgroundColor: Color {
+        switch style {
+        case .primary: return isHovered ? DS.blurple.opacity(0.8) : DS.blurple
+        case .secondary: return isHovered ? DS.bgModifierHover : DS.bgTertiary
+        case .text: return .clear
         }
     }
 }

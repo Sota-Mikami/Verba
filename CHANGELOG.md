@@ -2,6 +2,19 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [0.2.2] - 2026-03-08
+
+### Added
+- Sparkle auto-update now fully functional (EdDSA signed, appcast.xml on GitHub Pages)
+- Hover interactions on all actionable buttons across the app
+- Tooltips on Dictionary and Settings icon buttons (Edit, Delete, Reset)
+- Reusable hover button components (HoverPillButton, HoverIconButton)
+- Release automation script (`scripts/release.sh`)
+
+### Changed
+- "Check for Updates" button is now disabled until Sparkle is ready
+- Auto-update check enabled on launch for Release builds only
+
 ## [0.2.1] - 2026-03-08
 
 ### Added

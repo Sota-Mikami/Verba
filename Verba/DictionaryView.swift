@@ -6,6 +6,8 @@ struct DictionaryView: View {
     @State private var showSearch = false
     @State private var editingEntry: DictionaryEntry? = nil
     @State private var isCreatingEntry = false
+    @State private var isNewWordHovered = false
+    @State private var isSearchHovered = false
 
     private var filteredEntries: [DictionaryEntry] {
         var entries = appState.dictionaryEntries
@@ -36,10 +38,13 @@ struct DictionaryView: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
-                        .background(DS.blurple)
+                        .background(isNewWordHovered ? DS.blurple.opacity(0.8) : DS.blurple)
                         .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
+                        .scaleEffect(isNewWordHovered ? 1.03 : 1.0)
                 }
                 .buttonStyle(.plain)
+                .onHover { isNewWordHovered = $0 }
+                .animation(.easeOut(duration: 0.12), value: isNewWordHovered)
             }
             .padding(.horizontal, 28)
             .padding(.top, 28)
@@ -80,12 +85,15 @@ struct DictionaryView: View {
                     } label: {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 14))
-                            .foregroundStyle(DS.textMuted)
+                            .foregroundStyle(isSearchHovered ? DS.textNormal : DS.textMuted)
                             .padding(8)
-                            .background(DS.bgTertiary)
+                            .background(isSearchHovered ? DS.bgModifierHover : DS.bgTertiary)
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
+                    .onHover { isSearchHovered = $0 }
+                    .animation(.easeOut(duration: 0.12), value: isSearchHovered)
+                    .help("Search")
                 }
             }
             .padding(.horizontal, 28)
@@ -197,6 +205,7 @@ struct DictionaryCard: View {
                             .clipShape(RoundedRectangle(cornerRadius: 4))
                     }
                     .buttonStyle(.plain)
+                    .help("Edit")
                     Button(action: onDelete) {
                         Image(systemName: "trash")
                             .font(.system(size: 11))
@@ -206,6 +215,7 @@ struct DictionaryCard: View {
                             .clipShape(RoundedRectangle(cornerRadius: 4))
                     }
                     .buttonStyle(.plain)
+                    .help("Delete")
                 }
                 .transition(.opacity)
             }
