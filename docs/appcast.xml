@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.4.4</title>
-            <description><![CDATA[<h2>What's New in v0.4.4</h2><ul><li>**Transcription fails with "No speech detected"** — Fixed race condition where streaming transcription and final transcription ran concurrently on WhisperKit, causing empty results. Now waits for streaming to fully complete before final transcription.</li></ul>]]></description>
-            <pubDate>Sun, 08 Mar 2026 21:12:12 +0700</pubDate>
+            <title>Version 0.4.5</title>
+            <description><![CDATA[<h2>What's New in v0.4.5</h2><ul><li>**Waveform barely visible** — Increased audio level amplification (×5 → ×40) so waveform bars respond visibly to normal speech</li><li>**Timer resets to 0:00** — Elapsed time now persists correctly across view re-renders</li></ul>]]></description>
+            <pubDate>Sun, 08 Mar 2026 21:19:07 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.4.4/Verba-v0.4.4.dmg"
-                sparkle:version="13"
-                sparkle:shortVersionString="0.4.4"
-                sparkle:edSignature="T/pBEZz5tVpOQtTdFqeWcjRnQH2xvhDWCspf4Ok7fz9ip51d+yyyQZsp2gs37XCfwo2yX9X0qIUCxh7nIL0TBA=="
-                length="10172550"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.4.5/Verba-v0.4.5.dmg"
+                sparkle:version="14"
+                sparkle:shortVersionString="0.4.5"
+                sparkle:edSignature="ajNLY865AT6x+fXA71p+lwTl306+tADB5wwiLwA6W9WDyCcvIL8YjeP2jr0SDappOXEsQrV35Uibrb0Aaz2CBA=="
+                length="10173623"
                 type="application/octet-stream"
             />
         </item>
