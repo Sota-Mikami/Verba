@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.4.1</title>
-            <description><![CDATA[<h2>What's New in v0.4.1</h2><ul><li>**Audio feedback** — Sound cues for recording start (pop), stop (tink), and paste confirmation (morse)</li><li>**Paste success indicator** — Green checkmark briefly shown in floating indicator before fade-out</li><li>**Animated formatting dots** — "Formatting..." cycles dots for visible progress</li><li>**Timer flip animation** — Elapsed time digits animate with numericText transition</li><li>**App icon** — Updated to match brand palette (dark plum-black background, purple waves, amber glow)</li><li>**Timer accuracy** — Elapsed time now uses Date-based calculation instead of cumulative increment</li><li>**Formatting center alignment** — Status text now vertically centered in indicator during transcribing/formatting</li><li>**Dictionary terminology** — Unified to "Add Term" (was mixed "New word" / "Add Term")</li><li>**Button contrast** — Fixed accent buttons (Add Term, Save) using textOnAccent for readability in light mode</li><li>**Dictionary Enter key** — Term can be added by pressing Enter</li></ul>]]></description>
-            <pubDate>Sun, 08 Mar 2026 17:43:31 +0700</pubDate>
+            <title>Version 0.4.2</title>
+            <description><![CDATA[<h2>What's New in v0.4.2</h2><ul><li>Release v0.4.2</li></ul>]]></description>
+            <pubDate>Sun, 08 Mar 2026 17:52:38 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.4.1/Verba-v0.4.1.dmg"
-                sparkle:version="9"
-                sparkle:shortVersionString="0.4.1"
-                sparkle:edSignature="8POsqIKpPTHf3MDbvb1499gYjulwUPaQE59SauYJnwQYjQGKaj79QK9Ezmu/zroTqzLhrNBFcj/ExhalzkjpBQ=="
-                length="9964110"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.4.2/Verba-v0.4.2.dmg"
+                sparkle:version="10"
+                sparkle:shortVersionString="0.4.2"
+                sparkle:edSignature="z0tNfeFzK3phFnSZ8gj5UxxBPQfOgui3ZJsb0/Ygs66N41SFbbKWh1vOtvLcKQZASmSx94+iYwusx1Fsovs5AA=="
+                length="9521779"
                 type="application/octet-stream"
             />
         </item>
