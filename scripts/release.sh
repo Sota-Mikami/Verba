@@ -79,6 +79,10 @@ if [ ! -d "$APP_PATH" ]; then
     exit 1
 fi
 
+# --- Adhoc code sign (required for Sparkle validation) ---
+echo "==> Adhoc signing app bundle"
+codesign --deep --force --sign - "$APP_PATH"
+
 # --- Create DMG ---
 echo "==> Creating DMG"
 DMG_NAME="Verba-v${VERSION}.dmg"
