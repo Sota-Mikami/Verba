@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.5.6</title>
-            <description><![CDATA[<h2>What's New in v0.5.6</h2><ul><li>**Build environment test** — Exact v0.5.0 code with version bump only. If this doesn't work, it's a build environment issue (macOS/Xcode update), not a code change.</li></ul>]]></description>
-            <pubDate>Mon, 09 Mar 2026 10:30:10 +0700</pubDate>
+            <title>Version 0.5.7</title>
+            <description><![CDATA[<h2>What's New in v0.5.7</h2><ul><li>**Bisect test** — v0.5.0 code + FloatingIndicator changes only (draggable + space-following). Testing if this change breaks Fn key detection.</li></ul>]]></description>
+            <pubDate>Mon, 09 Mar 2026 10:34:41 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.5.6/Verba-v0.5.6.dmg"
-                sparkle:version="26"
-                sparkle:shortVersionString="0.5.6"
-                sparkle:edSignature="kIGdar0r1vPT2untzSSI5+ZfqsISFyUIJrGqdjKNEMTEfGNM3gsv2X0mklbI9mWAXAdas1gWCfC6P8EtDewmDw=="
-                length="10164289"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.5.7/Verba-v0.5.7.dmg"
+                sparkle:version="27"
+                sparkle:shortVersionString="0.5.7"
+                sparkle:edSignature="DOhrvok6bXIrn7w+ARAwXSZvdMLcDzdhSntuPkcoudZvIiGBStD7ptgFZLb1d/dioOT4xD380UHzroVtRjZkDg=="
+                length="10166660"
                 type="application/octet-stream"
             />
         </item>
