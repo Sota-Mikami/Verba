@@ -2,6 +2,11 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [0.5.0] - 2026-03-09
+
+### Fixed
+- **Long recordings cut off after ~30 seconds** — Enabled VAD (Voice Activity Detection) chunking so WhisperKit now transcribes full audio length instead of only the first window.
+
 ## [0.4.9] - 2026-03-09
 
 ### Fixed
