@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.5.2</title>
-            <description><![CDATA[<h2>What's New in v0.5.2</h2><ul><li>**Draggable floating indicator** — Drag the recording indicator anywhere on screen to avoid blocking content underneath.</li><li>**Space-following indicator** — The indicator now follows you when switching between desktop Spaces.</li><li>**History search** — Search through transcription history by text content.</li><li>**History export** — Export history to Markdown file with timestamps, duration, and mode.</li><li>**Dictionary export** — Export dictionary terms to a text file.</li></ul>]]></description>
-            <pubDate>Mon, 09 Mar 2026 07:44:09 +0700</pubDate>
+            <title>Version 0.5.3</title>
+            <description><![CDATA[<h2>What's New in v0.5.3</h2><ul><li>**Hotkey not responding** — Push-to-talk hold timer was blocked when the main thread was busy (e.g. during LLM model loading). Timer now runs on a background queue.</li></ul>]]></description>
+            <pubDate>Mon, 09 Mar 2026 07:53:17 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.5.2/Verba-v0.5.2.dmg"
-                sparkle:version="21"
-                sparkle:shortVersionString="0.5.2"
-                sparkle:edSignature="8xwznEq5etqRLavZgC3FFLdt4Xil1iO+wCM3wkWp4j55drPohCaBH0bU8bj6QPHJVW6+LPB4EqwX4TCzy0XVCQ=="
-                length="10192810"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.5.3/Verba-v0.5.3.dmg"
+                sparkle:version="22"
+                sparkle:shortVersionString="0.5.3"
+                sparkle:edSignature="zbXV6jf5dbtiv8m6FqksaqJichuH0pbZhAgdfxVNwBYV0WXRTOrxlvhaqnmG79tMai6m6iXIWibTBijn5t/3CQ=="
+                length="10194436"
                 type="application/octet-stream"
             />
         </item>
