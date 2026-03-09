@@ -2,6 +2,11 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [0.5.3] - 2026-03-09
+
+### Fixed
+- **Hotkey not responding** — Push-to-talk hold timer was blocked when the main thread was busy (e.g. during LLM model loading). Timer now runs on a background queue.
+
 ## [0.5.2] - 2026-03-09
 
 ### Added
