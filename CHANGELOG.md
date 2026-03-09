@@ -2,6 +2,13 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [0.5.1] - 2026-03-09
+
+### Added
+- **History search** — Search through transcription history by text content.
+- **History export** — Export history to Markdown file with timestamps, duration, and mode.
+- **Dictionary export** — Export dictionary terms to a text file.
+
 ## [0.5.0] - 2026-03-09
 
 ### Fixed
