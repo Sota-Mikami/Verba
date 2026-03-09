@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.5.4</title>
-            <description><![CDATA[<h2>What's New in v0.5.4</h2><ul><li>**Microphone permission guard** — Recording now verifies microphone permission is granted before starting. If permission was revoked or never granted, shows a clear error and re-requests permission instead of silently failing.</li><li>**Audio input entitlement** — Added `com.apple.security.device.audio-input` entitlement for improved compatibility with recent macOS updates.</li></ul>]]></description>
-            <pubDate>Mon, 09 Mar 2026 08:54:44 +0700</pubDate>
+            <title>Version 0.5.5</title>
+            <description><![CDATA[<h2>What's New in v0.5.5</h2><ul><li>**Hotkey not triggering recording** — Reverted PTT hold timer back to main thread. The v0.5.3 change to a background queue prevented Fn key hold detection from working reliably.</li></ul>]]></description>
+            <pubDate>Mon, 09 Mar 2026 10:21:20 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.5.4/Verba-v0.5.4.dmg"
-                sparkle:version="24"
-                sparkle:shortVersionString="0.5.4"
-                sparkle:edSignature="+zOHo6/P3rhA5+sX6TF2WlDh9lFh+SuVVoadozTtBidk1S1Iblitgv4Yf0lVbgjg3ACQEP/P2I4bqhmMQTqcDw=="
-                length="10194016"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.5.5/Verba-v0.5.5.dmg"
+                sparkle:version="25"
+                sparkle:shortVersionString="0.5.5"
+                sparkle:edSignature="kISUZdrst03gP57AdVvFWdAUcMY/s5UlQAdlV9FRKNv0XeM8DtM1Ps3DqLCDST3QgvzfD5Uf6huJhfcdpH+TAw=="
+                length="10193793"
                 type="application/octet-stream"
             />
         </item>
