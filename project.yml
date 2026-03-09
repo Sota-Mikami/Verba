@@ -28,8 +28,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.sotamikami.verba
-        MARKETING_VERSION: "0.6.2"
-        CURRENT_PROJECT_VERSION: 32
+        MARKETING_VERSION: "0.6.3"
+        CURRENT_PROJECT_VERSION: 33
         INFOPLIST_FILE: Verba/Info.plist
         CODE_SIGN_ENTITLEMENTS: Verba/Verba.entitlements
         SWIFT_VERSION: "5.9"

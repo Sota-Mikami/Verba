@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.6.2</title>
-            <description><![CDATA[<h2>What's New in v0.6.2</h2><ul><li>**Persistent dashboard stats** — Sessions, Words, and Time Saved are now stored as lifetime totals. Deleting history no longer resets these numbers — your cumulative achievements are preserved.</li></ul>]]></description>
-            <pubDate>Mon, 09 Mar 2026 14:09:40 +0700</pubDate>
+            <title>Version 0.6.3</title>
+            <description><![CDATA[<h2>What's New in v0.6.3</h2><ul><li>**Dictionary card hover jitter** — Edit/delete buttons no longer cause layout shift on hover. Buttons are now always in layout and toggle visibility with opacity.</li></ul>]]></description>
+            <pubDate>Mon, 09 Mar 2026 14:14:51 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.6.2/Verba-v0.6.2.dmg"
-                sparkle:version="32"
-                sparkle:shortVersionString="0.6.2"
-                sparkle:edSignature="WJU5SNfASo2f42c8gyf+60/Kdma+ts21QROe21Ww315VnJg4ZZS3rb0Etn+G3FCpgw5S9N26WorJJgd/WZ04Cg=="
-                length="10193552"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.6.3/Verba-v0.6.3.dmg"
+                sparkle:version="33"
+                sparkle:shortVersionString="0.6.3"
+                sparkle:edSignature="QUP05vg/WhZWU0kHwDcJ0ynvPLbXdzIk4FqM+7Q844qsDd7Qf6QGtd8zlRSOvxerart2xFRGVdbGoMHcwXv9AQ=="
+                length="10192962"
                 type="application/octet-stream"
             />
         </item>
