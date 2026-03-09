@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.5.7</title>
-            <description><![CDATA[<h2>What's New in v0.5.7</h2><ul><li>**Bisect test** — v0.5.0 code + FloatingIndicator changes only (draggable + space-following). Testing if this change breaks Fn key detection.</li></ul>]]></description>
-            <pubDate>Mon, 09 Mar 2026 10:34:41 +0700</pubDate>
+            <title>Version 0.5.8</title>
+            <description><![CDATA[<h2>What's New in v0.5.8</h2><ul><li>**Fn key not responding** — Reverted FloatingIndicator changes (draggable window + space-following) that broke global hotkey detection.</li><li>**History search** — Search through transcription history by text content.</li><li>**History export** — Export history to Markdown file.</li><li>**Dictionary export** — Export dictionary terms to a text file.</li></ul>]]></description>
+            <pubDate>Mon, 09 Mar 2026 10:38:17 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.5.7/Verba-v0.5.7.dmg"
-                sparkle:version="27"
-                sparkle:shortVersionString="0.5.7"
-                sparkle:edSignature="DOhrvok6bXIrn7w+ARAwXSZvdMLcDzdhSntuPkcoudZvIiGBStD7ptgFZLb1d/dioOT4xD380UHzroVtRjZkDg=="
-                length="10166660"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.5.8/Verba-v0.5.8.dmg"
+                sparkle:version="28"
+                sparkle:shortVersionString="0.5.8"
+                sparkle:edSignature="MHLuQuR1EmMC+0MOBj66Reeux751XTxqbMI9mtWqnJKuDH0Rk1YMyno7pt1JV7mkOmHKIALdpkdXghTtc5oqAw=="
+                length="10192244"
                 type="application/octet-stream"
             />
         </item>
