@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.5.0</title>
-            <description><![CDATA[<h2>What's New in v0.5.0</h2><ul><li>**Long recordings cut off after ~30 seconds** — Enabled VAD (Voice Activity Detection) chunking so WhisperKit now transcribes full audio length instead of only the first window.</li></ul>]]></description>
-            <pubDate>Mon, 09 Mar 2026 07:16:34 +0700</pubDate>
+            <title>Version 0.5.1</title>
+            <description><![CDATA[<h2>What's New in v0.5.1</h2><ul><li>**History search** — Search through transcription history by text content.</li><li>**History export** — Export history to Markdown file with timestamps, duration, and mode.</li><li>**Dictionary export** — Export dictionary terms to a text file.</li></ul>]]></description>
+            <pubDate>Mon, 09 Mar 2026 07:27:00 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.5.0/Verba-v0.5.0.dmg"
-                sparkle:version="19"
-                sparkle:shortVersionString="0.5.0"
-                sparkle:edSignature="hQgB3kH3+0bdZauQPjBzlCmWLcxevtTiyPhSI2TX+4Xi6p4XavqFvICQUFY2wD/hGwVMoWfhzlQfLqNNKPM1BQ=="
-                length="10164271"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.5.1/Verba-v0.5.1.dmg"
+                sparkle:version="20"
+                sparkle:shortVersionString="0.5.1"
+                sparkle:edSignature="SoGu/iIT/5bsNy0Ue/2TTWQoNCxGcL4IcnALdjPqb7ExiFy+STqOlm4DqHvVIT2beB6el78P2+x2sRnezID3Dg=="
+                length="10192241"
                 type="application/octet-stream"
             />
         </item>
