@@ -88,8 +88,9 @@ class WhisperService {
             language: language,
             detectLanguage: language == nil,
             skipSpecialTokens: true,
-            withoutTimestamps: true,
-            promptTokens: tokens
+            withoutTimestamps: false,
+            promptTokens: tokens,
+            chunkingStrategy: .vad
         )
 
         let results: [TranscriptionResult] = try await whisperKit.transcribe(
