@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.5.8</title>
-            <description><![CDATA[<h2>What's New in v0.5.8</h2><ul><li>**Fn key not responding** — Reverted FloatingIndicator changes (draggable window + space-following) that broke global hotkey detection.</li><li>**History search** — Search through transcription history by text content.</li><li>**History export** — Export history to Markdown file.</li><li>**Dictionary export** — Export dictionary terms to a text file.</li></ul>]]></description>
-            <pubDate>Mon, 09 Mar 2026 10:38:17 +0700</pubDate>
+            <title>Version 0.5.9</title>
+            <description><![CDATA[<h2>What's New in v0.5.9</h2><ul><li>**"No speech detected" hint** — When transcription fails repeatedly with the Auto whisper model, suggests changing to a different model in Settings. Helps diagnose memory issues from large model combinations.</li></ul>]]></description>
+            <pubDate>Mon, 09 Mar 2026 11:14:13 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.5.8/Verba-v0.5.8.dmg"
-                sparkle:version="28"
-                sparkle:shortVersionString="0.5.8"
-                sparkle:edSignature="MHLuQuR1EmMC+0MOBj66Reeux751XTxqbMI9mtWqnJKuDH0Rk1YMyno7pt1JV7mkOmHKIALdpkdXghTtc5oqAw=="
-                length="10192244"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.5.9/Verba-v0.5.9.dmg"
+                sparkle:version="29"
+                sparkle:shortVersionString="0.5.9"
+                sparkle:edSignature="Qpmh8byIwWojoYfFJjmxB9oY4umzHYTQn6/dir2ynUzASDMXsO3xkhWYefYQqAmy98QZsjZxDKgbvN/78nj2CQ=="
+                length="10192263"
                 type="application/octet-stream"
             />
         </item>
