@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.4.9</title>
-            <description><![CDATA[<h2>What's New in v0.4.9</h2><ul><li>**History not persisting across restarts** — Fixed date decoding mismatch that silently prevented history from loading on app launch.</li></ul>]]></description>
-            <pubDate>Mon, 09 Mar 2026 06:55:21 +0700</pubDate>
+            <title>Version 0.5.0</title>
+            <description><![CDATA[<h2>What's New in v0.5.0</h2><ul><li>**Long recordings cut off after ~30 seconds** — Enabled VAD (Voice Activity Detection) chunking so WhisperKit now transcribes full audio length instead of only the first window.</li></ul>]]></description>
+            <pubDate>Mon, 09 Mar 2026 07:16:34 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.4.9/Verba-v0.4.9.dmg"
-                sparkle:version="18"
-                sparkle:shortVersionString="0.4.9"
-                sparkle:edSignature="wMy2qZunjRwOfUb9w8wzwqtBNdC3656blWKk4K4y32qsCOvu59bxsxdvthxnea1HPS0NjW3DIEZa+wNNqficCg=="
-                length="10164470"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.5.0/Verba-v0.5.0.dmg"
+                sparkle:version="19"
+                sparkle:shortVersionString="0.5.0"
+                sparkle:edSignature="hQgB3kH3+0bdZauQPjBzlCmWLcxevtTiyPhSI2TX+4Xi6p4XavqFvICQUFY2wD/hGwVMoWfhzlQfLqNNKPM1BQ=="
+                length="10164271"
                 type="application/octet-stream"
             />
         </item>
