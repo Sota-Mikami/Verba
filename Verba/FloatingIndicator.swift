@@ -1,10 +1,32 @@
 import SwiftUI
 import AppKit
 
-/// NSWindow subclass that never becomes key or main — prevents stealing focus
+/// NSWindow subclass that never becomes key or main — prevents stealing focus.
+/// Supports dragging by mouse anywhere on the window.
 class NonActivatingWindow: NSWindow {
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
+    /// Set to true after user drags the window to a custom position
+    var hasBeenDragged = false
+    private var dragOrigin: NSPoint?
+
+    override func mouseDown(with event: NSEvent) {
+        dragOrigin = event.locationInWindow
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard let origin = dragOrigin else { return }
+        let current = event.locationInWindow
+        var frameOrigin = frame.origin
+        frameOrigin.x += current.x - origin.x
+        frameOrigin.y += current.y - origin.y
+        setFrameOrigin(frameOrigin)
+        hasBeenDragged = true
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        dragOrigin = nil
+    }
 }
 
 class FloatingIndicatorState: ObservableObject {
@@ -72,7 +94,8 @@ class FloatingIndicatorController {
             w.isOpaque = false
             w.backgroundColor = .clear
             w.hasShadow = true
-            w.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+            w.collectionBehavior = [.canJoinAllSpaces, .moveToActiveSpace, .fullScreenAuxiliary, .stationary]
+            w.isMovableByWindowBackground = true
             w.ignoresMouseEvents = false
             w.contentView = hostingView
             self.window = w
@@ -80,7 +103,9 @@ class FloatingIndicatorController {
             updateWindowHeight(indicatorHeight)
         }
 
-        positionAtBottom()
+        if !((window as? NonActivatingWindow)?.hasBeenDragged ?? false) {
+            positionAtBottom()
+        }
         window?.alphaValue = 0
         window?.orderFrontRegardless()
 
@@ -122,6 +147,7 @@ class FloatingIndicatorController {
     @MainActor
     func hide() {
         state.isVisible = false
+        (window as? NonActivatingWindow)?.hasBeenDragged = false
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.2
             ctx.timingFunction = CAMediaTimingFunction(name: .easeIn)
@@ -168,13 +194,16 @@ class FloatingIndicatorController {
             w.isOpaque = false
             w.backgroundColor = .clear
             w.hasShadow = true
-            w.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+            w.collectionBehavior = [.canJoinAllSpaces, .moveToActiveSpace, .fullScreenAuxiliary, .stationary]
+            w.isMovableByWindowBackground = true
             w.ignoresMouseEvents = false
             w.contentView = hostingView
             self.window = w
         }
 
-        positionAtBottom()
+        if !((window as? NonActivatingWindow)?.hasBeenDragged ?? false) {
+            positionAtBottom()
+        }
         window?.alphaValue = 0
         window?.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { ctx in
