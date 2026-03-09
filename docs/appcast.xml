@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.6.1</title>
-            <description><![CDATA[<h2>What's New in v0.6.1</h2><ul><li>**Recording timer reset** — Timer now correctly resets to 0:00 when starting a new recording after canceling. Previously it resumed from the canceled session's elapsed time.</li></ul>]]></description>
-            <pubDate>Mon, 09 Mar 2026 13:51:19 +0700</pubDate>
+            <title>Version 0.6.2</title>
+            <description><![CDATA[<h2>What's New in v0.6.2</h2><ul><li>**Persistent dashboard stats** — Sessions, Words, and Time Saved are now stored as lifetime totals. Deleting history no longer resets these numbers — your cumulative achievements are preserved.</li></ul>]]></description>
+            <pubDate>Mon, 09 Mar 2026 14:09:40 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.6.1/Verba-v0.6.1.dmg"
-                sparkle:version="31"
-                sparkle:shortVersionString="0.6.1"
-                sparkle:edSignature="bCKTpZAzrrhBMU5gGOu6c6LDypptWlctaB1+bPwk0vLFBUcJBQ77oC2LVPhOEez/BEPILoLIG6mOp/ysn5ndCw=="
-                length="10192512"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.6.2/Verba-v0.6.2.dmg"
+                sparkle:version="32"
+                sparkle:shortVersionString="0.6.2"
+                sparkle:edSignature="WJU5SNfASo2f42c8gyf+60/Kdma+ts21QROe21Ww315VnJg4ZZS3rb0Etn+G3FCpgw5S9N26WorJJgd/WZ04Cg=="
+                length="10193552"
                 type="application/octet-stream"
             />
         </item>
