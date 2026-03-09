@@ -192,6 +192,12 @@ struct L10n {
 
     // MARK: Dictionary (additional)
     var search: String { s("Search...", "検索...") }
+    var exportDictionary: String { s("Export", "エクスポート") }
+
+    // MARK: History (additional)
+    var searchHistory: String { s("Search history...", "履歴を検索...") }
+    var exportHistory: String { s("Export", "エクスポート") }
+    var exported: String { s("Exported", "エクスポート完了") }
 
     // MARK: Floating Indicator (additional)
     var cancelled: String { s("Cancelled", "キャンセルしました") }
