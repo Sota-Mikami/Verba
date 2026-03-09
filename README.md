@@ -99,8 +99,10 @@ open Verba.xcodeproj
 
 - [x] Real-time streaming transcription
 - [x] Audio feedback (sound cues for start/stop/paste)
+- [x] Export transcription history
+- [ ] Draggable floating indicator + Space-following (reverted in v0.5.8 — broke Fn key detection, needs alternative implementation)
+- [ ] Default formatting model upgrade (Qwen3 0.6B → Qwen3 4B for better quality)
 - [ ] Context-aware formatting (read active app content)
-- [ ] Export transcription history
 
 ## License
 
