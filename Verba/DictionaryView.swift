@@ -8,7 +8,6 @@ struct DictionaryView: View {
     @State private var isCreatingEntry = false
     @State private var isNewWordHovered = false
     @State private var isSearchHovered = false
-    @State private var isExportHovered = false
 
     private var filteredEntries: [DictionaryEntry] {
         var entries = appState.dictionaryEntries
@@ -29,26 +28,6 @@ struct DictionaryView: View {
                     .font(.system(size: 24, weight: .bold))
                     .foregroundStyle(DS.textNormal)
                 Spacer()
-                if !appState.dictionaryEntries.isEmpty {
-                    Button {
-                        exportDictionary()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 11))
-                            Text(appState.l10n.exportDictionary)
-                                .font(.system(size: 12, weight: .medium))
-                        }
-                        .foregroundStyle(isExportHovered ? DS.textNormal : DS.textMuted)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(isExportHovered ? DS.bgModifierHover : DS.bgTertiary)
-                        .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
-                    }
-                    .buttonStyle(.plain)
-                    .onHover { isExportHovered = $0 }
-                    .animation(.easeOut(duration: 0.12), value: isExportHovered)
-                }
                 Button {
                     isCreatingEntry = true
                     editingEntry = DictionaryEntry(term: "")
@@ -170,17 +149,6 @@ struct DictionaryView: View {
                 }
             )
         }
-    }
-
-    private func exportDictionary() {
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [.plainText]
-        panel.nameFieldStringValue = "verba-dictionary.txt"
-        panel.canCreateDirectories = true
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-
-        let text = appState.dictionaryEntries.map { $0.term }.joined(separator: "\n")
-        try? text.write(to: url, atomically: true, encoding: .utf8)
     }
 
     private var emptyState: some View {

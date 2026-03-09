@@ -216,22 +216,20 @@ class HotkeyController {
             pttActive = false
             DebugLog.log("[HK] onModDown: scheduling PTT hold timer (\(self.holdThreshold)s)")
             let work = DispatchWorkItem { [weak self] in
-                DispatchQueue.main.async {
-                    guard let self else {
-                        DebugLog.log("[HK] PTT timer fired: self is nil")
-                        return
-                    }
-                    guard self.modDown[kc] == true else {
-                        DebugLog.log("[HK] PTT timer fired: modDown[\(kc)] is false/nil, key already released")
-                        return
-                    }
-                    DebugLog.log("[HK] PTT timer fired: activating PTT, calling onPushToTalkStart")
-                    self.pttActive = true
-                    self.onPushToTalkStart?()
+                guard let self else {
+                    DebugLog.log("[HK] PTT timer fired: self is nil")
+                    return
                 }
+                guard self.modDown[kc] == true else {
+                    DebugLog.log("[HK] PTT timer fired: modDown[\(kc)] is false/nil, key already released")
+                    return
+                }
+                DebugLog.log("[HK] PTT timer fired: activating PTT, calling onPushToTalkStart")
+                self.pttActive = true
+                self.onPushToTalkStart?()
             }
             pttHoldTimer = work
-            DispatchQueue.global().asyncAfter(deadline: .now() + holdThreshold, execute: work)
+            DispatchQueue.main.asyncAfter(deadline: .now() + holdThreshold, execute: work)
         }
     }
 

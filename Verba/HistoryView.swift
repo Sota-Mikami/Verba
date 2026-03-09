@@ -3,18 +3,6 @@ import SwiftUI
 struct HistoryView: View {
     @EnvironmentObject var appState: AppState
     @State private var showClearConfirm = false
-    @State private var searchQuery = ""
-    @State private var showSearch = false
-    @State private var isSearchHovered = false
-    @State private var isExportHovered = false
-
-    private var filteredHistory: [TranscriptionRecord] {
-        guard !searchQuery.isEmpty else { return appState.history }
-        let q = searchQuery.lowercased()
-        return appState.history.filter {
-            ($0.formattedText ?? $0.rawText ?? "").lowercased().contains(q)
-        }
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -30,104 +18,31 @@ struct HistoryView: View {
                 }
                 Spacer()
                 if !appState.history.isEmpty {
-                    HStack(spacing: 8) {
-                        // Export button
-                        Button {
-                            exportHistory()
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "square.and.arrow.up")
-                                    .font(.system(size: 11))
-                                Text(appState.l10n.exportHistory)
-                                    .font(.system(size: 12, weight: .medium))
-                            }
-                            .foregroundStyle(isExportHovered ? DS.textNormal : DS.textMuted)
+                    Button {
+                        showClearConfirm = true
+                    } label: {
+                        Text(appState.l10n.clearAll)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(DS.red)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
-                            .background(isExportHovered ? DS.bgModifierHover : DS.bgTertiary)
+                            .background(DS.red.opacity(0.1))
                             .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                    }
+                    .buttonStyle(.plain)
+                    .alert(appState.l10n.clearAllConfirmTitle, isPresented: $showClearConfirm) {
+                        Button(appState.l10n.clearAll, role: .destructive) {
+                            appState.clearHistory()
                         }
-                        .buttonStyle(.plain)
-                        .onHover { isExportHovered = $0 }
-                        .animation(.easeOut(duration: 0.12), value: isExportHovered)
-
-                        // Clear All button
-                        Button {
-                            showClearConfirm = true
-                        } label: {
-                            Text(appState.l10n.clearAll)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(DS.red)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(DS.red.opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
-                        }
-                        .buttonStyle(.plain)
-                        .alert(appState.l10n.clearAllConfirmTitle, isPresented: $showClearConfirm) {
-                            Button(appState.l10n.clearAll, role: .destructive) {
-                                appState.clearHistory()
-                            }
-                            Button(appState.l10n.cancel, role: .cancel) {}
-                        } message: {
-                            Text(appState.l10n.clearAllConfirmMessage)
-                        }
+                        Button(appState.l10n.cancel, role: .cancel) {}
+                    } message: {
+                        Text(appState.l10n.clearAllConfirmMessage)
                     }
                 }
             }
             .padding(.horizontal, 28)
             .padding(.top, 28)
             .padding(.bottom, 16)
-
-            // Search bar
-            if !appState.history.isEmpty {
-                HStack(spacing: 0) {
-                    Spacer()
-                    if showSearch {
-                        HStack(spacing: 6) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 12))
-                                .foregroundStyle(DS.textFaint)
-                            TextField(appState.l10n.searchHistory, text: $searchQuery)
-                                .textFieldStyle(.plain)
-                                .font(.system(size: 13))
-                                .foregroundStyle(DS.textNormal)
-                                .frame(width: 200)
-                            Button {
-                                searchQuery = ""
-                                withAnimation { showSearch = false }
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(DS.textFaint)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(DS.inputBg)
-                        .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
-                        .transition(.opacity.combined(with: .move(edge: .trailing)))
-                    } else {
-                        Button {
-                            withAnimation { showSearch = true }
-                        } label: {
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 14))
-                                .foregroundStyle(isSearchHovered ? DS.textNormal : DS.textMuted)
-                                .padding(8)
-                                .background(isSearchHovered ? DS.bgModifierHover : DS.bgTertiary)
-                                .clipShape(Circle())
-                        }
-                        .buttonStyle(.plain)
-                        .onHover { isSearchHovered = $0 }
-                        .animation(.easeOut(duration: 0.12), value: isSearchHovered)
-                        .help("Search")
-                    }
-                }
-                .padding(.horizontal, 28)
-                .padding(.bottom, 12)
-            }
 
             if appState.history.isEmpty {
                 Spacer()
@@ -144,7 +59,7 @@ struct HistoryView: View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: 0) {
-                        ForEach(filteredHistory) { record in
+                        ForEach(appState.history) { record in
                             HistoryRow(record: record)
                                 .environmentObject(appState)
                                 .transition(.asymmetric(
@@ -155,34 +70,12 @@ struct HistoryView: View {
                     }
                     .padding(.horizontal, 28)
                     .padding(.bottom, 16)
-                    .animation(.easeOut(duration: 0.3), value: filteredHistory.map(\.id))
+                    .animation(.easeOut(duration: 0.3), value: appState.history.map(\.id))
                 }
             }
         }
         .background(DS.bgSecondary)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    }
-
-    private func exportHistory() {
-        let panel = NSSavePanel()
-        panel.allowedContentTypes = [.plainText]
-        panel.nameFieldStringValue = "verba-history.md"
-        panel.canCreateDirectories = true
-        guard panel.runModal() == .OK, let url = panel.url else { return }
-
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .medium
-        dateFormatter.timeStyle = .short
-
-        var md = "# Verba History\n\n"
-        for record in appState.history where record.status == .success {
-            let date = dateFormatter.string(from: record.timestamp)
-            let duration = Int(record.duration)
-            let text = record.displayText
-            md += "## \(date) (\(duration)s, \(record.mode.rawValue))\n\n\(text)\n\n---\n\n"
-        }
-
-        try? md.write(to: url, atomically: true, encoding: .utf8)
     }
 }
 
