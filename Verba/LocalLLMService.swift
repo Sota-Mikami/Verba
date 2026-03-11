@@ -74,6 +74,11 @@ class LocalLLMService: ObservableObject {
 
     private var modelContainer: ModelContainer?
     private var currentModelId: String?
+    private var idleUnloadTask: Task<Void, Never>?
+    private var activeLoadTask: Task<Void, Never>?
+
+    /// How long to wait after last generation before unloading model (seconds)
+    private let idleUnloadDelay: TimeInterval = 300
 
     private let hub = HubApi(
         downloadBase: FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
@@ -99,79 +104,177 @@ class LocalLLMService: ObservableObject {
         }
     }
 
-    /// Download and load a model
-    func downloadAndLoad(modelId: String) async {
+    /// Wait for any in-progress download/load to complete
+    func waitForReady() async {
+        await activeLoadTask?.value
+    }
+
+    /// True if a download or load is currently in progress
+    var isBusy: Bool {
+        switch modelState {
+        case .downloading, .loading: return true
+        default: return false
+        }
+    }
+
+    /// Download a model without loading it into memory
+    func downloadOnly(modelId: String) async {
+        // Guard: don't start if already busy
+        guard !isBusy else {
+            logger.info("downloadOnly: already busy, skipping")
+            return
+        }
+
         errorMessage = nil
         modelState = .downloading(progress: 0)
 
-        let config = ModelConfiguration(id: modelId)
+        let task = Task { @MainActor [weak self] in
+            guard let self else { return }
+            let config = ModelConfiguration(id: modelId)
 
-        do {
-            // Download
-            _ = try await downloadModel(
-                hub: hub,
-                configuration: config
-            ) { [weak self] progress in
-                Task { @MainActor in
-                    self?.modelState = .downloading(progress: progress.fractionCompleted)
+            do {
+                _ = try await downloadModel(
+                    hub: self.hub,
+                    configuration: config
+                ) { [weak self] progress in
+                    Task { @MainActor in
+                        self?.modelState = .downloading(progress: progress.fractionCompleted)
+                    }
                 }
+
+                self.currentModelId = modelId
+                self.modelState = .downloaded
+                logger.info("Model downloaded (not loaded): \(modelId)")
+            } catch {
+                logger.error("Failed to download model: \(error.localizedDescription)")
+                self.errorMessage = error.localizedDescription
+                self.modelState = .notDownloaded
             }
-
-            modelState = .loading
-
-            // Load into memory
-            Memory.cacheLimit = 20 * 1024 * 1024
-
-            let container = try await LLMModelFactory.shared.loadContainer(
-                hub: hub,
-                configuration: config
-            ) { _ in }
-
-            modelContainer = container
-            currentModelId = modelId
-            modelState = .ready
-            logger.info("Local model loaded: \(modelId)")
-        } catch {
-            logger.error("Failed to load local model: \(error.localizedDescription)")
-            errorMessage = error.localizedDescription
-            modelState = .notDownloaded
         }
+        activeLoadTask = task
+        await task.value
+        activeLoadTask = nil
+    }
+
+    /// Download and load a model
+    func downloadAndLoad(modelId: String) async {
+        // Guard: don't start if already busy
+        guard !isBusy else {
+            logger.info("downloadAndLoad: already busy, waiting for current task")
+            await activeLoadTask?.value
+            return
+        }
+
+        errorMessage = nil
+        modelState = .downloading(progress: 0)
+
+        let task = Task { @MainActor [weak self] in
+            guard let self else { return }
+            let config = ModelConfiguration(id: modelId)
+
+            do {
+                // Download
+                _ = try await downloadModel(
+                    hub: self.hub,
+                    configuration: config
+                ) { [weak self] progress in
+                    Task { @MainActor in
+                        self?.modelState = .downloading(progress: progress.fractionCompleted)
+                    }
+                }
+
+                self.modelState = .loading
+
+                // Load into memory
+                Memory.cacheLimit = 20 * 1024 * 1024
+
+                let container = try await LLMModelFactory.shared.loadContainer(
+                    hub: self.hub,
+                    configuration: config
+                ) { _ in }
+
+                self.modelContainer = container
+                self.currentModelId = modelId
+                self.modelState = .ready
+                logger.info("Local model loaded: \(modelId)")
+            } catch {
+                logger.error("Failed to load local model: \(error.localizedDescription)")
+                self.errorMessage = error.localizedDescription
+                self.modelState = .notDownloaded
+            }
+        }
+        activeLoadTask = task
+        await task.value
+        activeLoadTask = nil
     }
 
     /// Load an already-downloaded model
     func loadModel(modelId: String) async {
+        // Guard: don't start if already busy
+        guard !isBusy else {
+            logger.info("loadModel: already busy, waiting for current task")
+            await activeLoadTask?.value
+            return
+        }
         guard modelState == .downloaded || currentModelId != modelId else { return }
         errorMessage = nil
         modelState = .loading
 
-        let config = ModelConfiguration(id: modelId)
+        let task = Task { @MainActor [weak self] in
+            guard let self else { return }
+            let config = ModelConfiguration(id: modelId)
 
-        do {
-            Memory.cacheLimit = 20 * 1024 * 1024
+            do {
+                Memory.cacheLimit = 20 * 1024 * 1024
 
-            let container = try await LLMModelFactory.shared.loadContainer(
-                hub: hub,
-                configuration: config
-            ) { _ in }
+                let container = try await LLMModelFactory.shared.loadContainer(
+                    hub: self.hub,
+                    configuration: config
+                ) { _ in }
 
-            modelContainer = container
-            currentModelId = modelId
-            modelState = .ready
-            logger.info("Local model loaded: \(modelId)")
-        } catch {
-            logger.error("Failed to load model: \(error.localizedDescription)")
-            errorMessage = error.localizedDescription
-            modelState = .downloaded
+                self.modelContainer = container
+                self.currentModelId = modelId
+                self.modelState = .ready
+                logger.info("Local model loaded: \(modelId)")
+            } catch {
+                logger.error("Failed to load model: \(error.localizedDescription)")
+                self.errorMessage = error.localizedDescription
+                self.modelState = .downloaded
+            }
         }
+        activeLoadTask = task
+        await task.value
+        activeLoadTask = nil
     }
 
     /// Unload the current model to free memory
     func unloadModel() {
+        cancelIdleUnload()
+        let wasReady = modelContainer != nil
         modelContainer = nil
-        currentModelId = nil
         if case .ready = modelState {
             modelState = .downloaded
         }
+        if wasReady {
+            logger.info("LLM unloaded to free memory (model files still on disk: \(self.currentModelId ?? "nil"))")
+        }
+    }
+
+    /// Schedule automatic unload after idle period
+    func scheduleIdleUnload() {
+        cancelIdleUnload()
+        idleUnloadTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(self?.idleUnloadDelay ?? 30))
+            guard !Task.isCancelled, let self, self.modelContainer != nil else { return }
+            logger.info("Idle timeout reached — unloading LLM to free memory")
+            self.unloadModel()
+        }
+    }
+
+    /// Cancel pending idle unload (e.g. when preloading for next use)
+    func cancelIdleUnload() {
+        idleUnloadTask?.cancel()
+        idleUnloadTask = nil
     }
 
     /// Delete a downloaded model from disk
@@ -191,6 +294,8 @@ class LocalLLMService: ObservableObject {
 
     /// Generate formatted text using the local model
     func generate(systemPrompt: String, userMessage: String) async -> String? {
+        cancelIdleUnload()
+
         guard let container = modelContainer else {
             logger.error("No model loaded for generation")
             return nil
@@ -220,9 +325,13 @@ class LocalLLMService: ObservableObject {
                 }
             }
 
+            // Schedule unload after idle period
+            scheduleIdleUnload()
+
             return output.trimmingCharacters(in: .whitespacesAndNewlines)
         } catch {
             logger.error("Local generation error: \(error.localizedDescription)")
+            scheduleIdleUnload()
             return nil
         }
     }

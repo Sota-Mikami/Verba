@@ -108,8 +108,8 @@ struct MainView: View {
                         Circle()
                             .fill(DS.orange.opacity(0.3))
                             .frame(width: 12, height: 12)
-                            .scaleEffect(appState.isModelLoaded ? 1 : 1.5)
-                            .opacity(appState.isModelLoaded ? 0 : 0.5)
+                            .scaleEffect(1.5)
+                            .opacity(0.5)
                             .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: appState.isModelLoaded)
                     }
                     Circle()

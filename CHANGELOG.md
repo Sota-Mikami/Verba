@@ -2,6 +2,23 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [0.7.0] - 2026-03-12
+
+### Added
+- **LLM memory optimization** — Formatting model (LLM) is now loaded on-demand when recording starts and automatically unloaded after 5 minutes of idle to free memory (~2.5GB VRAM saved when idle).
+- **LLM preloading** — LLM begins loading in the background while you speak, so formatting starts without delay in most cases.
+- **Graceful LLM fallback** — If the formatting model fails to load (e.g. low memory), raw text is pasted with a brief notification instead of silently skipping.
+- **Download-only on startup** — LLM model files are pre-downloaded at startup but not loaded into memory until first use.
+- **Concurrent download guard** — Prevents duplicate model downloads that caused progress to jump back and forth.
+- **Dictionary export button** — Export dictionary terms from the Dictionary view.
+
+### Changed
+- **Default formatting model** upgraded from Qwen3 0.6B to **Qwen3 4B** for significantly better formatting quality (existing users keep their current selection).
+- **README roadmap** replaced inline list with link to GitHub Projects.
+
+### Fixed
+- **Progress bar regression** — Model download progress no longer jumps backwards when multiple download tasks race.
+
 ## [0.5.3] - 2026-03-09
 
 ### Fixed

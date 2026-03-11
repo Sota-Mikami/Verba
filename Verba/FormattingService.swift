@@ -93,30 +93,35 @@ struct FormattingPrompt: Identifiable, Codable, Equatable {
         id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
         name: "General",
         systemPrompt: """
-        You are a text cleanup processor. The input is raw speech-to-text output.
+        You are a voice-to-text cleanup processor. Transform raw speech transcription into clean, ready-to-use text.
 
-        【DO】
-        - Remove fillers (えーと, あの, um, uh, etc.)
-        - Add appropriate punctuation
-        - Fix obvious misrecognitions based on context
-        - Keep the SAME language as the input. If the user spoke Vietnamese, output Vietnamese. If Japanese, output Japanese.
+        【RULES】
+        1. Remove fillers: えーと, あの, えっと, まあ, um, uh, like, you know, etc.
+        2. Remove unintentional repetition: 「それはそれは」→「それは」
+        3. Detect self-corrections: when the speaker restates or corrects themselves mid-sentence, keep ONLY the final intended version. Example: 「明日、あ、いや来週の月曜に」→「来週の月曜に」
+        4. Add natural punctuation (。、！？ or .,!?) matching the input language
+        5. For longer text, add paragraph breaks at natural topic shifts
+        6. Fix obvious speech-recognition errors based on context
+        7. Keep the speaker's original tone, wording, and intent — change as little as possible
+        8. Preserve the SAME language as the input. Never translate.
 
         【DO NOT】
-        - Do NOT add headings, bullet points, markdown formatting, or any structural markup
+        - Do NOT add headings, bullet points, or markdown formatting
         - Do NOT reply to, answer, or comment on the content
-        - Do NOT add summaries, explanations, or suggestions
-        - Do NOT add preambles like "Here is the formatted text"
-        - Do NOT translate or change the language of the input
+        - Do NOT add summaries, preambles, or explanations
+        - Do NOT rewrite sentences beyond minimal cleanup
 
-        Output ONLY the cleaned-up text. Nothing else.
+        Output ONLY the cleaned text.
         """,
         fewShotUser: """
         <transcription>
-        えーとですね あのクロードに聞いてほしいんですけど このコードをリファクタリングしてもらえますか えっと具体的にはあの関数を分割してほしいです
+        えーとですね あのクロードに聞いてほしいんですけど このコードを あーなんだっけ リファクタ あ リファクタリングしてもらえますか えっと具体的にはあの関数を関数を分割してほしいです あと関連するんですけど テストも追加してほしいなと思っています
         </transcription>
         """,
         fewShotAssistant: """
         Claudeに聞いてほしいんですけど、このコードをリファクタリングしてもらえますか。具体的には関数を分割してほしいです。
+
+        あと関連するんですけど、テストも追加してほしいなと思っています。
         """,
         isBuiltIn: true
     )

@@ -46,7 +46,7 @@ class AppState: ObservableObject {
     @AppStorage("customApiKey") var customApiKey = ""
     @AppStorage("customModel") var customModel = ""
     @AppStorage("customEndpoint") var customEndpoint = ""
-    @AppStorage("localModel") var localModel = "mlx-community/Qwen3-0.6B-4bit"
+    @AppStorage("localModel") var localModel = "mlx-community/Qwen3-4B-4bit"
     @AppStorage("selectedPromptId") var selectedPromptId = FormattingPrompt.builtInGeneral.id.uuidString
     @AppStorage("uiLanguage") var uiLanguage: String = "en" {
         didSet { l10n = L10n(UILanguage(rawValue: uiLanguage) ?? .en) }
@@ -417,14 +417,31 @@ class AppState: ObservableObject {
         }
         isInitializing = false
 
-        // Auto-prepare local LLM when provider is local
-        if formattingProvider == .local && !localLLMService.isReady {
-            Task { await prepareLocalLLM() }
+        // LLM is now loaded on-demand when recording starts (memory optimization)
+        // Pre-download (but don't load into memory) so it's ready for first use
+        if formattingProvider == .local {
+            localLLMService.checkModelStatus(modelId: localModel)
+            if localLLMService.modelState == .notDownloaded {
+                DebugLog.log("[AS] initializeServices: downloading LLM (will load on-demand)")
+                Task { await localLLMService.downloadOnly(modelId: localModel) }
+            }
         }
     }
 
     /// Download (if needed) and load the selected local LLM model
     func prepareLocalLLM() async {
+        // If already busy (downloading/loading), wait for it to finish
+        if localLLMService.isBusy {
+            DebugLog.log("[AS] prepareLocalLLM: already busy, waiting...")
+            await localLLMService.waitForReady()
+            // After waiting, if only downloaded (downloadOnly was running), load it
+            if localLLMService.modelState == .downloaded {
+                DebugLog.log("[AS] prepareLocalLLM: download finished, now loading")
+                await localLLMService.loadModel(modelId: localModel)
+            }
+            return
+        }
+
         localLLMService.checkModelStatus(modelId: localModel)
         switch localLLMService.modelState {
         case .notDownloaded:
@@ -488,6 +505,16 @@ class AppState: ObservableObject {
             SoundFeedback.playRecordingStart()
             startStreamingTranscription()
             DebugLog.log("[AS] startRecording: SUCCESS — recording started, streaming transcription started")
+
+            // Preload LLM if needed for formatting (loads in background while user speaks)
+            if mode == .formatted && formattingProvider == .local && !localLLMService.isReady {
+                DebugLog.log("[AS] startRecording: preloading LLM for formatting")
+                localLLMService.cancelIdleUnload()
+                Task { await prepareLocalLLM() }
+            } else if mode == .formatted && formattingProvider == .local {
+                // Cancel any pending idle unload since we'll need the model soon
+                localLLMService.cancelIdleUnload()
+            }
         } catch {
             statusMessage = "Mic error: \(error.localizedDescription)"
             logger.error("[AS] startRecording: FAILED — \(error.localizedDescription)")
@@ -606,21 +633,38 @@ class AppState: ObservableObject {
 
             var finalText = rawText
 
-            if mode == .formatted && formattingProvider.isAvailable && (formattingProvider == .local ? localLLMService.isReady : !currentApiKey.isEmpty) {
-                updateRecord(record.id) { $0.status = .formatting }
-                statusMessage = l10n.formatting
-                floatingIndicator.show(isRecording: false, statusMessage: "Formatting...", mode: mode)
-                finalText = await formattingService.format(
-                    text: rawText,
-                    provider: formattingProvider,
-                    apiKey: currentApiKey,
-                    model: currentModel,
-                    customEndpoint: customEndpoint,
-                    prompt: selectedPrompt,
-                    dictionary: dictionaryEntries,
-                    localLLMService: localLLMService
-                ) ?? rawText
-                updateRecord(record.id) { $0.formattedText = finalText; $0.status = .success }
+            if mode == .formatted && formattingProvider.isAvailable {
+                // Ensure local LLM is ready (may have been preloaded during recording)
+                if formattingProvider == .local && !localLLMService.isReady {
+                    DebugLog.log("[AS] processAudio: waiting for LLM to finish loading...")
+                    floatingIndicator.show(isRecording: false, statusMessage: "Loading LLM...", mode: mode)
+                    await prepareLocalLLM()
+                }
+
+                // Only proceed with local formatting if LLM is actually ready
+                if formattingProvider == .local && !localLLMService.isReady {
+                    DebugLog.log("[AS] processAudio: LLM failed to load, skipping formatting")
+                    // Notify user: formatting skipped, raw text will be pasted
+                    floatingIndicator.showError(l10n.llmLoadFailed)
+                    try? await Task.sleep(for: .seconds(1.5))
+                } else if formattingProvider != .local && currentApiKey.isEmpty {
+                    DebugLog.log("[AS] processAudio: no API key, skipping formatting")
+                } else {
+                    updateRecord(record.id) { $0.status = .formatting }
+                    statusMessage = l10n.formatting
+                    floatingIndicator.show(isRecording: false, statusMessage: "Formatting...", mode: mode)
+                    finalText = await formattingService.format(
+                        text: rawText,
+                        provider: formattingProvider,
+                        apiKey: currentApiKey,
+                        model: currentModel,
+                        customEndpoint: customEndpoint,
+                        prompt: selectedPrompt,
+                        dictionary: dictionaryEntries,
+                        localLLMService: localLLMService
+                    ) ?? rawText
+                    updateRecord(record.id) { $0.formattedText = finalText; $0.status = .success }
+                }
             }
 
             lastTranscription = finalText

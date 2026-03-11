@@ -19,6 +19,7 @@ class FloatingIndicatorState: ObservableObject {
     @Published var streamingText: String = ""
     @Published var isStreamingActive = false
     @Published var showSuccess = false
+    @Published var recordingSessionId = UUID()
     var onPromptSelected: ((String) -> Void)?
     var onModeChanged: ((TranscriptionMode) -> Void)?
     var onErrorDismissed: (() -> Void)?
@@ -55,6 +56,9 @@ class FloatingIndicatorController {
         state.errorMessage = nil
         state.audioLevels = Array(repeating: 0, count: 30)
         state.resetStreaming()
+        if isRecording {
+            state.recordingSessionId = UUID()
+        }
 
         let indicatorHeight: CGFloat = isRecording ? 96 : 72
 
@@ -313,6 +317,7 @@ struct FloatingIndicatorView: View {
 
                         if state.isRecording {
                             ElapsedTimeView()
+                                .id(state.recordingSessionId)
                                 .font(.system(size: 14, weight: .semibold, design: .monospaced))
                                 .foregroundStyle(Color(hex: 0xede8e1).opacity(0.7))
                         } else {

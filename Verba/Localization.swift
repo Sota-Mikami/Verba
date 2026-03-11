@@ -164,6 +164,11 @@ struct L10n {
     // MARK: Sidebar
     var voiceInput: String { s("Voice Input", "音声入力") }
     var whisperReady: String { s("Whisper Ready", "Whisper 準備完了") }
+    var llmReady: String { s("LLM Ready", "LLM 準備完了") }
+    var llmStandby: String { s("LLM Standby", "LLM スタンバイ") }
+    var llmLoading: String { s("Loading LLM...", "LLM 読み込み中...") }
+    var llmDownloading: String { s("Downloading LLM...", "LLM ダウンロード中...") }
+    var llmLoadFailed: String { s("LLM unavailable — pasted raw text", "LLM読み込み失敗 — 生テキストをペースト") }
 
     // MARK: Menu Bar (additional)
     var recent: String { s("Recent", "最近") }
@@ -192,6 +197,12 @@ struct L10n {
 
     // MARK: Dictionary (additional)
     var search: String { s("Search...", "検索...") }
+    var exportDictionary: String { s("Export", "エクスポート") }
+
+    // MARK: History (additional)
+    var searchHistory: String { s("Search history...", "履歴を検索...") }
+    var exportHistory: String { s("Export", "エクスポート") }
+    var exported: String { s("Exported", "エクスポート完了") }
 
     // MARK: Floating Indicator (additional)
     var cancelled: String { s("Cancelled", "キャンセルしました") }
@@ -203,6 +214,7 @@ struct L10n {
     func pastedChars(_ count: Int) -> String { s("Pasted \(count) chars", "\(count)文字をペースト") }
     func retranscribedChars(_ count: Int) -> String { s("Retranscribed \(count) chars", "\(count)文字を再文字起こし") }
     var noSpeechDetected: String { s("No speech detected", "音声が検出されませんでした") }
+    var noSpeechModelHint: String { s("No speech detected — try changing Whisper model in Settings", "音声が検出されません — 設定からWhisperモデルを変更してみてください") }
     var modelNotLoaded: String { s("Model not loaded yet", "モデルがまだ読み込まれていません") }
     var accessibilityNeeded: String { s("⚠ Accessibility permission needed — text copied to clipboard", "⚠ アクセシビリティ権限が必要です — テキストはクリップボードにコピーされました") }
 }
