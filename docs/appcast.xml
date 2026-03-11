@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.6.3</title>
-            <description><![CDATA[<h2>What's New in v0.6.3</h2><ul><li>**Dictionary card hover jitter** — Edit/delete buttons no longer cause layout shift on hover. Buttons are now always in layout and toggle visibility with opacity.</li></ul>]]></description>
-            <pubDate>Mon, 09 Mar 2026 14:14:51 +0700</pubDate>
+            <title>Version 0.7.0</title>
+            <description><![CDATA[<h2>What's New in v0.7.0</h2><ul><li>**Dashboard Hero Card** — New unified card showing today's voice input stats (characters, sessions, recording time) with comparison to weekly average</li><li>**Streak tracking** — Consecutive daily usage counter with fire pill indicator</li><li>**All Time stats in Hero Card** — Lifetime sessions, characters, and time saved displayed below today's stats</li><li>**Persistent today/streak data** — All stats survive history deletion and app restarts, stored independently via AppStorage</li><li>**Word count accuracy** — Now counts CJK characters alongside space-separated words for accurate Japanese/Chinese text counting</li><li>**DateFormatter caching** — Static formatter instance for better performance during backfill operations</li></ul>]]></description>
+            <pubDate>Wed, 11 Mar 2026 19:30:33 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.6.3/Verba-v0.6.3.dmg"
-                sparkle:version="33"
-                sparkle:shortVersionString="0.6.3"
-                sparkle:edSignature="QUP05vg/WhZWU0kHwDcJ0ynvPLbXdzIk4FqM+7Q844qsDd7Qf6QGtd8zlRSOvxerart2xFRGVdbGoMHcwXv9AQ=="
-                length="10192962"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.7.0/Verba-v0.7.0.dmg"
+                sparkle:version="34"
+                sparkle:shortVersionString="0.7.0"
+                sparkle:edSignature="Andziy1yVxotN/bTyZXHcpOPYziDOqs+knkXanKTgOOGfJWvb2W4VZixIGpEs8Jan1t1TE0kxrTkM8tOJZxlCw=="
+                length="10225900"
                 type="application/octet-stream"
             />
         </item>
