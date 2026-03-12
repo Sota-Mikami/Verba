@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.8.1</title>
-            <description><![CDATA[<h2>What's New in v0.8.1</h2><ul><li>**Dashboard stats reset on history clear** — Sessions, Words, and Time Saved are now lifetime counters stored independently. Clearing history no longer resets dashboard statistics.</li><li>**Large V3 Turbo model never finishes loading** — Incorrect model ID (`-turbo` → `_turbo`) prevented WhisperKit from finding the model. Existing users with the wrong ID are auto-migrated on launch.</li></ul>]]></description>
-            <pubDate>Thu, 12 Mar 2026 10:17:07 +0700</pubDate>
+            <title>Version 0.8.2</title>
+            <description><![CDATA[<h2>What's New in v0.8.2</h2><ul><li>**Whisper model download progress in Settings** — Model section now shows a real-time progress bar with percentage during download and a spinner during loading, matching the sidebar indicator.</li></ul>]]></description>
+            <pubDate>Thu, 12 Mar 2026 11:09:52 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.8.1/Verba-v0.8.1.dmg"
-                sparkle:version="37"
-                sparkle:shortVersionString="0.8.1"
-                sparkle:edSignature="8mwcBlCZw8+yWcEaTK84O8SCeh7rNbW8awOUASuQDKmYuSmu96Ow8NuIIQmAhv0YvucehjCySoDmqIMF7eT9Dg=="
-                length="10226232"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.8.2/Verba-v0.8.2.dmg"
+                sparkle:version="38"
+                sparkle:shortVersionString="0.8.2"
+                sparkle:edSignature="ozinopMQlOmGAgjWrlC/dnnmoK+lfh2eC8RCPFYwBGNyD3o3Go6+wM1h6HkpspgxCr3oVMUNtmmQUvLzx1MNDg=="
+                length="10254939"
                 type="application/octet-stream"
             />
         </item>
