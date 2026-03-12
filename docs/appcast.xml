@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.6.3</title>
-            <description><![CDATA[<h2>What's New in v0.6.3</h2><ul><li>**Dictionary card hover jitter** — Edit/delete buttons no longer cause layout shift on hover. Buttons are now always in layout and toggle visibility with opacity.</li></ul>]]></description>
-            <pubDate>Mon, 09 Mar 2026 14:14:51 +0700</pubDate>
+            <title>Version 0.7.0</title>
+            <description><![CDATA[<h2>What's New in v0.7.0</h2><ul><li>**LLM memory optimization** — Formatting model (LLM) is now loaded on-demand when recording starts and automatically unloaded after 5 minutes of idle to free memory (~2.5GB VRAM saved when idle).</li><li>**LLM preloading** — LLM begins loading in the background while you speak, so formatting starts without delay in most cases.</li><li>**Graceful LLM fallback** — If the formatting model fails to load (e.g. low memory), raw text is pasted with a brief notification instead of silently skipping.</li><li>**Download-only on startup** — LLM model files are pre-downloaded at startup but not loaded into memory until first use.</li><li>**Concurrent download guard** — Prevents duplicate model downloads that caused progress to jump back and forth.</li><li>**Dictionary export button** — Export dictionary terms from the Dictionary view.</li><li>**Default formatting model** upgraded from Qwen3 0.6B to **Qwen3 4B** for significantly better formatting quality (existing users keep their current selection).</li><li>**README roadmap** replaced inline list with link to GitHub Projects.</li><li>**Progress bar regression** — Model download progress no longer jumps backwards when multiple download tasks race.</li></ul>]]></description>
+            <pubDate>Thu, 12 Mar 2026 07:01:31 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.6.3/Verba-v0.6.3.dmg"
-                sparkle:version="33"
-                sparkle:shortVersionString="0.6.3"
-                sparkle:edSignature="QUP05vg/WhZWU0kHwDcJ0ynvPLbXdzIk4FqM+7Q844qsDd7Qf6QGtd8zlRSOvxerart2xFRGVdbGoMHcwXv9AQ=="
-                length="10192962"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.7.0/Verba-v0.7.0.dmg"
+                sparkle:version="34"
+                sparkle:shortVersionString="0.7.0"
+                sparkle:edSignature="oBC0oSEIP1batHjpDTi02nA5dCAY8Rb1GO7DWRMNbvxz/AjONV0qkAaLRhkcQ0K28p3NBXuE8SOrGehqOxELBA=="
+                length="10199933"
                 type="application/octet-stream"
             />
         </item>
