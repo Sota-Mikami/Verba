@@ -7,15 +7,15 @@
         <language>en</language>
         <item>
             <title>Version 0.8.1</title>
-            <description><![CDATA[<h2>What's New in v0.8.1</h2><ul><li>**Dashboard stats reset on history clear** — Sessions, Words, and Time Saved are now lifetime counters stored independently. Clearing history no longer resets dashboard statistics.</li></ul>]]></description>
-            <pubDate>Thu, 12 Mar 2026 10:03:45 +0700</pubDate>
+            <description><![CDATA[<h2>What's New in v0.8.1</h2><ul><li>**Dashboard stats reset on history clear** — Sessions, Words, and Time Saved are now lifetime counters stored independently. Clearing history no longer resets dashboard statistics.</li><li>**Large V3 Turbo model never finishes loading** — Incorrect model ID (`-turbo` → `_turbo`) prevented WhisperKit from finding the model. Existing users with the wrong ID are auto-migrated on launch.</li></ul>]]></description>
+            <pubDate>Thu, 12 Mar 2026 10:17:07 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
                 url="https://github.com/Sota-Mikami/Verba/releases/download/v0.8.1/Verba-v0.8.1.dmg"
-                sparkle:version="36"
+                sparkle:version="37"
                 sparkle:shortVersionString="0.8.1"
-                sparkle:edSignature="2E+qVNqaMy6ONo8FN6BjZIFcOaOiBOfOsrnB9nWyfiJBTOPAHqUJ7G1hcQp99eu/SE8eGaJyzj3L95RP3OYXDQ=="
-                length="10226463"
+                sparkle:edSignature="8mwcBlCZw8+yWcEaTK84O8SCeh7rNbW8awOUASuQDKmYuSmu96Ow8NuIIQmAhv0YvucehjCySoDmqIMF7eT9Dg=="
+                length="10226232"
                 type="application/octet-stream"
             />
         </item>
