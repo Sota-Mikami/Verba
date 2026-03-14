@@ -17,7 +17,7 @@ enum LicenseConstants {
     static let keychainLastValidated = "lastValidated"
 
     // LemonSqueezy — these are public-facing, not secrets
-    static let lemonSqueezyStoreURL = "https://verba-app.lemonsqueezy.com/buy/YOUR_PRODUCT_ID" // TODO: Replace with actual product URL
+    static let lemonSqueezyStoreURL = "https://verba-app.lemonsqueezy.com/buy/1402280"
     static let lemonSqueezyActivateURL = "https://api.lemonsqueezy.com/v1/licenses/activate"
     static let lemonSqueezyValidateURL = "https://api.lemonsqueezy.com/v1/licenses/validate"
 }
