@@ -2,6 +2,42 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [0.9.0] - 2026-03-15 (Unreleased)
+
+### Added
+- **License activation with LemonSqueezy integration** — Activate a license key to unlock the full version, powered by LemonSqueezy payment infrastructure.
+- **Purchase celebration UI** — Confetti animation plays on successful license activation.
+- **Terms of Service page** — Accessible from Settings and onboarding.
+
+### Changed
+- **Trial UI updates immediately after license activation** — No restart required; the UI reflects activated status instantly.
+
+### Fixed
+- **Improved error messages for license activation** — Localized EN/JA error messages for invalid keys, network failures, and expired licenses.
+- **CoreML cache crash recovery for WhisperKit** — Automatically clears corrupted CoreML cache and retries model loading instead of crashing.
+- **Onboarding LLM download for non-local formatting providers** — Onboarding no longer attempts to download an LLM model when cloud formatting is selected.
+
+## [0.8.2] - 2026-03-12
+
+### Added
+- **Whisper model download progress in Settings** — Model section now shows a real-time progress bar with percentage during download and a spinner during loading, matching the sidebar indicator.
+
+## [0.8.1] - 2026-03-12
+
+### Fixed
+- **Dashboard stats reset on history clear** — Sessions, Words, and Time Saved are now lifetime counters stored independently. Clearing history no longer resets dashboard statistics.
+- **Large V3 Turbo model never finishes loading** — Incorrect model ID (`-turbo` → `_turbo`) prevented WhisperKit from finding the model. Existing users with the wrong ID are auto-migrated on launch.
+
+## [0.8.0] - 2026-03-12
+
+### Added
+- **Compact indicator mode** — Minimize the recording indicator to a slim bar at the bottom of the screen to avoid blocking content. Click to expand back.
+- **Custom floating tooltips** — Action buttons (Stop & transcribe, Discard recording, Minimize) now show instant tooltips above the button, rendered in a separate window so they're never clipped.
+
+### Changed
+- **Recording action buttons** — Simplified to icon-only with instant tooltip labels instead of hover-expand text, reducing visual clutter when multiple buttons are present.
+- **Compact bar hover interaction** — Shows "Click to expand" hint with smooth animation on hover.
+
 ## [0.7.0] - 2026-03-12
 
 ### Added

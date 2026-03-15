@@ -15,12 +15,19 @@ struct DashboardView: View {
         }
     }
 
+    @State private var showLicenseSheet = false
+
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 20) {
                 header
                     .offset(y: appeared ? 0 : 8)
                     .opacity(appeared ? 1 : 0)
+                if appState.licenseService.isTrial {
+                    trialStatusCard
+                        .offset(y: appeared ? 0 : 10)
+                        .opacity(appeared ? 1 : 0)
+                }
                 modeCards
                     .offset(y: appeared ? 0 : 12)
                     .opacity(appeared ? 1 : 0)
@@ -32,6 +39,10 @@ struct DashboardView: View {
                     .opacity(appeared ? 1 : 0)
             }
             .padding(28)
+        }
+        .sheet(isPresented: $showLicenseSheet) {
+            LicenseView(licenseService: appState.licenseService)
+                .environmentObject(appState)
         }
         .background(DS.bgSecondary)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -81,40 +92,32 @@ struct DashboardView: View {
 
     private var pttActionVerb: String {
         switch appState.pttShortcut.kind {
-        case .modifierHold: return "Hold"
-        case .keyCombo: return "Press"
-        case .doubleTap: return "Double-tap"
+        case .modifierHold: return appState.l10n.holdAction
+        case .keyCombo: return appState.l10n.pressAction
+        case .doubleTap: return appState.l10n.doubleTapAction
         }
     }
 
     private var hfActionVerb: String {
         switch appState.hfShortcut.kind {
-        case .doubleTap: return "Double-tap"
-        case .keyCombo: return "Press"
-        case .modifierHold: return "Tap"
+        case .doubleTap: return appState.l10n.doubleTapAction
+        case .keyCombo: return appState.l10n.pressAction
+        case .modifierHold: return appState.l10n.tapAction
         }
     }
 
     private var hfCardDescription: String {
         switch appState.hfShortcut.kind {
-        case .doubleTap: return "Double-tap to toggle recording."
-        case .keyCombo: return "Press to toggle recording."
-        case .modifierHold: return "Tap to toggle recording."
+        case .doubleTap: return appState.l10n.toggleRecordingDesc(appState.l10n.doubleTapAction)
+        case .keyCombo: return appState.l10n.toggleRecordingDesc(appState.l10n.pressAction)
+        case .modifierHold: return appState.l10n.toggleRecordingDesc(appState.l10n.tapAction)
         }
     }
 
     // MARK: - Stats
 
     private var stats: (sessions: Int, words: Int, duration: TimeInterval) {
-        let sessions = appState.history.count
-        let words = appState.history.reduce(0) { total, record in
-            let text = record.displayText
-            let spaceWords = text.split(separator: " ").count
-            let jpChars = text.unicodeScalars.filter { $0.value >= 0x3000 && $0.value <= 0x9FFF }.count
-            return total + spaceWords + jpChars
-        }
-        let duration = appState.history.reduce(0.0) { $0 + $1.duration }
-        return (sessions, words, duration)
+        (appState.lifetimeSessions, appState.lifetimeWords, appState.lifetimeDuration)
     }
 
     private var statsGrid: some View {
@@ -125,6 +128,66 @@ struct DashboardView: View {
         }
     }
 
+
+    // MARK: - Trial Status Banner
+
+    @State private var pricingHovered = false
+
+    private var trialStatusCard: some View {
+        let remaining = appState.licenseService.trialRemainingFormatted ?? ""
+        let urgency = appState.licenseService.urgencyLevel
+        let accentColor: Color = urgency == .critical1h ? DS.red : DS.blurple
+        let trialProgress: Double = {
+            guard case .trial(let rem) = appState.licenseService.status else { return 0 }
+            return max(0, min(1, rem / LicenseConstants.trialDurationSeconds))
+        }()
+
+        return HStack(spacing: 12) {
+            Image(systemName: "clock")
+                .font(.system(size: 12))
+                .foregroundStyle(accentColor)
+
+            Text("\(appState.l10n.trialStatusTitle): \(remaining) \(appState.l10n.trialRemaining2)")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(DS.textNormal)
+
+            // Progress bar
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(DS.bgTertiary)
+                        .frame(height: 6)
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(accentColor)
+                        .frame(width: geo.size.width * trialProgress, height: 4)
+                }
+            }
+            .frame(height: 6)
+
+            Button {
+                showLicenseSheet = true
+            } label: {
+                Text(appState.l10n.seePricing)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(pricingHovered ? accentColor.opacity(0.7) : accentColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(accentColor.opacity(pricingHovered ? 0.15 : 0.08))
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .onHover { pricingHovered = $0 }
+            .animation(.easeOut(duration: 0.12), value: pricingHovered)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(DS.cardBg)
+        .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
+        .overlay(
+            RoundedRectangle(cornerRadius: DS.radiusMedium)
+                .stroke(accentColor.opacity(0.2), lineWidth: 1)
+        )
+    }
 
     // MARK: - Recent
 
@@ -309,7 +372,7 @@ struct RecentRow: View {
                         .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
                 }
                 .buttonStyle(.plain)
-                .help("Copy")
+                .help(L10n.current.copy)
                 .transition(.opacity)
             }
         }

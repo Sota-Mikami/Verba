@@ -678,7 +678,7 @@ struct RecordingActionButton: View {
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
         .animation(.easeOut(duration: 0.15), value: isHovered)
-        .help(style == .cancel ? "Discard recording" : "Stop & transcribe")
+        .help(style == .cancel ? L10n.current.discardRecording : L10n.current.stopAndTranscribe)
     }
 }
 

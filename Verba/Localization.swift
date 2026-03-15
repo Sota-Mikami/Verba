@@ -18,7 +18,8 @@ enum UILanguage: String, CaseIterable {
 
 struct L10n {
     static var current: L10n {
-        let code = UserDefaults.standard.string(forKey: "uiLanguage") ?? "en"
+        let fallback = (Locale.preferredLanguages.first?.hasPrefix("ja") == true) ? "ja" : "en"
+        let code = UserDefaults.standard.string(forKey: "uiLanguage") ?? fallback
         let lang = UILanguage(rawValue: code) ?? .en
         return L10n(lang)
     }
@@ -161,14 +162,55 @@ struct L10n {
     var licenseExpired: String { s("Trial expired", "トライアル期限切れ") }
     var deactivateLicense: String { s("Deactivate License", "ライセンスを無効化") }
 
+    // MARK: Trial UX
+    var trialStatusTitle: String { s("Trial", "トライアル") }
+    var trialRemaining2: String { s("remaining", "残り") }
+    var wordsTranscribed: String { s("words transcribed", "語を文字起こし") }
+    var sessionsCompleted: String { s("sessions completed", "セッション完了") }
+    var timeSavedVsTyping: String { s("saved vs typing", "タイピングより節約") }
+    var seePricing: String { s("See Pricing →", "料金を見る →") }
+    var trialExpiresIn24h: String { s("Your trial ends in 24 hours. Keep using Verba?", "トライアルは24時間後に終了します。Verbaを続けませんか？") }
+    var trialExpiresIn1h: String { s("Your trial ends in less than 1 hour", "トライアルは1時間以内に終了します") }
+    var learnMore: String { s("Learn More", "詳細を見る") }
+    var buyNow: String { s("Buy Now", "今すぐ購入") }
+    var dismiss: String { s("Dismiss", "閉じる") }
+    var trialResults: String { s("Your trial results", "トライアルの成果") }
+    var continueUsingVerba: String { s("Keep using Verba?", "Verbaを続けて使いませんか？") }
+    func buyForPrice(_ price: String) -> String { s("Buy for \(price)", "\(price)で購入する") }
+    var opensInBrowser: String { s("Opens in browser", "ブラウザで開きます") }
+    var alreadyHaveKey: String { s("Already have a license key?", "すでにライセンスキーをお持ちですか？") }
+    var licenseActivatedSuccess: String { s("Thank You!", "ありがとうございます！") }
+    var welcomeToVerba: String { s("Your support means the world.\nEnjoy Verba — it's yours.", "あなたのサポートが支えです。\nVerbaを楽しんでください。") }
+    var startUsingVerba: String { s("Let's go!", "さっそく使う") }
+    var upgrade: String { s("Upgrade", "アップグレード") }
+
+    // MARK: Onboarding (value prop)
+    var onboardingValueTitle: String { s("Just speak. Verba writes.", "話すだけ。あとはVerbaが書く。") }
+    var onboardingValueFeature1: String { s("Fully on-device processing", "完全オンデバイス処理") }
+    var onboardingValueFeature2: String { s("Auto-paste into any app", "どのアプリにも自動ペースト") }
+    var onboardingValueFeature3: String { s("Setup takes 2 minutes", "セットアップは2分で完了") }
+    var onboardingGetStartedBtn: String { s("Get Started →", "はじめる →") }
+    var onboardingMicReason: String { s("Your voice is recorded to transcribe. All audio is processed on your Mac and never sent externally.", "音声を録音して文字起こしします。すべてMac上で処理され、外部には送信されません。") }
+    var onboardingAccessibilityReason: String { s("Required to auto-paste transcribed text into your active app.", "文字起こしテキストをアクティブなアプリに自動ペーストするために必要です。") }
+    var onboardingTrialStarted: String { s("Your 48-hour free trial has started.", "48時間の無料トライアルがスタートしました。") }
+    var onboardingTrialExplore: String { s("Explore all features freely.", "すべての機能を自由にお試しください。") }
+    var onboardingPriceInfo: String { s("¥5,800 one-time purchase for lifetime use", "¥5,800の買い切りで永久利用") }
+    var onboardingPriceDetail: String { s("Learn more →", "詳しくはこちら →") }
+    var allSetup: String { s("All Set!", "準備完了！") }
+    var transcriptionSuccess: String { s("Your voice became text!", "あなたの声がテキストになりました！") }
+
     // MARK: Onboarding
     var onboardingWelcome: String { s("Welcome to Verba", "Verbaへようこそ") }
     var onboardingMicTitle: String { s("Microphone Access", "マイクへのアクセス") }
     var onboardingMicDesc: String { s("Verba needs microphone access to record your voice.", "Verbaは音声を録音するためにマイクへのアクセスが必要です。") }
     var onboardingAccessibilityTitle: String { s("Accessibility Permission", "アクセシビリティ権限") }
     var onboardingAccessibilityDesc: String { s("Required to automatically paste transcribed text into your active app.", "文字起こしテキストをアクティブなアプリに自動ペーストするために必要です。") }
-    var onboardingModelTitle: String { s("Downloading AI Model", "AIモデルをダウンロード中") }
+    var onboardingModelTitle: String { s("Downloading AI Models", "AIモデルをダウンロード中") }
     var onboardingModelDesc: String { s("Downloading the speech recognition model. This only happens once.", "音声認識モデルをダウンロード中。初回のみ必要です。") }
+    var onboardingModelDescBoth: String { s("Downloading speech recognition and text formatting models...", "音声認識とテキスト整形モデルをダウンロード中...") }
+    var whisperModelLabel: String { s("Speech Recognition", "音声認識") }
+    var formattingModelLabel: String { s("Text Formatting", "テキスト整形") }
+    var modelsReady: String { s("Both models are ready", "両方のモデルの準備ができました") }
     var onboardingGrantAccess: String { s("Grant Access", "アクセスを許可") }
     var onboardingOpenSettings: String { s("Open System Settings", "システム設定を開く") }
     var onboardingGetStarted: String { s("Get Started", "始める") }
@@ -197,11 +239,33 @@ struct L10n {
 
     // MARK: Onboarding (additional)
     var onboardingShortcutsTitle: String { s("Your Shortcuts", "ショートカットキー") }
-    var onboardingShortcutsDesc: String { s("These keyboard shortcuts control voice input. You can change them later in Settings.", "これらのショートカットキーで音声入力を操作します。設定で後から変更できます。") }
+    var onboardingShortcutsDesc: String { s("These keyboard shortcuts control voice input.", "これらのショートカットキーで音声入力を操作します。") }
+    var onboardingShortcutsNote: String { s("You can change these anytime in Settings.", "設定からいつでも変更できます。") }
     var holdToRecordHint: String { s("Hold to record", "長押しで録音") }
+    var recording: String { s("Recording...", "録音中...") }
+    var releaseToStop: String { s("Release to stop", "離すと停止します") }
     var doubleTapToToggleHint: String { s("Double-tap to toggle", "ダブルタップで切り替え") }
     var tryItOut: String { s("Try It Out", "試してみよう") }
-    var tryItOutDesc: String { s("Press the button below and say something. Verba will transcribe it right here.", "下のボタンを押して何か話してください。Verbaがここで文字起こしします。") }
+    var tryItOutDesc: String { s("Read the text below while holding the shortcut key.", "ショートカットキーを押しながら、下のテキストを読み上げてください。") }
+    var holdAndReadAloud: String { s("and begin reading aloud", "を押しながら読み上げ") }
+    var tryInputPlaceholder: String { s("Hold Fn and read aloud, or double-tap Fn to start", "fnを長押しして読み上げ、またはfn×2でスタート") }
+    var trySampleText: String { s("The quick brown fox jumps over the lazy dog near the river.", "今日はとても天気が良いので、散歩に出かけようと思います。") }
+    var trySampleLabel: String { s("Read this aloud:", "声に出して読んでください：") }
+    var tryResultLabel: String { s("Your voice:", "あなたの声：") }
+
+    // Trial: PTT sample (short — hold key while reading)
+    var trialPttSample: String { s(
+        "Hold the key and speak. When you let go, your voice becomes text and is pasted automatically.",
+        "キーを押しながら話してください。離すと音声がテキストになり、自動でペーストされます。"
+    ) }
+    // Trial: HF sample (longer — hands-free, no key holding)
+    var trialHfSample: String { s(
+        "Double-tap the key to start hands-free mode. You can speak as long as you like without holding anything. When you're done, double-tap again to stop. The text will be cleaned up and pasted into your active app.",
+        "キーをダブルタップするとハンズフリーモードが始まります。キーを押し続ける必要はなく、好きなだけ話せます。終わったらもう一度ダブルタップで停止します。テキストは整形されて、アクティブなアプリにペーストされます。"
+    ) }
+    var trialPttTitle: String { s("Try Push-to-Talk", "長押しモードを試そう") }
+    var trialHfTitle: String { s("Try Hands-Free", "ハンズフリーモードを試そう") }
+    var trialAccuracy: String { s("Accuracy", "一致率") }
     var itWorks: String { s("It works!", "動作確認完了！") }
     var itWorksDesc: String { s("Your voice was transcribed on-device. Nothing left your Mac.", "音声はデバイス上で文字起こしされました。データはMacの外に出ていません。") }
     var startRecording: String { s("Start Recording", "録音開始") }
@@ -217,6 +281,22 @@ struct L10n {
     var searchHistory: String { s("Search history...", "履歴を検索...") }
     var exportHistory: String { s("Export", "エクスポート") }
     var exported: String { s("Exported", "エクスポート完了") }
+
+    // MARK: Tooltips
+    var play: String { s("Play", "再生") }
+    var stop: String { s("Stop", "停止") }
+    var delete: String { s("Delete", "削除") }
+    var edit: String { s("Edit", "編集") }
+    var retry: String { s("Retry", "再試行") }
+    var discardRecording: String { s("Discard recording", "録音を破棄") }
+    var stopAndTranscribe: String { s("Stop & transcribe", "停止して文字起こし") }
+
+    // MARK: Action verbs (Dashboard)
+    var holdAction: String { s("Hold", "長押し") }
+    var pressAction: String { s("Press", "押す") }
+    var doubleTapAction: String { s("Double-tap", "ダブルタップ") }
+    var tapAction: String { s("Tap", "タップ") }
+    func toggleRecordingDesc(_ verb: String) -> String { s("\(verb) to toggle recording.", "\(verb)で録音を切り替えます。") }
 
     // MARK: Floating Indicator (additional)
     var cancelled: String { s("Cancelled", "キャンセルしました") }

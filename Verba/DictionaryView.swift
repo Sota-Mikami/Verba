@@ -112,7 +112,7 @@ struct DictionaryView: View {
                     .buttonStyle(.plain)
                     .onHover { isSearchHovered = $0 }
                     .animation(.easeOut(duration: 0.12), value: isSearchHovered)
-                    .help("Search")
+                    .help(appState.l10n.search)
                 }
             }
             .padding(.horizontal, 28)
@@ -234,7 +234,7 @@ struct DictionaryCard: View {
                         .clipShape(RoundedRectangle(cornerRadius: 4))
                 }
                 .buttonStyle(.plain)
-                .help("Edit")
+                .help(L10n.current.edit)
                 Button(action: onDelete) {
                     Image(systemName: "trash")
                         .font(.system(size: 11))
@@ -244,7 +244,7 @@ struct DictionaryCard: View {
                         .clipShape(RoundedRectangle(cornerRadius: 4))
                 }
                 .buttonStyle(.plain)
-                .help("Delete")
+                .help(L10n.current.delete)
             }
             .opacity(isHovered ? 1 : 0)
         }

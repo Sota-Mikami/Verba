@@ -38,14 +38,33 @@ struct MainView: View {
     }
 
     @State private var showLicenseModal = false
+    @State private var bannerDismissed = false
+    @State private var upgradeHovered = false
 
     var body: some View {
         HStack(spacing: 0) {
             sidebar
             Divider().foregroundStyle(DS.cardBorder)
-            detail
-                .id(selectedPage)
-                .transition(.opacity.animation(.easeInOut(duration: 0.15)))
+            VStack(spacing: 0) {
+                // Trial expiry banner
+                if !bannerDismissed,
+                   appState.licenseService.isTrial,
+                   appState.licenseService.urgencyLevel != .normal {
+                    TrialExpiryBanner(
+                        urgency: appState.licenseService.urgencyLevel,
+                        l10n: appState.l10n,
+                        onAction: { showLicenseModal = true },
+                        onDismiss: { withAnimation { bannerDismissed = true } }
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                }
+
+                detail
+                    .id(selectedPage)
+                    .transition(.opacity.animation(.easeInOut(duration: 0.15)))
+            }
         }
         .background(DS.bgPrimary)
         .preferredColorScheme(appState.resolvedColorScheme)
@@ -55,10 +74,14 @@ struct MainView: View {
                 .environmentObject(appState)
                 .interactiveDismissDisabled()
         }
-        .sheet(isPresented: $showLicenseModal) {
+        .sheet(isPresented: $showLicenseModal, onDismiss: {
+            // Ensure modal state is cleared and UI refreshes after license modal closes
+            showLicenseModal = false
+            appState.licenseService.objectWillChange.send()
+        }) {
             LicenseView(licenseService: appState.licenseService)
                 .environmentObject(appState)
-                .interactiveDismissDisabled()
+                .interactiveDismissDisabled(appState.licenseService.isLocked)
         }
         .onAppear { checkLicense() }
         .onReceive(appState.licenseService.$status) { newStatus in
@@ -66,7 +89,8 @@ struct MainView: View {
             case .trialExpired, .licenseExpired:
                 showLicenseModal = true
             case .activated:
-                showLicenseModal = false
+                // Don't dismiss immediately — let LicenseView show success celebration
+                break
             default:
                 break
             }
@@ -126,11 +150,23 @@ struct MainView: View {
 
             Spacer()
 
-            // Trial badge
+            // Trial badge with upgrade link
             if let remaining = appState.licenseService.trialRemainingFormatted {
-                HStack(spacing: 6) {
-                    TrialBadge(remaining: remaining)
+                HStack(spacing: 0) {
+                    TrialBadge(remaining: remaining, urgency: appState.licenseService.urgencyLevel)
+
                     Spacer()
+
+                    Button {
+                        showLicenseModal = true
+                    } label: {
+                        Text(appState.l10n.upgrade)
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(upgradeHovered ? DS.blurple : DS.textLink)
+                    }
+                    .buttonStyle(.plain)
+                    .onHover { upgradeHovered = $0 }
+                    .animation(.easeOut(duration: 0.12), value: upgradeHovered)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 4)

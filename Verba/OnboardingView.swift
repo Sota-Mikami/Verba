@@ -9,27 +9,37 @@ struct OnboardingView: View {
     @State private var accessibilityGranted = AXIsProcessTrusted()
     @State private var accessibilityTimer: Timer?
     @State private var trialRecorded = false
-    @State private var trialText = ""
-    @State private var isTrialRecording = false
-    @State private var trialTimer: Timer?
-    @State private var trialElapsed: TimeInterval = 0
+    @State private var trialInputText = ""
+    @State private var historyCountBeforeTrial = 0
+    @State private var trialAccuracy: Int?
+    @FocusState private var trialFieldFocused: Bool
 
-    private let totalSteps = 5
+    private let totalSteps = 8 // 0: value prop, 1-4: permissions/model/shortcut, 5: PTT trial, 6: HF trial, 7: completion
 
     var body: some View {
         VStack(spacing: 0) {
-            // Progress dots
-            HStack(spacing: 8) {
-                ForEach(0..<totalSteps, id: \.self) { index in
-                    Circle()
-                        .fill(index == currentStep ? DS.blurple : DS.textFaint.opacity(0.4))
-                        .frame(width: 8, height: 8)
-                        .scaleEffect(index == currentStep ? 1.05 : 1.0)
-                        .animation(.easeOut(duration: 0.25), value: currentStep)
-                }
+            // Top bar: language toggle
+            HStack {
+                Spacer()
+                languageToggle
             }
-            .padding(.top, 32)
-            .padding(.bottom, 24)
+            .padding(.top, 12)
+            .padding(.horizontal, 16)
+
+            // Progress dots (skip step 0 and last step from dots for cleaner look)
+            if currentStep > 0 && currentStep < totalSteps - 1 {
+                HStack(spacing: 8) {
+                    ForEach(1..<(totalSteps - 1), id: \.self) { index in
+                        Circle()
+                            .fill(index == currentStep ? DS.blurple : DS.textFaint.opacity(0.4))
+                            .frame(width: 8, height: 8)
+                            .scaleEffect(index == currentStep ? 1.05 : 1.0)
+                            .animation(.easeOut(duration: 0.25), value: currentStep)
+                    }
+                }
+                .padding(.top, 12)
+                .padding(.bottom, 24)
+            }
 
             // Step content
             VStack(spacing: 24) {
@@ -38,7 +48,7 @@ struct OnboardingView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .animation(.easeInOut(duration: 0.3), value: currentStep)
         }
-        .frame(width: 520, height: 480)
+        .frame(width: 520, height: 540)
         .background(DS.bgSecondary)
         .onAppear {
             checkMicPermission()
@@ -46,7 +56,6 @@ struct OnboardingView: View {
         }
         .onDisappear {
             accessibilityTimer?.invalidate()
-            trialTimer?.invalidate()
         }
     }
 
@@ -56,11 +65,15 @@ struct OnboardingView: View {
     private var stepContent: some View {
         switch currentStep {
         case 0:
+            // Step 0: Value Proposition
+            valuePropStep
+        case 1:
             // Step 1: Microphone permission
             stepCard(
                 icon: "mic.fill",
                 title: appState.l10n.onboardingMicTitle,
-                description: appState.l10n.onboardingMicDesc
+                description: appState.l10n.onboardingMicDesc,
+                reason: appState.l10n.onboardingMicReason
             ) {
                 if micGranted {
                     grantedBadge
@@ -72,12 +85,13 @@ struct OnboardingView: View {
             } footer: {
                 nextButton(enabled: micGranted)
             }
-        case 1:
+        case 2:
             // Step 2: Accessibility permission
             stepCard(
                 icon: "hand.raised.fill",
                 title: appState.l10n.onboardingAccessibilityTitle,
-                description: appState.l10n.onboardingAccessibilityDesc
+                description: appState.l10n.onboardingAccessibilityDesc,
+                reason: appState.l10n.onboardingAccessibilityReason
             ) {
                 if accessibilityGranted {
                     grantedBadge
@@ -89,29 +103,52 @@ struct OnboardingView: View {
             } footer: {
                 nextButton(enabled: accessibilityGranted)
             }
-        case 2:
-            // Step 3: Whisper model download
+        case 3:
+            // Step 3: Whisper + LLM model download
             stepCard(
                 icon: "arrow.down.circle.fill",
                 title: appState.l10n.onboardingModelTitle,
-                description: appState.l10n.onboardingModelDesc
+                description: needsLocalLLM ? appState.l10n.onboardingModelDescBoth : appState.l10n.onboardingModelDesc
             ) {
                 VStack(spacing: 12) {
-                    if appState.isModelLoaded {
-                        grantedBadge
+                    if bothModelsDownloaded {
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 16))
+                                .foregroundStyle(DS.green)
+                            Text(appState.l10n.modelsReady)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(DS.green)
+                        }
+                        .transition(.scale.combined(with: .opacity))
                     } else {
-                        ProgressView()
-                            .controlSize(.small)
-                            .tint(DS.blurple)
-                        Text(appState.statusMessage)
-                            .font(.system(size: 12))
-                            .foregroundStyle(DS.textMuted)
+                        // Whisper progress row
+                        modelProgressRow(
+                            label: appState.l10n.whisperModelLabel,
+                            isComplete: appState.isModelLoaded,
+                            progress: nil // Whisper doesn't expose fractional progress
+                        )
+                        // LLM progress row (only for local provider)
+                        if needsLocalLLM {
+                            modelProgressRow(
+                                label: appState.l10n.formattingModelLabel,
+                                isComplete: llmDownloaded,
+                                progress: llmDownloadProgress
+                            )
+                        }
                     }
                 }
+                .onAppear {
+                    // Ensure LLM download starts in parallel with Whisper
+                    startLLMDownloadIfNeeded()
+                }
             } footer: {
-                nextButton(enabled: appState.isModelLoaded)
+                nextButton(enabled: bothModelsDownloaded) {
+                    // When advancing from Step 3, start loading LLM into memory
+                    Task { await appState.loadLLMForOnboarding() }
+                }
             }
-        case 3:
+        case 4:
             // Step 4: Shortcut confirmation
             stepCard(
                 icon: "keyboard.fill",
@@ -129,116 +166,83 @@ struct OnboardingView: View {
                         shortcut: appState.hfShortcut.label,
                         hint: appState.l10n.doubleTapToToggleHint
                     )
+
+                    Text(appState.l10n.onboardingShortcutsNote)
+                        .font(.system(size: 11))
+                        .foregroundStyle(DS.textFaint)
                 }
             } footer: {
                 nextButton(enabled: true)
             }
-        case 4:
-            // Step 5: Try it out
-            trialStep
+        case 5:
+            // Step 5: PTT trial
+            trialStep(
+                title: appState.l10n.trialPttTitle,
+                sampleText: appState.l10n.trialPttSample,
+                shortcutLabel: appState.pttShortcut.label,
+                shortcutHintText: appState.l10n.holdToRecordHint
+            )
+        case 6:
+            // Step 6: HF trial
+            trialStep(
+                title: appState.l10n.trialHfTitle,
+                sampleText: appState.l10n.trialHfSample,
+                shortcutLabel: appState.hfShortcut.label,
+                shortcutHintText: appState.l10n.doubleTapToToggleHint
+            )
+        case 7:
+            // Step 7: Completion with trial info
+            completionStep
         default:
             EmptyView()
         }
     }
 
-    // MARK: - Trial Step (Interactive)
+    // MARK: - Step 0: Value Proposition
 
-    private var trialStep: some View {
+    private var valuePropStep: some View {
         VStack(spacing: 0) {
             Spacer()
 
             VStack(spacing: 20) {
-                // Icon
-                ZStack {
-                    Circle()
-                        .fill(trialRecorded ? DS.green.opacity(0.15) : DS.warm.opacity(0.15))
-                        .frame(width: 64, height: 64)
-                    Image(systemName: trialRecorded ? "checkmark" : "waveform")
-                        .font(.system(size: 26, weight: .semibold))
-                        .foregroundStyle(trialRecorded ? DS.green : DS.warm)
+                // Icon pair
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(DS.warm.opacity(0.15))
+                            .frame(width: 44, height: 44)
+                        Image(systemName: "mic.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(DS.warm)
+                    }
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(DS.textFaint)
+                    ZStack {
+                        Circle()
+                            .fill(DS.blurple.opacity(0.15))
+                            .frame(width: 44, height: 44)
+                        Image(systemName: "doc.text")
+                            .font(.system(size: 18))
+                            .foregroundStyle(DS.blurple)
+                    }
                 }
 
-                Text(trialRecorded ? appState.l10n.itWorks : appState.l10n.tryItOut)
+                // Title
+                Text(appState.l10n.onboardingValueTitle)
                     .font(.system(size: 20, weight: .bold))
                     .foregroundStyle(DS.textNormal)
-
-                Text(trialRecorded
-                     ? appState.l10n.itWorksDesc
-                     : appState.l10n.tryItOutDesc)
-                    .font(.system(size: 14))
-                    .foregroundStyle(DS.textMuted)
                     .multilineTextAlignment(.center)
-                    .lineSpacing(3)
-                    .frame(maxWidth: 320)
 
-                // Trial area
-                if trialRecorded {
-                    // Show transcription result
-                    VStack(spacing: 8) {
-                        Text(trialText)
-                            .font(.system(size: 14))
-                            .foregroundStyle(DS.textNormal)
-                            .padding(12)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(DS.bgTertiary)
-                            .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
-
-                        Button {
-                            trialRecorded = false
-                            trialText = ""
-                        } label: {
-                            Text(appState.l10n.tryAgain)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(DS.textMuted)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                } else if isTrialRecording {
-                    // Recording state
-                    VStack(spacing: 10) {
-                        HStack(spacing: 8) {
-                            Circle()
-                                .fill(DS.warm)
-                                .frame(width: 10, height: 10)
-                            Text(String(format: "%d:%02d", Int(trialElapsed) / 60, Int(trialElapsed) % 60))
-                                .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                                .foregroundStyle(DS.textNormal)
-                        }
-
-                        Button {
-                            stopTrialRecording()
-                        } label: {
-                            Text(appState.l10n.stopRecording)
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(DS.textOnAccent)
-                                .padding(.horizontal, 24)
-                                .padding(.vertical, 10)
-                                .background(DS.warm)
-                                .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                } else {
-                    // Start button
-                    Button {
-                        startTrialRecording()
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "mic.fill")
-                                .font(.system(size: 14))
-                            Text(appState.l10n.startRecording)
-                                .font(.system(size: 14, weight: .semibold))
-                        }
-                        .foregroundStyle(DS.textOnAccent)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 10)
-                        .background(DS.blurple)
-                        .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
-                    }
-                    .buttonStyle(.plain)
+                // Features
+                VStack(alignment: .leading, spacing: 10) {
+                    featureRow(icon: "lock.shield", text: appState.l10n.onboardingValueFeature1)
+                    featureRow(icon: "doc.on.clipboard", text: appState.l10n.onboardingValueFeature2)
+                    featureRow(icon: "clock", text: appState.l10n.onboardingValueFeature3)
                 }
+                .padding(.horizontal, 20)
             }
-            .padding(32)
+            .padding(24)
             .background(
                 RoundedRectangle(cornerRadius: DS.radiusLarge)
                     .fill(DS.cardBg)
@@ -251,20 +255,281 @@ struct OnboardingView: View {
 
             Spacer()
 
-            // Get Started button
-            Button {
-                hasCompletedOnboarding = true
-            } label: {
-                Text(appState.l10n.onboardingGetStarted)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(DS.textOnAccent)
-                    .padding(.horizontal, 32)
-                    .padding(.vertical, 10)
-                    .background(DS.blurple)
-                    .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
+            HoverAccentButton(label: appState.l10n.onboardingGetStartedBtn, horizontalPadding: 36, verticalPadding: 12, fontSize: 15) {
+                withAnimation { currentStep += 1 }
             }
-            .buttonStyle(.plain)
-            .padding(.bottom, 32)
+            .padding(.bottom, 24)
+        }
+    }
+
+    private func featureRow(icon: String, text: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 13))
+                .foregroundStyle(DS.green)
+                .frame(width: 20)
+            Text(text)
+                .font(.system(size: 14))
+                .foregroundStyle(DS.textMuted)
+        }
+    }
+
+    // MARK: - Trial Step (Interactive via real shortcut)
+
+    private func trialStep(title: String, sampleText: String, shortcutLabel: String, shortcutHintText: String) -> some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 16) {
+                // Title
+                Text(title)
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(DS.textNormal)
+
+                // Sample text with left accent bar (blockquote style)
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "mic.fill")
+                            .font(.system(size: 10))
+                            .foregroundStyle(DS.textFaint)
+                        Text(appState.l10n.trySampleLabel)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(DS.textFaint)
+                    }
+
+                    HStack(spacing: 0) {
+                        RoundedRectangle(cornerRadius: 1.5)
+                            .fill(DS.blurple)
+                            .frame(width: 3)
+
+                        Text(sampleText)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(DS.textNormal)
+                            .lineSpacing(3)
+                            .padding(.leading, 12)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                // Real text input area - text gets pasted here via normal flow
+                ZStack(alignment: .topLeading) {
+                    if trialInputText.isEmpty && !trialFieldFocused {
+                        Text(appState.l10n.tryInputPlaceholder)
+                            .font(.system(size: 13))
+                            .foregroundStyle(DS.textFaint)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 8)
+                    }
+
+                    TextEditor(text: $trialInputText)
+                        .font(.system(size: 13))
+                        .foregroundStyle(DS.textNormal)
+                        .scrollContentBackground(.hidden)
+                        .focused($trialFieldFocused)
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, minHeight: 60)
+                .background(DS.bgTertiary)
+                .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
+                .overlay(
+                    RoundedRectangle(cornerRadius: DS.radiusMedium)
+                        .stroke(trialFieldFocused ? DS.blurple.opacity(0.5) : trialRecorded ? DS.green.opacity(0.5) : DS.cardBorder, lineWidth: 1)
+                )
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        trialFieldFocused = true
+                    }
+                }
+
+                // Bottom: accuracy result or shortcut hint
+                if trialRecorded, let accuracy = trialAccuracy {
+                    HStack(spacing: 12) {
+                        // Accuracy badge
+                        HStack(spacing: 4) {
+                            Text("\(accuracy)%")
+                                .font(.system(size: 22, weight: .bold, design: .rounded))
+                                .foregroundStyle(accuracy >= 80 ? DS.green : DS.warm)
+                            Text(appState.l10n.trialAccuracy)
+                                .font(.system(size: 12))
+                                .foregroundStyle(DS.textFaint)
+                        }
+
+                        Spacer()
+
+                        Button {
+                            trialRecorded = false
+                            trialInputText = ""
+                            trialAccuracy = nil
+                            historyCountBeforeTrial = appState.history.count
+                            trialFieldFocused = true
+                        } label: {
+                            Text(appState.l10n.tryAgain)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(DS.textLink)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                } else {
+                    shortcutHint(key: shortcutLabel, label: shortcutHintText)
+                }
+            }
+            .padding(24)
+            .background(
+                RoundedRectangle(cornerRadius: DS.radiusLarge)
+                    .fill(DS.cardBg)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DS.radiusLarge)
+                            .stroke(DS.cardBorder, lineWidth: 1)
+                    )
+            )
+            .padding(.horizontal, 40)
+            .onAppear {
+                // Reset state for this trial phase
+                trialRecorded = false
+                trialInputText = ""
+                trialAccuracy = nil
+                historyCountBeforeTrial = appState.history.count
+                appState.isOnboardingTrial = true
+            }
+            .onChange(of: trialInputText) { newValue in
+                // Text was pasted into the field via normal Verba flow
+                let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty && !trialRecorded {
+                    let accuracy = Self.textSimilarity(expected: sampleText, actual: trimmed)
+                    withAnimation {
+                        trialAccuracy = accuracy
+                        trialRecorded = true
+                    }
+                }
+            }
+
+            Spacer()
+
+            // Next button
+            HoverAccentButton(label: appState.l10n.onboardingNext) {
+                withAnimation { currentStep += 1 }
+            }
+            .padding(.bottom, 24)
+        }
+    }
+
+    // MARK: - Text Similarity
+
+    /// Word-level similarity between expected sample text and actual transcription (0–100)
+    private static func textSimilarity(expected: String, actual: String) -> Int {
+        let normalize: (String) -> [String] = { text in
+            text.lowercased()
+                .replacingOccurrences(of: "[。、！？.,!?\"'\\-—:;()（）「」]", with: " ", options: .regularExpression)
+                .split(separator: " ")
+                .map(String.init)
+                .filter { !$0.isEmpty }
+        }
+        let expectedWords = normalize(expected)
+        let actualWords = normalize(actual)
+        guard !expectedWords.isEmpty else { return 0 }
+
+        // Longest Common Subsequence for word-level similarity
+        let m = expectedWords.count
+        let n = actualWords.count
+        var dp = Array(repeating: Array(repeating: 0, count: n + 1), count: m + 1)
+        for i in 1...m {
+            for j in 1...n {
+                if expectedWords[i - 1] == actualWords[j - 1] {
+                    dp[i][j] = dp[i - 1][j - 1] + 1
+                } else {
+                    dp[i][j] = max(dp[i - 1][j], dp[i][j - 1])
+                }
+            }
+        }
+        let lcs = dp[m][n]
+        let score = Double(lcs) / Double(m) * 100
+        return min(Int(score.rounded()), 100)
+    }
+
+    // MARK: - Step 6: Completion with Trial Info
+
+    private var completionStep: some View {
+        VStack(spacing: 0) {
+            Spacer()
+
+            VStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(DS.green.opacity(0.15))
+                        .frame(width: 52, height: 52)
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 26))
+                        .foregroundStyle(DS.green)
+                }
+
+                Text(appState.l10n.allSetup)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(DS.textNormal)
+
+                VStack(spacing: 6) {
+                    Text(appState.l10n.onboardingTrialStarted)
+                        .font(.system(size: 14))
+                        .foregroundStyle(DS.textNormal)
+                    Text(appState.l10n.onboardingTrialExplore)
+                        .font(.system(size: 14))
+                        .foregroundStyle(DS.textMuted)
+                }
+                .multilineTextAlignment(.center)
+            }
+            .padding(24)
+            .background(
+                RoundedRectangle(cornerRadius: DS.radiusLarge)
+                    .fill(DS.cardBg)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DS.radiusLarge)
+                            .stroke(DS.cardBorder, lineWidth: 1)
+                    )
+            )
+            .padding(.horizontal, 40)
+
+            Spacer()
+
+            VStack(spacing: 8) {
+                HoverAccentButton(label: appState.l10n.startUsingVerba, horizontalPadding: 36, verticalPadding: 12, fontSize: 15) {
+                    appState.isOnboardingTrial = false
+                    hasCompletedOnboarding = true
+                }
+
+                VStack(spacing: 2) {
+                    Text(appState.l10n.onboardingPriceInfo)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(DS.textMuted)
+
+                    HoverTextLink(label: appState.l10n.onboardingPriceDetail) {
+                        if let url = URL(string: LicenseConstants.lemonSqueezyStoreURL) {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                }
+            }
+            .padding(.bottom, 24)
+        }
+    }
+
+    // MARK: - Shortcut Hint (for trial step)
+
+    private func shortcutHint(key: String, label: String) -> some View {
+        HStack(spacing: 6) {
+            Text(key)
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .foregroundStyle(DS.textNormal)
+                .padding(.horizontal, 7)
+                .padding(.vertical, 3)
+                .background(DS.bgTertiary)
+                .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                .overlay(
+                    RoundedRectangle(cornerRadius: DS.radiusSmall)
+                        .stroke(DS.cardBorder, lineWidth: 1)
+                )
+
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundStyle(DS.textFaint)
         }
     }
 
@@ -300,37 +565,54 @@ struct OnboardingView: View {
         icon: String,
         title: String,
         description: String,
+        reason: String? = nil,
         @ViewBuilder action: () -> Action,
         @ViewBuilder footer: () -> Footer
     ) -> some View {
         VStack(spacing: 0) {
             Spacer()
 
-            VStack(spacing: 20) {
+            VStack(spacing: 16) {
                 ZStack {
                     Circle()
                         .fill(DS.blurple.opacity(0.15))
-                        .frame(width: 64, height: 64)
+                        .frame(width: 52, height: 52)
                     Image(systemName: icon)
-                        .font(.system(size: 26, weight: .semibold))
+                        .font(.system(size: 22, weight: .semibold))
                         .foregroundStyle(DS.blurple)
                 }
 
                 Text(title)
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(DS.textNormal)
 
                 Text(description)
-                    .font(.system(size: 14))
+                    .font(.system(size: 13))
                     .foregroundStyle(DS.textMuted)
                     .multilineTextAlignment(.center)
                     .lineSpacing(3)
-                    .frame(maxWidth: 320)
+                    .frame(maxWidth: 340)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                // "Why is this needed?" explanation
+                if let reason {
+                    Text(reason)
+                        .font(.system(size: 11))
+                        .foregroundStyle(DS.textFaint)
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(2)
+                        .frame(maxWidth: 320)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(DS.bgTertiary.opacity(0.5))
+                        .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                }
 
                 action()
                     .padding(.top, 4)
             }
-            .padding(32)
+            .padding(24)
             .background(
                 RoundedRectangle(cornerRadius: DS.radiusLarge)
                     .fill(DS.cardBg)
@@ -344,11 +626,31 @@ struct OnboardingView: View {
             Spacer()
 
             footer()
-                .padding(.bottom, 32)
+                .padding(.bottom, 24)
         }
     }
 
     // MARK: - Components
+
+    private var languageToggle: some View {
+        Button {
+            let next: String = appState.uiLanguage == "en" ? "ja" : "en"
+            appState.uiLanguage = next
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "globe")
+                    .font(.system(size: 11))
+                Text(appState.uiLanguage == "en" ? "日本語" : "English")
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .foregroundStyle(DS.textMuted)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(DS.bgTertiary)
+            .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+        }
+        .buttonStyle(.plain)
+    }
 
     private var grantedBadge: some View {
         HStack(spacing: 6) {
@@ -363,86 +665,82 @@ struct OnboardingView: View {
     }
 
     private func actionButton(_ label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(label)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(DS.textOnAccent)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 10)
-                .background(DS.blurple)
-                .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
-        }
-        .buttonStyle(.plain)
+        HoverAccentButton(label: label, action: action)
     }
 
-    private func nextButton(enabled: Bool) -> some View {
-        Button {
+    private func nextButton(enabled: Bool, extraAction: (() -> Void)? = nil) -> some View {
+        HoverAccentButton(label: appState.l10n.onboardingNext, enabled: enabled) {
+            extraAction?()
             withAnimation { currentStep += 1 }
-        } label: {
-            Text(appState.l10n.onboardingNext)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(enabled ? DS.textOnAccent : DS.textFaint)
-                .padding(.horizontal, 32)
-                .padding(.vertical, 10)
-                .background(enabled ? DS.blurple : DS.bgModifierActive)
-                .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
         }
-        .buttonStyle(.plain)
-        .disabled(!enabled)
     }
 
-    // MARK: - Trial Recording
+    // MARK: - Model Download Helpers
 
-    private func startTrialRecording() {
-        guard appState.isModelLoaded else { return }
-        do {
-            let recorder = AudioRecorder()
-            recorder.selectedDeviceUID = appState.selectedMicDeviceUID
-            try recorder.startRecording()
-            isTrialRecording = true
-            trialElapsed = 0
-            // Store recorder temporarily
-            trialRecorderRef = recorder
-            trialTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-                DispatchQueue.main.async {
-                    trialElapsed += 0.1
+    private var llmDownloaded: Bool {
+        switch appState.localLLMService.modelState {
+        case .downloaded, .loading, .ready: return true
+        default: return false
+        }
+    }
+
+    private var llmDownloadProgress: Double? {
+        switch appState.localLLMService.modelState {
+        case .downloading(let progress): return progress
+        default: return nil
+        }
+    }
+
+    private var needsLocalLLM: Bool {
+        appState.formattingProvider == .local
+    }
+
+    private var bothModelsDownloaded: Bool {
+        if needsLocalLLM {
+            return appState.isModelLoaded && llmDownloaded
+        } else {
+            return appState.isModelLoaded
+        }
+    }
+
+    private func startLLMDownloadIfNeeded() {
+        guard appState.formattingProvider == .local else { return }
+        appState.localLLMService.checkModelStatus(modelId: appState.localModel)
+        if appState.localLLMService.modelState == .notDownloaded {
+            Task { await appState.localLLMService.downloadOnly(modelId: appState.localModel) }
+        }
+    }
+
+    private func modelProgressRow(label: String, isComplete: Bool, progress: Double?) -> some View {
+        HStack(spacing: 10) {
+            Text(label)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(DS.textMuted)
+                .frame(width: 90, alignment: .trailing)
+
+            if isComplete {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(DS.green)
+                Spacer()
+            } else {
+                ProgressView(value: progress ?? 0)
+                    .tint(DS.blurple)
+                    .frame(maxWidth: .infinity)
+
+                if let progress {
+                    Text("\(Int(progress * 100))%")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(DS.textFaint)
+                        .frame(width: 36, alignment: .trailing)
+                } else {
+                    ProgressView()
+                        .controlSize(.mini)
+                        .frame(width: 36)
                 }
             }
-        } catch {
-            // Silently fail — permissions should already be granted
         }
     }
-
-    private func stopTrialRecording() {
-        trialTimer?.invalidate()
-        trialTimer = nil
-        isTrialRecording = false
-
-        guard let recorder = trialRecorderRef else { return }
-        let audioData = recorder.stopRecording()
-        trialRecorderRef = nil
-
-        Task {
-            do {
-                let text = try await appState.transcribeAudio(audioData)
-                await MainActor.run {
-                    withAnimation {
-                        trialText = text.isEmpty ? appState.l10n.noSpeechDetectedShort : text
-                        trialRecorded = true
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    withAnimation {
-                        trialText = appState.l10n.transcriptionFailedShort
-                        trialRecorded = true
-                    }
-                }
-            }
-        }
-    }
-
-    @State private var trialRecorderRef: AudioRecorder?
 
     // MARK: - Permissions
 

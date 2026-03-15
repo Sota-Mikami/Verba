@@ -5,6 +5,9 @@ import ServiceManagement
 
 private let logger = Logger(subsystem: "com.sotamikami.verba", category: "AppState")
 
+/// Detect system language for default UI language (check primary language only)
+private let systemLanguageDefault: String = (Locale.preferredLanguages.first?.hasPrefix("ja") == true) ? "ja" : "en"
+
 enum TranscriptionMode: String, CaseIterable, Codable {
     case fast = "Fast"
     case formatted = "Formatted"
@@ -37,6 +40,8 @@ class AppState: ObservableObject {
     @Published var resolvedColorScheme: ColorScheme = .dark
     private var appearanceObservation: NSKeyValueObservation?
     @Published var unseenHistoryCount = 0
+    @Published var isOnboardingTrial = false
+    @Published var isLLMReadyForTrial = false
 
     @AppStorage("formattingProvider") var formattingProvider: FormattingProvider = .local
     @AppStorage("openRouterApiKey") var openRouterApiKey = ""
@@ -48,7 +53,7 @@ class AppState: ObservableObject {
     @AppStorage("customEndpoint") var customEndpoint = ""
     @AppStorage("localModel") var localModel = "mlx-community/Qwen3-4B-4bit"
     @AppStorage("selectedPromptId") var selectedPromptId = FormattingPrompt.builtInGeneral.id.uuidString
-    @AppStorage("uiLanguage") var uiLanguage: String = "en" {
+    @AppStorage("uiLanguage") var uiLanguage: String = systemLanguageDefault {
         didSet { l10n = L10n(UILanguage(rawValue: uiLanguage) ?? .en) }
     }
     @AppStorage("appearance") var appearance: AppAppearance = .dark {
@@ -64,6 +69,9 @@ class AppState: ObservableObject {
         didSet { saveDictionary() }
     }
     @Published var l10n = L10n.current
+    @AppStorage("lifetimeSessions") var lifetimeSessions = 0
+    @AppStorage("lifetimeWords") var lifetimeWords = 0
+    @AppStorage("lifetimeDuration") var lifetimeDuration: Double = 0
     @AppStorage("historyRetention") var historyRetention: HistoryRetention = .thirtyDays
     @Published var launchAtLogin = false
     @AppStorage("showInDock") var showInDock = true {
@@ -406,6 +414,10 @@ class AppState: ObservableObject {
                 return
             }
 
+            if WhisperService.didCrashDuringLastLoad {
+                DebugLog.log("[AS] initializeServices: ⚠ previous crash detected, will clear cache and retry")
+            }
+
             DebugLog.log("[AS] initializeServices: loading Whisper model variant=\(self.whisperModel)")
             try await whisperService.loadModel(variant: whisperModel)
             isModelLoaded = true
@@ -418,10 +430,11 @@ class AppState: ObservableObject {
         }
         isInitializing = false
 
-        // LLM is now loaded on-demand when recording starts (memory optimization)
-        // Pre-download (but don't load into memory) so it's ready for first use
+        // LLM download is network I/O only (MLX, not CoreML) — safe to run in parallel
+        DebugLog.log("[AS] initializeServices: formattingProvider=\(self.formattingProvider.rawValue)")
         if formattingProvider == .local {
             localLLMService.checkModelStatus(modelId: localModel)
+            DebugLog.log("[AS] initializeServices: LLM modelState=\(String(describing: self.localLLMService.modelState))")
             if localLLMService.modelState == .notDownloaded {
                 DebugLog.log("[AS] initializeServices: downloading LLM (will load on-demand)")
                 Task { await localLLMService.downloadOnly(modelId: localModel) }
@@ -458,6 +471,19 @@ class AppState: ObservableObject {
         }
     }
 
+    /// Load LLM for onboarding trial — called when transitioning from Step 3 to Step 4
+    func loadLLMForOnboarding() async {
+        guard formattingProvider == .local else {
+            isLLMReadyForTrial = true
+            return
+        }
+        DebugLog.log("[AS] loadLLMForOnboarding: loading LLM into memory")
+        localLLMService.cancelIdleUnload()
+        await prepareLocalLLM()
+        isLLMReadyForTrial = localLLMService.isReady
+        DebugLog.log("[AS] loadLLMForOnboarding: isLLMReadyForTrial=\(self.isLLMReadyForTrial)")
+    }
+
     func reloadWhisperModel() async {
         isModelLoaded = false
         isInitializing = true
@@ -477,6 +503,9 @@ class AppState: ObservableObject {
 
     private func startRecording(hint: String) {
         DebugLog.log("[AS] startRecording: hint=\(hint), isModelLoaded=\(self.isModelLoaded), isProcessing=\(self.isProcessing)")
+
+        // Record activity for inactivity-based re-trial (before license check)
+        licenseService.recordActivity()
 
         // License check
         licenseService.refreshStatus()
@@ -618,7 +647,7 @@ class AppState: ObservableObject {
         }
     }
 
-    private func processAudio(_ audioData: Data, paste: Bool = true) async {
+    private func processAudio(_ audioData: Data, paste: Bool = true, isRetry: Bool = false) async {
         DebugLog.log("[AS] processAudio: audioData=\(audioData.count) bytes, paste=\(paste), mode=\(self.mode.rawValue)")
         var record = TranscriptionRecord(audioData: audioData, language: nil, mode: mode)
         history.insert(record, at: 0)
@@ -643,7 +672,11 @@ class AppState: ObservableObject {
 
             var finalText = rawText
 
-            if mode == .formatted && formattingProvider.isAvailable {
+            // Determine if formatting should run: normal formatted mode OR onboarding trial
+            let shouldFormat = isOnboardingTrial || (mode == .formatted && formattingProvider.isAvailable)
+            let activePrompt = isOnboardingTrial ? FormattingPrompt.builtInOnboardingTrial : selectedPrompt
+
+            if shouldFormat {
                 // Ensure local LLM is ready (may have been preloaded during recording)
                 if formattingProvider == .local && !localLLMService.isReady {
                     DebugLog.log("[AS] processAudio: waiting for LLM to finish loading...")
@@ -657,7 +690,7 @@ class AppState: ObservableObject {
                     // Notify user: formatting skipped, raw text will be pasted
                     floatingIndicator.showError(l10n.llmLoadFailed)
                     try? await Task.sleep(for: .seconds(1.5))
-                } else if formattingProvider != .local && currentApiKey.isEmpty {
+                } else if formattingProvider != .local && currentApiKey.isEmpty && !isOnboardingTrial {
                     DebugLog.log("[AS] processAudio: no API key, skipping formatting")
                 } else {
                     updateRecord(record.id) { $0.status = .formatting }
@@ -669,12 +702,19 @@ class AppState: ObservableObject {
                         apiKey: currentApiKey,
                         model: currentModel,
                         customEndpoint: customEndpoint,
-                        prompt: selectedPrompt,
+                        prompt: activePrompt,
                         dictionary: dictionaryEntries,
                         localLLMService: localLLMService
                     ) ?? rawText
                     updateRecord(record.id) { $0.formattedText = finalText; $0.status = .success }
                 }
+            }
+
+            // Update lifetime stats (skip on retry to avoid double-counting)
+            if !isRetry {
+                lifetimeSessions += 1
+                lifetimeWords += Self.countWords(finalText)
+                lifetimeDuration += record.duration
             }
 
             lastTranscription = finalText
@@ -716,8 +756,14 @@ class AppState: ObservableObject {
         statusMessage = l10n.retranscribing
         deleteRecord(record)
         Task {
-            await processAudio(record.audioData, paste: false)
+            await processAudio(record.audioData, paste: false, isRetry: true)
         }
+    }
+
+    static func countWords(_ text: String) -> Int {
+        let spaceWords = text.split(separator: " ").count
+        let jpChars = text.unicodeScalars.filter { $0.value >= 0x3000 && $0.value <= 0x9FFF }.count
+        return spaceWords + jpChars
     }
 
     func clearHistory() {

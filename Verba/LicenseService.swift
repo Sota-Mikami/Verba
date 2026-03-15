@@ -15,9 +15,11 @@ enum LicenseConstants {
     static let keychainActivated = "activated"
     static let keychainExpiresAt = "expiresAt"
     static let keychainLastValidated = "lastValidated"
+    static let keychainLastActive = "lastActiveDate"
+    static let inactiveRetrialSeconds: TimeInterval = 365 * 24 * 60 * 60 // 1 year
 
     // LemonSqueezy — these are public-facing, not secrets
-    static let lemonSqueezyStoreURL = "https://verba-app.lemonsqueezy.com/buy/1402280"
+    static let lemonSqueezyStoreURL = "https://verba-app.lemonsqueezy.com/checkout/buy/4857fb02-ce31-4fb8-8b8b-48d2e5e92629"
     static let lemonSqueezyActivateURL = "https://api.lemonsqueezy.com/v1/licenses/activate"
     static let lemonSqueezyValidateURL = "https://api.lemonsqueezy.com/v1/licenses/validate"
 }
@@ -94,10 +96,11 @@ class LicenseService: ObservableObject {
     // MARK: - Status Check
 
     func refreshStatus() {
-        #if DEBUG
-        status = .activated(expiresAt: nil)
-        return
-        #endif
+        // TEMPORARILY DISABLED for testing
+        // #if DEBUG
+        // status = .activated(expiresAt: nil)
+        // return
+        // #endif
 
         // Check if already activated
         if KeychainHelper.load(key: LicenseConstants.keychainActivated) == "true" {
@@ -127,6 +130,9 @@ class LicenseService: ObservableObject {
             let remaining = LicenseConstants.trialDurationSeconds - elapsed
             if remaining > 0 {
                 status = .trial(remaining: remaining)
+            } else if shouldGrantRetrial() {
+                resetTrial()
+                logger.info("Re-trial granted after 1+ year of inactivity")
             } else {
                 status = .trialExpired
             }
@@ -146,6 +152,24 @@ class LicenseService: ObservableObject {
         }
     }
 
+    // MARK: - Trial Urgency
+
+    enum TrialUrgency {
+        case normal, warning24h, critical1h
+    }
+
+    var urgencyLevel: TrialUrgency {
+        guard case .trial(let remaining) = status else { return .normal }
+        if remaining <= 3600 { return .critical1h }
+        if remaining <= 86400 { return .warning24h }
+        return .normal
+    }
+
+    var isTrial: Bool {
+        if case .trial = status { return true }
+        return false
+    }
+
     var trialRemainingFormatted: String? {
         guard case .trial(let remaining) = status else { return nil }
         let hours = Int(remaining) / 3600
@@ -162,6 +186,35 @@ class LicenseService: ObservableObject {
         formatter.dateStyle = .medium
         formatter.timeStyle = .none
         return formatter.string(from: date)
+    }
+
+    // MARK: - Activity Tracking & Re-trial
+
+    /// Record user activity (call on each recording session)
+    func recordActivity() {
+        KeychainHelper.save(key: LicenseConstants.keychainLastActive, value: String(Date().timeIntervalSince1970))
+    }
+
+    /// Check if user has been inactive for 1+ year and deserves a fresh trial
+    private func shouldGrantRetrial() -> Bool {
+        guard let lastActiveString = KeychainHelper.load(key: LicenseConstants.keychainLastActive),
+              let lastActive = Double(lastActiveString) else {
+            // No activity recorded — use trial start as proxy
+            guard let startString = KeychainHelper.load(key: LicenseConstants.keychainTrialStart),
+                  let startDate = Double(startString) else { return false }
+            let elapsed = Date().timeIntervalSince1970 - startDate
+            return elapsed >= LicenseConstants.inactiveRetrialSeconds
+        }
+        let elapsed = Date().timeIntervalSince1970 - lastActive
+        return elapsed >= LicenseConstants.inactiveRetrialSeconds
+    }
+
+    /// Reset trial to a fresh 48-hour window
+    private func resetTrial() {
+        let now = String(Date().timeIntervalSince1970)
+        KeychainHelper.save(key: LicenseConstants.keychainTrialStart, value: now)
+        KeychainHelper.delete(key: LicenseConstants.keychainLastActive)
+        status = .trial(remaining: LicenseConstants.trialDurationSeconds)
     }
 
     // MARK: - LemonSqueezy Activation
@@ -284,13 +337,19 @@ class LicenseService: ObservableObject {
             return parseAPIResponse(data: data)
         } else if httpResponse.statusCode == 404 {
             throw LicenseError.invalidKey
-        } else if httpResponse.statusCode == 422 {
+        } else {
+            // 400, 422, etc. — parse error from response body
             if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                let error = json["error"] as? String {
+                // LemonSqueezy returns descriptive errors like "license key has reached activation limit"
+                if error.lowercased().contains("limit") {
+                    throw LicenseError.activationLimitReached
+                }
                 throw LicenseError.apiError(error)
             }
-            throw LicenseError.activationLimitReached
-        } else {
+            if httpResponse.statusCode == 400 || httpResponse.statusCode == 422 {
+                throw LicenseError.activationLimitReached
+            }
             throw LicenseError.apiError("HTTP \(httpResponse.statusCode)")
         }
     }
@@ -330,10 +389,11 @@ class LicenseService: ObservableObject {
     /// Response shape: { "valid": bool, "license_key": { "expires_at": "ISO8601 | null", ... }, ... }
     private func parseAPIResponse(data: Data) -> APIResult {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            return APIResult(valid: true, expiresAt: nil)
+            logger.error("Failed to parse license API response JSON")
+            return APIResult(valid: false, expiresAt: nil)
         }
 
-        let valid = (json["valid"] as? Bool) ?? (json["activated"] as? Bool) ?? true
+        let valid = (json["valid"] as? Bool) ?? (json["activated"] as? Bool) ?? false
 
         // expires_at lives inside license_key object
         var expiresAt: Date?
@@ -374,11 +434,12 @@ enum LicenseError: LocalizedError {
     case apiError(String)
 
     var errorDescription: String? {
+        let ja = L10n.current.lang == .ja
         switch self {
-        case .invalidURL: return "Invalid activation URL"
-        case .networkError: return "Network error. Check your connection."
-        case .invalidKey: return "Invalid license key."
-        case .activationLimitReached: return "Activation limit reached for this key."
+        case .invalidURL: return ja ? "無効なURLです" : "Invalid activation URL"
+        case .networkError: return ja ? "ネットワークエラー。接続を確認してください。" : "Network error. Check your connection."
+        case .invalidKey: return ja ? "無効なライセンスキーです。" : "Invalid license key."
+        case .activationLimitReached: return ja ? "このキーのアクティベーション回数が上限に達しました。" : "Activation limit reached for this key."
         case .apiError(let msg): return msg
         }
     }

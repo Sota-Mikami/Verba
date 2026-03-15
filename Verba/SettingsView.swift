@@ -728,7 +728,7 @@ struct PromptRow: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 4))
                             }
                             .buttonStyle(.plain)
-                            .help("Edit")
+                            .help(L10n.current.edit)
                         }
                         if let onDelete {
                             Button(action: onDelete) {
@@ -740,7 +740,7 @@ struct PromptRow: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 4))
                             }
                             .buttonStyle(.plain)
-                            .help("Delete")
+                            .help(L10n.current.delete)
                         }
                     }
                     .transition(.opacity)
@@ -771,7 +771,7 @@ struct PromptEditorSheet: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
-            Text(isNew ? "New Formatting Prompt" : "Edit Prompt")
+            Text(isNew ? L10n.current.newFormattingPrompt : L10n.current.editPrompt)
                 .font(.system(size: 18, weight: .bold))
                 .foregroundStyle(DS.textNormal)
                 .padding(.horizontal, 28)
@@ -1299,5 +1299,53 @@ struct SettingsActionButton: View {
         case .secondary: return isHovered ? DS.bgModifierHover : DS.bgTertiary
         case .text: return .clear
         }
+    }
+}
+
+// MARK: - Hover Accent Button (for onboarding / license CTAs)
+
+struct HoverAccentButton: View {
+    let label: String
+    var enabled: Bool = true
+    var horizontalPadding: CGFloat = 32
+    var verticalPadding: CGFloat = 10
+    var fontSize: CGFloat = 14
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: fontSize, weight: .semibold))
+                .foregroundStyle(enabled ? DS.textOnAccent : DS.textFaint)
+                .padding(.horizontal, horizontalPadding)
+                .padding(.vertical, verticalPadding)
+                .background(enabled ? (isHovered ? DS.accentLight : DS.blurple) : DS.bgModifierActive)
+                .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
+                .scaleEffect(isHovered && enabled ? 1.02 : 1.0)
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .onHover { isHovered = $0 }
+        .animation(.easeOut(duration: 0.12), value: isHovered)
+    }
+}
+
+// MARK: - Hover Text Link
+
+struct HoverTextLink: View {
+    let label: String
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(isHovered ? DS.blurple : DS.textLink)
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+        .animation(.easeOut(duration: 0.12), value: isHovered)
     }
 }

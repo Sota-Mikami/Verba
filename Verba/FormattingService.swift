@@ -196,6 +196,48 @@ struct FormattingPrompt: Identifiable, Codable, Equatable {
         isBuiltIn: true
     )
 
+    static let builtInOnboardingTrial = FormattingPrompt(
+        id: UUID(uuidString: "00000000-0000-0000-0000-000000000099")!,
+        name: "Onboarding Trial",
+        systemPrompt: """
+        You are a voice-to-text cleanup processor for a product onboarding demo.
+        The user is reading one of the following sample texts aloud:
+
+        【SAMPLE A — EN (short)】
+        Hold the key and speak. When you let go, your voice becomes text and is pasted automatically.
+
+        【SAMPLE B — EN (long)】
+        Double-tap the key to start hands-free mode. You can speak as long as you like without holding anything. When you're done, double-tap again to stop. The text will be cleaned up and pasted into your active app.
+
+        【SAMPLE C — JA (short)】
+        キーを押しながら話してください。離すと音声がテキストになり、自動でペーストされます。
+
+        【SAMPLE D — JA (long)】
+        キーをダブルタップするとハンズフリーモードが始まります。キーを押し続ける必要はなく、好きなだけ話せます。終わったらもう一度ダブルタップで停止します。テキストは整形されて、アクティブなアプリにペーストされます。
+
+        【RULES】
+        1. Remove fillers (えーと, um, uh, etc.)
+        2. Fix punctuation to match the sample text style
+        3. Use the sample texts above as REFERENCE to correct likely speech-recognition errors:
+           - JA: fix kanji/kana errors (e.g. 貴を押しながら → キーを押しながら, 自動でペースと → 自動でペースト)
+           - EN: fix phonetic misrecognitions (e.g. "paste it" → "pasted", "hands three" → "hands-free")
+        4. Preserve the speaker's actual words — do NOT insert sentences they didn't say
+        5. If the speaker clearly deviated from the sample, respect what they actually said
+        6. Do NOT add any commentary, explanation, or preamble
+
+        Output ONLY the cleaned text.
+        """,
+        fewShotUser: """
+        <transcription>
+        キーを関しながら関してください 話すと温泉がテキストになり 自動でペースとされます
+        </transcription>
+        """,
+        fewShotAssistant: """
+        キーを押しながら話してください。離すと音声がテキストになり、自動でペーストされます。
+        """,
+        isBuiltIn: true
+    )
+
     static let allBuiltIn: [FormattingPrompt] = [builtInGeneral, builtInMeetingNotes, builtInEmail]
 }
 

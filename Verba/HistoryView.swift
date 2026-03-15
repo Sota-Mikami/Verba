@@ -122,7 +122,7 @@ struct HistoryView: View {
                         .buttonStyle(.plain)
                         .onHover { isSearchHovered = $0 }
                         .animation(.easeOut(duration: 0.12), value: isSearchHovered)
-                        .help("Search")
+                        .help(appState.l10n.search)
                     }
                 }
                 .padding(.horizontal, 28)
@@ -259,7 +259,7 @@ struct HistoryRow: View {
                 if isHovered || playback.isPlaying(record.id) {
                     HStack(spacing: 4) {
                         // Play/Stop audio
-                        ActionButton(icon: playback.isPlaying(record.id) ? "stop.fill" : "play.fill", tooltip: playback.isPlaying(record.id) ? "Stop" : "Play") {
+                        ActionButton(icon: playback.isPlaying(record.id) ? "stop.fill" : "play.fill", tooltip: playback.isPlaying(record.id) ? appState.l10n.stop : appState.l10n.play) {
                             if playback.isPlaying(record.id) {
                                 playback.stop()
                             } else {
@@ -268,17 +268,17 @@ struct HistoryRow: View {
                         }
 
                         if !record.displayText.isEmpty {
-                            ActionButton(icon: "doc.on.doc", tooltip: "Copy") {
+                            ActionButton(icon: "doc.on.doc", tooltip: appState.l10n.copy) {
                                 NSPasteboard.general.clearContents()
                                 NSPasteboard.general.setString(record.displayText, forType: .string)
                             }
                         }
                         if record.status == .failed || record.status == .success {
-                            ActionButton(icon: "arrow.clockwise", tooltip: "Retry") {
+                            ActionButton(icon: "arrow.clockwise", tooltip: appState.l10n.retry) {
                                 appState.retryTranscription(record)
                             }
                         }
-                        ActionButton(icon: "trash", destructive: true, tooltip: "Delete") {
+                        ActionButton(icon: "trash", destructive: true, tooltip: appState.l10n.delete) {
                             withAnimation(.easeOut(duration: 0.25)) {
                                 appState.deleteRecord(record)
                             }

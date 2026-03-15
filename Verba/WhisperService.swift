@@ -20,6 +20,10 @@ class WhisperService {
     private var whisperKit: WhisperKit?
     private static let errorLogPath = "/tmp/verba-error.log"
 
+    /// Track model loading crashes via UserDefaults flag
+    private static let loadingFlagKey = "whisperModelLoading"
+    private static let crashCountKey = "whisperModelCrashCount"
+
     private static func writeLog(_ message: String) {
         let timestamp = ISO8601DateFormatter().string(from: Date())
         let line = "[\(timestamp)] \(message)\n"
@@ -36,12 +40,61 @@ class WhisperService {
         }
     }
 
+    /// Check if previous launch crashed during model loading
+    static var didCrashDuringLastLoad: Bool {
+        UserDefaults.standard.bool(forKey: loadingFlagKey)
+    }
+
+    static var crashCount: Int {
+        UserDefaults.standard.integer(forKey: crashCountKey)
+    }
+
+    /// Clear CoreML compiled model cache to recover from shader compilation crashes
+    private func clearCoreMLCache() {
+        Self.writeLog("Clearing CoreML compiled model cache...")
+        let fm = FileManager.default
+
+        guard let cachesDir = fm.urls(for: .cachesDirectory, in: .userDomainMask).first else { return }
+
+        // CoreML e5rt bundle cache — the actual location of compiled Metal shaders
+        // Stored per-app under ~/Library/Caches/<bundleID>/com.apple.e5rt.e5bundlecache/
+        if let bundleId = Bundle.main.bundleIdentifier {
+            let e5rtCache = cachesDir.appendingPathComponent(bundleId).appendingPathComponent("com.apple.e5rt.e5bundlecache")
+            if fm.fileExists(atPath: e5rtCache.path) {
+                try? fm.removeItem(at: e5rtCache)
+                Self.writeLog("Removed e5rt cache: \(e5rtCache.path)")
+            }
+        }
+
+        // Also try generic CoreML cache
+        let coremlCache = cachesDir.appendingPathComponent("com.apple.CoreML")
+        if fm.fileExists(atPath: coremlCache.path) {
+            try? fm.removeItem(at: coremlCache)
+            Self.writeLog("Removed CoreML cache: \(coremlCache.path)")
+        }
+    }
+
     func loadModel(variant: String = "auto") async throws {
+        let crashCount = Self.crashCount
+        let didCrashLast = Self.didCrashDuringLastLoad
+
+        if didCrashLast {
+            let newCount = crashCount + 1
+            UserDefaults.standard.set(newCount, forKey: Self.crashCountKey)
+            Self.writeLog("⚠ Previous launch crashed during model load (crash #\(newCount)). Clearing CoreML cache...")
+            clearCoreMLCache()
+            // Add delay to let Metal/GPU resources settle after crash
+            try? await Task.sleep(for: .seconds(2))
+        }
+
+        // Set loading flag — if app crashes during load, this stays true
+        UserDefaults.standard.set(true, forKey: Self.loadingFlagKey)
+        UserDefaults.standard.synchronize()
+
         Self.writeLog("Starting WhisperKit initialization with variant: \(variant)...")
 
         do {
             if variant == "auto" {
-                // Let WhisperKit auto-select the best model for this device
                 whisperKit = try await WhisperKit(
                     verbose: true,
                     logLevel: .debug,
@@ -59,8 +112,15 @@ class WhisperService {
                     download: true
                 )
             }
+
+            // Model loaded successfully — clear crash flag
+            UserDefaults.standard.set(false, forKey: Self.loadingFlagKey)
+            if crashCount > 0 {
+                UserDefaults.standard.set(0, forKey: Self.crashCountKey)
+            }
             Self.writeLog("WhisperKit initialized successfully, model: \(whisperKit?.modelVariant.description ?? "unknown")")
         } catch {
+            UserDefaults.standard.set(false, forKey: Self.loadingFlagKey)
             Self.writeLog("WhisperKit init FAILED: \(error)")
             throw error
         }

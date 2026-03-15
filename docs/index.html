@@ -727,6 +727,99 @@
       margin-top: 8px;
     }
 
+    /* ── Pricing ── */
+    .pricing {
+      padding: 100px 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .pricing h2 {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 400;
+      margin-bottom: 12px;
+    }
+
+    .pricing .lead {
+      color: var(--text-sub);
+      font-size: 15px;
+      margin-bottom: 48px;
+    }
+
+    .pricing-card {
+      max-width: 400px;
+      margin: 0 auto;
+      background: var(--bg-raised);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 36px;
+      text-align: center;
+    }
+
+    .pricing-card .price {
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .pricing-card .price-currency {
+      font-size: 20px;
+      font-weight: 600;
+      vertical-align: super;
+      color: var(--text-sub);
+    }
+
+    .pricing-card .price-note {
+      font-size: 13px;
+      color: var(--text-dim);
+      margin-bottom: 24px;
+    }
+
+    .pricing-features {
+      text-align: left;
+      margin-bottom: 28px;
+    }
+
+    .pricing-features li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: 13px;
+      color: var(--text-sub);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .pricing-features li:last-child { border-bottom: none; }
+
+    .pricing-features .check {
+      color: var(--green);
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .pricing-trial {
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .pricing-oss {
+      margin-top: 32px;
+      font-size: 13px;
+      color: var(--text-dim);
+      line-height: 1.7;
+    }
+
+    .pricing-oss a {
+      color: var(--accent-light);
+      text-decoration: none;
+    }
+
     /* ── CTA ── */
     .cta {
       padding: 120px 0 80px;
@@ -1102,11 +1195,40 @@
     </div>
   </section>
 
+  <!-- ── Pricing ── -->
+  <section class="pricing">
+    <div class="wrap">
+      <h2 data-i18n="pricing-h2">Simple pricing.</h2>
+      <p class="lead" data-i18n="pricing-lead">One-time purchase. No subscription. No hidden fees.</p>
+
+      <div class="pricing-card">
+        <div class="price"><span class="price-currency">¥</span>5,800</div>
+        <div class="price-note" data-i18n="pricing-note">One-time purchase · Lifetime license</div>
+
+        <ul class="pricing-features">
+          <li><span class="check">✓</span> <span data-i18n="pricing-f1">All features included</span></li>
+          <li><span class="check">✓</span> <span data-i18n="pricing-f2">Use on up to 3 Macs</span></li>
+          <li><span class="check">✓</span> <span data-i18n="pricing-f3">Free updates</span></li>
+          <li><span class="check">✓</span> <span data-i18n="pricing-f4">100% on-device — no cloud costs</span></li>
+          <li><span class="check">✓</span> <span data-i18n="pricing-f5">Open source (MIT License)</span></li>
+        </ul>
+
+        <a href="https://verba-app.lemonsqueezy.com/checkout/buy/4857fb02-ce31-4fb8-8b8b-48d2e5e92629" class="btn btn-accent btn-lg" style="width:100%;justify-content:center;" data-i18n="pricing-buy">Purchase License</a>
+
+        <div class="pricing-trial" data-i18n="pricing-trial">48-hour free trial · No credit card required</div>
+      </div>
+
+      <p class="pricing-oss" data-i18n="pricing-oss">
+        Verba is open source. You can also <a href="https://github.com/Sota-Mikami/Verba">build from source</a> for free.
+      </p>
+    </div>
+  </section>
+
   <!-- ── CTA ── -->
   <section class="cta">
     <div class="wrap">
       <h2 data-i18n="cta-h2">Your voice, your Mac, your data.</h2>
-      <p class="lead" data-i18n="cta-lead">Free, open source, no strings attached.</p>
+      <p class="lead" data-i18n="cta-lead">Open source, on your terms.</p>
       <div class="cta-actions">
         <a href="https://github.com/Sota-Mikami/Verba/releases/latest" class="btn btn-accent btn-lg" data-i18n="cta-download">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -1127,6 +1249,9 @@
         <a href="https://github.com/Sota-Mikami/Verba">GitHub</a>
         <a href="https://github.com/Sota-Mikami/Verba/releases" data-i18n="footer-releases">Releases</a>
         <a href="https://github.com/Sota-Mikami/Verba/blob/main/CHANGELOG.md" data-i18n="footer-changelog">Changelog</a>
+        <a href="./privacy.html" data-i18n="footer-privacy">Privacy</a>
+        <a href="./tokushoho.html" data-i18n="footer-tokushoho">Commercial Transaction Act</a>
+        <a href="./terms.html" data-i18n="footer-terms">Terms</a>
       </div>
     </div>
   </footer>
@@ -1178,12 +1303,26 @@
         'tech-app-h': 'メニューバーアプリ',
         'tech-app-p': 'モード・プロンプト即切替、最近の履歴',
         'cta-h2': 'あなたの声、あなたのMac、あなたのデータ。',
-        'cta-lead': '無料、オープンソース、制約なし。',
+        'cta-lead': 'オープンソース、あなたの自由に。',
         'cta-download': '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>最新版をダウンロード',
+        'pricing-h2': 'シンプルな料金体系。',
+        'pricing-lead': '買い切り。サブスクなし。隠れた料金なし。',
+        'pricing-note': '買い切り · 永久ライセンス',
+        'pricing-f1': 'すべての機能を利用可能',
+        'pricing-f2': '最大3台のMacで使用可能',
+        'pricing-f3': 'アップデート無料',
+        'pricing-f4': '100%オンデバイス — クラウド費用なし',
+        'pricing-f5': 'オープンソース（MITライセンス）',
+        'pricing-buy': 'ライセンスを購入',
+        'pricing-trial': '48時間の無料トライアル · クレジットカード不要',
+        'pricing-oss': 'Verbaはオープンソースです。<a href="https://github.com/Sota-Mikami/Verba">ソースからビルド</a>して無料で使うこともできます。',
         'cta-star': 'GitHubでスター',
         'footer-by': '<a href="https://github.com/Sota-Mikami">三上蒼太</a>が開発',
         'footer-releases': 'リリース',
         'footer-changelog': '変更履歴',
+        'footer-privacy': 'プライバシー',
+        'footer-tokushoho': '特定商取引法に基づく表記',
+        'footer-terms': '利用規約',
       }
     };
 

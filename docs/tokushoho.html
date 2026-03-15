@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>特定商取引法に基づく表記 — Verba</title>
+  <meta name="description" content="Verba — 特定商取引法に基づく表記 / Commercial Transaction Act Disclosure">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0c0b0f;
+      --bg-raised: #15141a;
+      --bg-surface: #1c1b23;
+      --accent: #7c6cfc;
+      --accent-light: #9b8aff;
+      --text: #ede8e1;
+      --text-sub: #9a948a;
+      --text-dim: #5a5650;
+      --border: rgba(255, 255, 255, 0.06);
+      --font-body: 'Noto Sans JP', 'Inter', -apple-system, sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.8;
+    }
+
+    a { color: var(--accent-light); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .wrap {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ── Header ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 16px 0;
+    }
+
+    .header-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-sub);
+      transition: color 0.15s;
+    }
+
+    .back-link:hover {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .logo span { color: var(--accent-light); }
+
+    .lang-switcher {
+      display: flex;
+      gap: 2px;
+      background: var(--bg-raised);
+      border-radius: 6px;
+      padding: 2px;
+      border: 1px solid var(--border);
+    }
+
+    .lang-switcher button {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 12px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .lang-switcher button.active {
+      background: var(--bg-surface);
+      color: var(--text);
+    }
+
+    .lang-switcher button:hover:not(.active) {
+      color: var(--text-sub);
+    }
+
+    /* ── Main ── */
+    main {
+      padding: 48px 0 80px;
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-bottom: 40px;
+    }
+
+    /* ── Table ── */
+    .info-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .info-table tr {
+      background: var(--bg-raised);
+    }
+
+    .info-table tr:nth-child(even) {
+      background: var(--bg);
+    }
+
+    .info-table td {
+      padding: 14px 20px;
+      font-size: 14px;
+      line-height: 1.7;
+      vertical-align: top;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .info-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .info-table td:first-child {
+      color: var(--text-sub);
+      white-space: nowrap;
+      width: 160px;
+      font-weight: 500;
+    }
+
+    .info-table td:last-child {
+      color: var(--text);
+    }
+
+    .info-table a {
+      word-break: break-all;
+    }
+
+    /* ── Note ── */
+    .note {
+      margin-top: 32px;
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.8;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 0;
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .footer-inner p {
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+
+    .footer-inner > a {
+      color: var(--text-sub);
+      text-decoration: none;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    .footer-links a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 12px;
+      transition: color 0.15s;
+    }
+
+    .footer-links a:hover {
+      color: var(--text-sub);
+    }
+
+    /* ── Lang visibility ── */
+    [data-lang-content="en"] { display: none; }
+    [data-lang-content="ja"] { display: block; }
+
+    html[lang="en"] [data-lang-content="en"] { display: block; }
+    html[lang="en"] [data-lang-content="ja"] { display: none; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .wrap { padding: 0 16px; }
+
+      .page-title { font-size: 20px; }
+
+      .info-table td:first-child {
+        width: auto;
+        white-space: normal;
+      }
+
+      .info-table td {
+        padding: 10px 14px;
+        font-size: 13px;
+      }
+
+      .footer-inner {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .info-table,
+      .info-table tbody,
+      .info-table tr,
+      .info-table td {
+        display: block;
+      }
+
+      .info-table tr {
+        margin-bottom: 1px;
+      }
+
+      .info-table td:first-child {
+        padding-bottom: 2px;
+        font-size: 12px;
+        border-bottom: none;
+      }
+
+      .info-table td:last-child {
+        padding-top: 2px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="wrap header-inner">
+      <a href="./" class="back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <span class="logo">Verb<span>a</span></span>
+      </a>
+      <div class="lang-switcher">
+        <button class="active" data-lang="ja">JA</button>
+        <button data-lang="en">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+
+      <!-- Japanese -->
+      <div data-lang-content="ja">
+        <h1 class="page-title">特定商取引法に基づく表記</h1>
+        <p class="page-subtitle">Commercial Transaction Act Disclosure</p>
+
+        <table class="info-table">
+          <tbody>
+            <tr>
+              <td>販売事業者</td>
+              <td>三上蒼太</td>
+            </tr>
+            <tr>
+              <td>運営責任者</td>
+              <td>三上蒼太</td>
+            </tr>
+            <tr>
+              <td>所在地</td>
+              <td>請求があった場合に遅滞なく開示いたします</td>
+            </tr>
+            <tr>
+              <td>連絡先</td>
+              <td>請求があった場合に遅滞なく開示いたします</td>
+            </tr>
+            <tr>
+              <td>メールアドレス</td>
+              <td><a href="mailto:ztkrw5467@gmail.com">ztkrw5467@gmail.com</a></td>
+            </tr>
+            <tr>
+              <td>販売価格</td>
+              <td>各商品ページに表示された価格（税込）</td>
+            </tr>
+            <tr>
+              <td>支払方法</td>
+              <td>クレジットカード（LemonSqueezy経由）</td>
+            </tr>
+            <tr>
+              <td>支払時期</td>
+              <td>購入時に即時決済</td>
+            </tr>
+            <tr>
+              <td>商品の引渡し時期</td>
+              <td>決済完了後、ライセンスキーをメールで即時発行</td>
+            </tr>
+            <tr>
+              <td>返品・キャンセル</td>
+              <td>デジタル商品のため、原則として返品・返金不可。ただし、商品に重大な不具合がある場合は個別に対応いたします。</td>
+            </tr>
+            <tr>
+              <td>動作環境</td>
+              <td>macOS 14以降、Apple Silicon搭載Mac</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- English -->
+      <div data-lang-content="en">
+        <h1 class="page-title">Commercial Transaction Act Disclosure</h1>
+        <p class="page-subtitle">特定商取引法に基づく表記</p>
+
+        <table class="info-table">
+          <tbody>
+            <tr>
+              <td>Seller</td>
+              <td>Sota Mikami</td>
+            </tr>
+            <tr>
+              <td>Representative</td>
+              <td>Sota Mikami</td>
+            </tr>
+            <tr>
+              <td>Address</td>
+              <td>Disclosed upon request</td>
+            </tr>
+            <tr>
+              <td>Contact</td>
+              <td>Disclosed upon request</td>
+            </tr>
+            <tr>
+              <td>Email</td>
+              <td><a href="mailto:ztkrw5467@gmail.com">ztkrw5467@gmail.com</a></td>
+            </tr>
+            <tr>
+              <td>Price</td>
+              <td>As displayed on the product page (tax included)</td>
+            </tr>
+            <tr>
+              <td>Payment Method</td>
+              <td>Credit card (via LemonSqueezy)</td>
+            </tr>
+            <tr>
+              <td>Payment Timing</td>
+              <td>Charged immediately at purchase</td>
+            </tr>
+            <tr>
+              <td>Delivery</td>
+              <td>License key delivered via email immediately after payment</td>
+            </tr>
+            <tr>
+              <td>Returns &amp; Cancellations</td>
+              <td>As this is a digital product, returns and refunds are generally not accepted. However, we will address cases of significant product defects on an individual basis.</td>
+            </tr>
+            <tr>
+              <td>System Requirements</td>
+              <td>macOS 14+, Apple Silicon Mac</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <p data-i18n="footer-by">
+        <a href="https://github.com/Sota-Mikami">三上蒼太</a>が開発
+      </p>
+      <div class="footer-links">
+        <a href="./">Verba</a>
+        <a href="https://github.com/Sota-Mikami/Verba">GitHub</a>
+        <a href="./terms.html" data-i18n="footer-terms">Terms</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const footerTexts = {
+      ja: '<a href="https://github.com/Sota-Mikami">三上蒼太</a>が開発',
+      en: 'Built by <a href="https://github.com/Sota-Mikami">Sota Mikami</a>'
+    };
+
+    const footerTermsTexts = { ja: '利用規約', en: 'Terms' };
+
+    function setLang(lang) {
+      document.documentElement.lang = lang;
+      document.querySelectorAll('.lang-switcher button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+
+      // Update page title
+      if (lang === 'ja') {
+        document.title = '特定商取引法に基づく表記 — Verba';
+      } else {
+        document.title = 'Commercial Transaction Act Disclosure — Verba';
+      }
+
+      // Update footer
+      const footerP = document.querySelector('[data-i18n="footer-by"]');
+      if (footerP && footerTexts[lang]) {
+        footerP.innerHTML = footerTexts[lang];
+      }
+
+      const footerTerms = document.querySelector('[data-i18n="footer-terms"]');
+      if (footerTerms && footerTermsTexts[lang]) {
+        footerTerms.textContent = footerTermsTexts[lang];
+      }
+
+      try { localStorage.setItem('verba-lang', lang); } catch(e) {}
+    }
+
+    document.querySelectorAll('.lang-switcher button').forEach(btn => {
+      btn.addEventListener('click', () => setLang(btn.dataset.lang));
+    });
+
+    // Restore saved preference or detect browser language
+    (function() {
+      let saved;
+      try { saved = localStorage.getItem('verba-lang'); } catch(e) {}
+      if (saved === 'en') {
+        setLang('en');
+      } else if (saved === 'ja') {
+        // Already ja by default
+      } else if (navigator.language && !navigator.language.startsWith('ja')) {
+        setLang('en');
+      }
+    })();
+  </script>
+</body>
+</html>

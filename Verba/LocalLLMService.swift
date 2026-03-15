@@ -90,10 +90,16 @@ class LocalLLMService: ObservableObject {
         let repo = Hub.Repo(id: config.name)
         let localPath = hub.localRepoLocation(repo)
 
+        DebugLog.log("[LLM] checkModelStatus: modelId=\(modelId), config.name=\(config.name), localPath=\(localPath.path)")
+
         let fm = FileManager.default
-        if fm.fileExists(atPath: localPath.path),
-           let contents = try? fm.contentsOfDirectory(atPath: localPath.path),
-           contents.contains(where: { $0.hasSuffix(".safetensors") }) {
+        let exists = fm.fileExists(atPath: localPath.path)
+        let contents = (try? fm.contentsOfDirectory(atPath: localPath.path)) ?? []
+        let hasSafetensors = contents.contains(where: { $0.hasSuffix(".safetensors") })
+
+        DebugLog.log("[LLM] checkModelStatus: exists=\(exists), contents=\(contents.count) files, hasSafetensors=\(hasSafetensors)")
+
+        if exists && hasSafetensors {
             if currentModelId == modelId && modelContainer != nil {
                 modelState = .ready
             } else {
