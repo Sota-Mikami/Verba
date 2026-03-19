@@ -2,6 +2,13 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [1.1.0] - 2026-03-19
+
+### Added
+- **Speech language settings** — Register the languages you speak in Settings > Transcription. Whisper uses your language list to avoid misdetection (e.g., Japanese no longer misrecognized as Korean).
+- **Smart language detection** — With multiple languages registered, Verba runs language detection first and picks the best match from your list before transcribing. Single language skips detection entirely for fastest performance.
+- **Detected language stored in history** — Each transcription record now includes the detected language.
+
 ## [1.0.1] - 2026-03-19
 
 ### Added

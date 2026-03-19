@@ -260,6 +260,9 @@ struct SettingsView: View {
             }
 
             Divider().foregroundStyle(DS.cardBorder)
+            speechLanguagesRow
+
+            Divider().foregroundStyle(DS.cardBorder)
             settingsRow(title: appState.l10n.outputMode, description: appState.l10n.outputModeDesc) {
                 Picker("", selection: $appState.mode) {
                     ForEach(TranscriptionMode.allCases, id: \.self) { mode in
@@ -268,6 +271,76 @@ struct SettingsView: View {
                 }
                 .frame(width: 140)
             }
+        }
+    }
+
+    // MARK: - Speech Languages
+
+    @State private var showLanguagePicker = false
+
+    private var speechLanguagesRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(appState.l10n.speechLanguages)
+                        .font(.system(size: 14))
+                        .foregroundStyle(DS.textNormal)
+                    Text(appState.speechLanguages.isEmpty
+                         ? appState.l10n.speechLanguagesAutoDesc
+                         : appState.l10n.speechLanguagesDesc)
+                        .font(.system(size: 12))
+                        .foregroundStyle(DS.textFaint)
+                }
+                Spacer()
+            }
+
+            if appState.speechLanguages.isEmpty {
+                // Auto mode — show setup button
+                HoverPillButton(
+                    label: appState.l10n.setUp,
+                    icon: "globe",
+                    color: DS.blurple,
+                    action: { showLanguagePicker = true }
+                )
+            } else {
+                // Show registered languages as chips
+                FlowLayout(spacing: 6) {
+                    ForEach(Array(appState.speechLanguages.enumerated()), id: \.offset) { index, code in
+                        let lang = SpeechLanguage.all.first { $0.code == code }
+                        LanguageChip(
+                            code: code,
+                            name: lang?.nameNative ?? code,
+                            canRemove: appState.speechLanguages.count > 1,
+                            onRemove: {
+                                var langs = appState.speechLanguages
+                                langs.remove(at: index)
+                                appState.speechLanguages = langs
+                            }
+                        )
+                    }
+
+                    HoverPillButton(
+                        label: appState.l10n.addLanguage,
+                        icon: "plus",
+                        color: DS.blurple,
+                        action: { showLanguagePicker = true }
+                    )
+                }
+            }
+        }
+        .padding(16)
+        .popover(isPresented: $showLanguagePicker) {
+            LanguagePickerPopover(
+                selectedCodes: appState.speechLanguages,
+                onSelect: { code in
+                    var langs = appState.speechLanguages
+                    if !langs.contains(code) {
+                        langs.append(code)
+                        appState.speechLanguages = langs
+                    }
+                },
+                onClose: { showLanguagePicker = false }
+            )
         }
     }
 
@@ -1390,5 +1463,172 @@ struct HoverTextLink: View {
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
         .animation(.easeOut(duration: 0.12), value: isHovered)
+    }
+}
+
+// MARK: - Language Chip
+
+struct LanguageChip: View {
+    let code: String
+    let name: String
+    let canRemove: Bool
+    let onRemove: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(name)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(DS.textNormal)
+            Text(code)
+                .font(.system(size: 10, design: .monospaced))
+                .foregroundStyle(DS.textFaint)
+            if canRemove {
+                Button(action: onRemove) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(isHovered ? DS.textNormal : DS.textFaint)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 5)
+        .background(isHovered ? DS.bgModifierActive : DS.bgTertiary)
+        .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+        .overlay(
+            RoundedRectangle(cornerRadius: DS.radiusSmall)
+                .stroke(DS.cardBorder, lineWidth: 1)
+        )
+        .onHover { isHovered = $0 }
+        .animation(.easeOut(duration: 0.12), value: isHovered)
+    }
+}
+
+// MARK: - Language Picker Popover
+
+struct LanguagePickerPopover: View {
+    let selectedCodes: [String]
+    let onSelect: (String) -> Void
+    let onClose: () -> Void
+    @State private var searchText = ""
+
+    private var filteredLanguages: [SpeechLanguage] {
+        let available = SpeechLanguage.all.filter { !selectedCodes.contains($0.code) }
+        guard !searchText.isEmpty else { return available }
+        let query = searchText.lowercased()
+        return available.filter {
+            $0.code.lowercased().contains(query) ||
+            $0.nameEN.lowercased().contains(query) ||
+            $0.nameNative.lowercased().contains(query)
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Search field
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 12))
+                    .foregroundStyle(DS.textFaint)
+                TextField(L10n.current.searchLanguages, text: $searchText)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13))
+                    .foregroundStyle(DS.textNormal)
+            }
+            .padding(10)
+
+            Divider().foregroundStyle(DS.cardBorder)
+
+            // Language list
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(filteredLanguages) { lang in
+                        LanguagePickerRow(language: lang) {
+                            onSelect(lang.code)
+                            onClose()
+                        }
+                    }
+                }
+            }
+            .frame(maxHeight: 240)
+        }
+        .frame(width: 260)
+        .background(DS.bgSecondary)
+    }
+}
+
+struct LanguagePickerRow: View {
+    let language: SpeechLanguage
+    let onSelect: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: onSelect) {
+            HStack {
+                Text(language.nameNative)
+                    .font(.system(size: 13))
+                    .foregroundStyle(DS.textNormal)
+                if language.nameNative != language.nameEN {
+                    Text("(\(language.nameEN))")
+                        .font(.system(size: 11))
+                        .foregroundStyle(DS.textFaint)
+                }
+                Spacer()
+                Text(language.code)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundStyle(DS.textFaint)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(isHovered ? DS.bgModifierHover : .clear)
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+    }
+}
+
+// MARK: - Flow Layout
+
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 6
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let result = layout(proposal: proposal, subviews: subviews)
+        return result.size
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let result = layout(proposal: proposal, subviews: subviews)
+        for (index, position) in result.positions.enumerated() {
+            subviews[index].place(
+                at: CGPoint(x: bounds.minX + position.x, y: bounds.minY + position.y),
+                proposal: .unspecified
+            )
+        }
+    }
+
+    private func layout(proposal: ProposedViewSize, subviews: Subviews) -> (size: CGSize, positions: [CGPoint]) {
+        let maxWidth = proposal.width ?? .infinity
+        var positions: [CGPoint] = []
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        var maxX: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x + size.width > maxWidth && x > 0 {
+                x = 0
+                y += rowHeight + spacing
+                rowHeight = 0
+            }
+            positions.append(CGPoint(x: x, y: y))
+            rowHeight = max(rowHeight, size.height)
+            x += size.width + spacing
+            maxX = max(maxX, x - spacing)
+        }
+
+        return (CGSize(width: maxX, height: y + rowHeight), positions)
     }
 }

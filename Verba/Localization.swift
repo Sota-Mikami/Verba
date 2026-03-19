@@ -135,6 +135,12 @@ struct L10n {
     var saveChanges: String { s("Save Changes", "変更を保存") }
 
     var autoDetect: String { s("Auto Detect", "自動検出") }
+    var speechLanguages: String { s("Languages I speak", "話す言語") }
+    var speechLanguagesDesc: String { s("Register your languages for accurate recognition.", "正確な認識のために言語を登録") }
+    var speechLanguagesAutoDesc: String { s("Auto-detecting from all languages.", "全言語から自動検出中") }
+    var addLanguage: String { s("Add", "追加") }
+    var setUp: String { s("Set up", "設定する") }
+    var searchLanguages: String { s("Search languages...", "言語を検索...") }
     var resetToDefault: String { s("Reset to Default", "デフォルトに戻す") }
     var modified: String { s("Modified", "変更済み") }
 

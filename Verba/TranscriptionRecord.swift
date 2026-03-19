@@ -27,7 +27,7 @@ struct TranscriptionRecord: Identifiable, Codable {
     let id: UUID
     let timestamp: Date
     let audioData: Data
-    let language: String?
+    var language: String?
     let mode: TranscriptionMode
     var rawText: String?
     var formattedText: String?

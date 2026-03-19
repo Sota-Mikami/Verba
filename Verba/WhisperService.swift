@@ -16,6 +16,11 @@ struct WhisperModelOption: Identifiable, Hashable {
     ]
 }
 
+struct WhisperTranscriptionResult {
+    let text: String
+    let language: String?
+}
+
 class WhisperService {
     private var whisperKit: WhisperKit?
     private static let errorLogPath = "/tmp/verba-error.log"
@@ -126,7 +131,7 @@ class WhisperService {
         }
     }
 
-    func transcribe(audioData: Data, language: String? = nil, initialPrompt: String? = nil) async throws -> String {
+    func transcribe(audioData: Data, language: String? = nil, initialPrompt: String? = nil) async throws -> WhisperTranscriptionResult {
         guard let whisperKit else {
             throw WhisperError.notInitialized
         }
@@ -158,8 +163,25 @@ class WhisperService {
             decodeOptions: options
         )
 
-        let text = results.map { $0.text }.joined(separator: " ")
-        return text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let text = results.map { $0.text }.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        let detectedLanguage = results.first?.language
+        return WhisperTranscriptionResult(text: text, language: detectedLanguage)
+    }
+
+    /// Detect language from audio without full transcription.
+    /// Returns language probability distribution for all supported languages.
+    func detectLanguage(audioData: Data) async throws -> [String: Float] {
+        guard let whisperKit else {
+            throw WhisperError.notInitialized
+        }
+
+        let samples = audioData.withUnsafeBytes { buffer -> [Float] in
+            Array(buffer.bindMemory(to: Float.self))
+        }
+
+        // WhisperKit method name has a typo: "detectLangauge"
+        let result = try await whisperKit.detectLangauge(audioArray: samples)
+        return result.langProbs
     }
 }
 

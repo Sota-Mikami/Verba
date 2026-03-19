@@ -78,6 +78,7 @@ class AppState: ObservableObject {
         didSet { applyDockVisibility() }
     }
     @AppStorage("whisperModel") var whisperModel = "auto"
+    @AppStorage("speechLanguages") var speechLanguagesJSON = "[]"
     @AppStorage("selectedMicDeviceUID") var selectedMicDeviceUID = "" // empty = system default
     @AppStorage("systemAudioBehavior") var systemAudioBehavior: SystemAudioBehavior = .keepPlaying {
         didSet {
@@ -165,6 +166,36 @@ class AppState: ObservableObject {
         setupKeyboardShortcuts()
         Task {
             await initializeServices()
+        }
+    }
+
+    var speechLanguages: [String] {
+        get {
+            (try? JSONDecoder().decode([String].self, from: Data(speechLanguagesJSON.utf8))) ?? []
+        }
+        set {
+            speechLanguagesJSON = (try? String(data: JSONEncoder().encode(newValue), encoding: .utf8)) ?? "[]"
+        }
+    }
+
+    /// Resolve the best language for transcription based on user's registered languages.
+    /// - Empty list (auto): returns nil → Whisper auto-detects from all languages
+    /// - Single language: returns that language code directly (no detection overhead)
+    /// - Multiple languages: runs detectLanguage, picks highest-probability language from user's list
+    private func resolveLanguage(audioData: Data) async -> String? {
+        let languages = speechLanguages
+        guard !languages.isEmpty else { return nil }
+        guard languages.count > 1 else { return languages[0] }
+
+        do {
+            let langProbs = try await whisperService.detectLanguage(audioData: audioData)
+            // Filter to user's registered languages, pick highest probability
+            let best = languages.max(by: { (langProbs[$0] ?? 0) < (langProbs[$1] ?? 0) })
+            DebugLog.log("[AS] resolveLanguage: langProbs=\(languages.map { "\($0):\(String(format: "%.3f", langProbs[$0] ?? 0))" }.joined(separator: ", ")), best=\(best ?? "nil")")
+            return best
+        } catch {
+            DebugLog.log("[AS] resolveLanguage: detectLanguage failed — \(error.localizedDescription), falling back to \(languages[0])")
+            return languages[0]
         }
     }
 
@@ -363,7 +394,9 @@ class AppState: ObservableObject {
     /// Quick transcription for onboarding trial — uses already-loaded Whisper model
     func transcribeAudio(_ audioData: Data) async throws -> String {
         let dictHint = formattingService.dictionaryHint(dictionary: dictionaryEntries)
-        return try await whisperService.transcribe(audioData: audioData, language: nil, initialPrompt: dictHint)
+        let lang = await resolveLanguage(audioData: audioData)
+        let result = try await whisperService.transcribe(audioData: audioData, language: lang, initialPrompt: dictHint)
+        return result.text
     }
 
     /// Cancel recording without transcribing — discard audio
@@ -633,10 +666,12 @@ class AppState: ObservableObject {
                 if seconds >= 1.0 {
                     do {
                         let hint = self.formattingService.dictionaryHint(dictionary: self.dictionaryEntries)
-                        let text = try await self.whisperService.transcribe(audioData: buffer, language: nil, initialPrompt: hint)
-                        DebugLog.log("[AS] streaming cycle #\(cycle): transcribed '\(text.prefix(50))'")
-                        if !Task.isCancelled && self.isRecording && !text.isEmpty {
-                            self.floatingIndicator.updateStreamingText(text)
+                        // Streaming uses first registered language (or nil for auto) — no detectLanguage overhead
+                        let streamLang = self.speechLanguages.first
+                        let result = try await self.whisperService.transcribe(audioData: buffer, language: streamLang, initialPrompt: hint)
+                        DebugLog.log("[AS] streaming cycle #\(cycle): transcribed '\(result.text.prefix(50))'")
+                        if !Task.isCancelled && self.isRecording && !result.text.isEmpty {
+                            self.floatingIndicator.updateStreamingText(result.text)
                         }
                     } catch {
                         DebugLog.log("[AS] streaming cycle #\(cycle): error — \(error.localizedDescription)")
@@ -663,7 +698,14 @@ class AppState: ObservableObject {
 
         do {
             let dictHint = formattingService.dictionaryHint(dictionary: dictionaryEntries)
-            let rawText = try await whisperService.transcribe(audioData: audioData, language: nil, initialPrompt: dictHint)
+            let lang = await resolveLanguage(audioData: audioData)
+            let transcriptionResult = try await whisperService.transcribe(audioData: audioData, language: lang, initialPrompt: dictHint)
+            let rawText = transcriptionResult.text
+
+            // Store detected language in the record
+            if let detectedLang = transcriptionResult.language {
+                updateRecord(record.id) { $0.language = detectedLang }
+            }
 
             if rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 updateRecord(record.id) { $0.status = .failed; $0.errorMessage = "No speech detected" }
