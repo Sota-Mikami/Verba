@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 0.8.2</title>
-            <description><![CDATA[<h2>What's New in v0.8.2</h2><ul><li>**Whisper model download progress in Settings** — Model section now shows a real-time progress bar with percentage during download and a spinner during loading, matching the sidebar indicator.</li></ul>]]></description>
-            <pubDate>Thu, 12 Mar 2026 11:09:52 +0700</pubDate>
+            <title>Version 1.0.0</title>
+            <description><![CDATA[<h2>What's New in v1.0.0</h2><ul><li>**License activation with LemonSqueezy integration** — Activate a license key to unlock the full version, powered by LemonSqueezy payment infrastructure.</li><li>**Purchase celebration UI** — Confetti animation plays on successful license activation.</li><li>**Terms of Service page** — Accessible from Settings and onboarding.</li><li>**Trial UI updates immediately after license activation** — No restart required; the UI reflects activated status instantly.</li><li>**Improved error messages for license activation** — Localized EN/JA error messages for invalid keys, network failures, and expired licenses.</li><li>**CoreML cache crash recovery for WhisperKit** — Automatically clears corrupted CoreML cache and retries model loading instead of crashing.</li><li>**Onboarding LLM download for non-local formatting providers** — Onboarding no longer attempts to download an LLM model when cloud formatting is selected.</li></ul>]]></description>
+            <pubDate>Thu, 19 Mar 2026 20:52:03 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v0.8.2/Verba-v0.8.2.dmg"
-                sparkle:version="38"
-                sparkle:shortVersionString="0.8.2"
-                sparkle:edSignature="ozinopMQlOmGAgjWrlC/dnnmoK+lfh2eC8RCPFYwBGNyD3o3Go6+wM1h6HkpspgxCr3oVMUNtmmQUvLzx1MNDg=="
-                length="10254939"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v1.0.0/Verba-v1.0.0.dmg"
+                sparkle:version="39"
+                sparkle:shortVersionString="1.0.0"
+                sparkle:edSignature="vMJA/uzQc6jAJQJdVYVXLSU0p9R81uHmCnEFFBhSepxHDj2fYIYWaqxMXTDWO7V4kKC4tjSR/TvcjZ87n7FdDQ=="
+                length="10398076"
                 type="application/octet-stream"
             />
         </item>
