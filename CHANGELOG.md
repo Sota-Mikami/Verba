@@ -2,7 +2,7 @@
 
 All notable changes to Verba will be documented in this file.
 
-## [0.9.0] - 2026-03-15 (Unreleased)
+## [1.0.0] - 2026-03-19
 
 ### Added
 - **License activation with LemonSqueezy integration** — Activate a license key to unlock the full version, powered by LemonSqueezy payment infrastructure.
