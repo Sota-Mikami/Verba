@@ -95,6 +95,16 @@ open Verba.xcodeproj
 | Shortcuts | [KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts) |
 | Auto-Update | [Sparkle](https://github.com/sparkle-project/Sparkle) |
 
+## Pricing
+
+Verba is **open source** (MIT License). You can build from source and use it for free.
+
+For convenience, a **pre-built binary** is available with auto-updates:
+- **48-hour free trial** — full functionality, no credit card required
+- **¥5,800 one-time purchase** — lifetime license, use on up to 3 Macs, no subscription
+
+[Purchase a license](https://sota-mikami.github.io/Verba/) · [Terms](https://sota-mikami.github.io/Verba/terms.html) · [Privacy](https://sota-mikami.github.io/Verba/privacy.html)
+
 ## Roadmap
 
 See [GitHub Projects](https://github.com/users/Sota-Mikami/projects/3) for the full task list.

@@ -19,7 +19,7 @@ enum LicenseConstants {
     static let inactiveRetrialSeconds: TimeInterval = 365 * 24 * 60 * 60 // 1 year
 
     // LemonSqueezy — these are public-facing, not secrets
-    static let lemonSqueezyStoreURL = "https://verba-app.lemonsqueezy.com/checkout/buy/4857fb02-ce31-4fb8-8b8b-48d2e5e92629"
+    static let lemonSqueezyStoreURL = "https://verba-app.lemonsqueezy.com/checkout/buy/5d4f77eb-647f-4659-a7bf-6afaa446d3a6"
     static let lemonSqueezyActivateURL = "https://api.lemonsqueezy.com/v1/licenses/activate"
     static let lemonSqueezyValidateURL = "https://api.lemonsqueezy.com/v1/licenses/validate"
 }

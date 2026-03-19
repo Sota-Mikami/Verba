@@ -100,6 +100,7 @@ class AppState: ObservableObject {
     }
 
     let licenseService = LicenseService()
+    private var licenseCancellable: AnyCancellable?
     private var audioRecorder = AudioRecorder()
     private var whisperService = WhisperService()
     private let formattingService = FormattingService()
@@ -155,6 +156,10 @@ class AppState: ObservableObject {
             Task { @MainActor [weak self] in
                 self?.floatingIndicator.updateAudioLevel(level)
             }
+        }
+        // Forward licenseService status changes to AppState's objectWillChange
+        licenseCancellable = licenseService.objectWillChange.sink { [weak self] _ in
+            self?.objectWillChange.send()
         }
         setupFloatingIndicatorCallbacks()
         setupKeyboardShortcuts()

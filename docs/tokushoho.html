@@ -410,6 +410,7 @@
         <a href="./">Verba</a>
         <a href="https://github.com/Sota-Mikami/Verba">GitHub</a>
         <a href="./terms.html" data-i18n="footer-terms">Terms</a>
+        <a href="./privacy.html" data-i18n="footer-privacy">Privacy</a>
       </div>
     </div>
   </footer>
@@ -421,6 +422,7 @@
     };
 
     const footerTermsTexts = { ja: '利用規約', en: 'Terms' };
+    const footerPrivacyTexts = { ja: 'プライバシーポリシー', en: 'Privacy' };
 
     function setLang(lang) {
       document.documentElement.lang = lang;
@@ -444,6 +446,10 @@
       const footerTerms = document.querySelector('[data-i18n="footer-terms"]');
       if (footerTerms && footerTermsTexts[lang]) {
         footerTerms.textContent = footerTermsTexts[lang];
+      }
+      const footerPrivacy = document.querySelector('[data-i18n="footer-privacy"]');
+      if (footerPrivacy && footerPrivacyTexts[lang]) {
+        footerPrivacy.textContent = footerPrivacyTexts[lang];
       }
 
       try { localStorage.setItem('verba-lang', lang); } catch(e) {}
