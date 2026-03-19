@@ -2,6 +2,12 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [1.0.1] - 2026-03-19
+
+### Added
+- **License status in sidebar** — Activated users see a green "Lifetime Plan" badge in the sidebar instead of the trial badge.
+- **License info section in Settings** — Shows plan name, masked license key, and active status for activated users.
+
 ## [1.0.0] - 2026-03-19
 
 ### Added

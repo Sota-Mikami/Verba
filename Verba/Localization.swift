@@ -184,6 +184,13 @@ struct L10n {
     var startUsingVerba: String { s("Let's go!", "さっそく使う") }
     var upgrade: String { s("Upgrade", "アップグレード") }
 
+    // MARK: License Status
+    var licensedPlan: String { s("Lifetime Plan", "ライフタイムプラン") }
+    var licenseActive: String { s("Active", "有効") }
+    var licenseInfo: String { s("License", "ライセンス") }
+    var plan: String { s("Plan", "プラン") }
+    var licenseStatusLabel: String { s("Status", "ステータス") }
+
     // MARK: Onboarding (value prop)
     var onboardingValueTitle: String { s("Just speak. Verba writes.", "話すだけ。あとはVerbaが書く。") }
     var onboardingValueFeature1: String { s("Fully on-device processing", "完全オンデバイス処理") }

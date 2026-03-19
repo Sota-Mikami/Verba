@@ -170,6 +170,17 @@ class LicenseService: ObservableObject {
         return false
     }
 
+    var isActivated: Bool {
+        if case .activated = status { return true }
+        return false
+    }
+
+    var maskedLicenseKey: String? {
+        guard let key = KeychainHelper.load(key: LicenseConstants.keychainLicenseKey) else { return nil }
+        let suffix = String(key.suffix(4))
+        return "XXXX-XXXX-XXXX-\(suffix)"
+    }
+
     var trialRemainingFormatted: String? {
         guard case .trial(let remaining) = status else { return nil }
         let hours = Int(remaining) / 3600

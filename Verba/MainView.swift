@@ -170,6 +170,17 @@ struct MainView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 4)
+            } else if appState.licenseService.isActivated {
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 11))
+                        .foregroundStyle(DS.green)
+                    Text(appState.l10n.licensedPlan)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(DS.textMuted)
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 4)
             }
 
             // Status

@@ -20,6 +20,11 @@ struct SettingsView: View {
                 modelSection
                 promptSection
                 formattingSection
+
+                // License (activated only)
+                if appState.licenseService.isActivated {
+                    licenseSection
+                }
             }
             .padding(28)
         }
@@ -456,6 +461,44 @@ struct SettingsView: View {
         }
     }
 
+
+    // MARK: - License
+
+    private var licenseSection: some View {
+        settingsGroup(appState.l10n.licenseInfo) {
+            // Plan
+            settingsRow(title: appState.l10n.plan, description: "") {
+                Text(appState.l10n.licensedPlan)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(DS.textNormal)
+            }
+
+            Divider().foregroundStyle(DS.cardBorder)
+
+            // License key (masked)
+            if let maskedKey = appState.licenseService.maskedLicenseKey {
+                settingsRow(title: appState.l10n.licenseKey, description: "") {
+                    Text(maskedKey)
+                        .font(.system(size: 13, design: .monospaced))
+                        .foregroundStyle(DS.textMuted)
+                }
+
+                Divider().foregroundStyle(DS.cardBorder)
+            }
+
+            // Status
+            settingsRow(title: appState.l10n.licenseStatusLabel, description: "") {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(DS.green)
+                        .frame(width: 8, height: 8)
+                    Text(appState.l10n.licenseActive)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(DS.green)
+                }
+            }
+        }
+    }
 
     // MARK: - Helpers
 
