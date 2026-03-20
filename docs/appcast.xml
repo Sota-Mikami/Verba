@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 1.1.0</title>
-            <description><![CDATA[<h2>What's New in v1.1.0</h2><ul><li>**Speech language settings** — Register the languages you speak in Settings > Transcription. Whisper uses your language list to avoid misdetection (e.g., Japanese no longer misrecognized as Korean).</li><li>**Smart language detection** — With multiple languages registered, Verba runs language detection first and picks the best match from your list before transcribing. Single language skips detection entirely for fastest performance.</li><li>**Detected language stored in history** — Each transcription record now includes the detected language.</li></ul>]]></description>
-            <pubDate>Thu, 19 Mar 2026 21:49:41 +0700</pubDate>
+            <title>Version 1.2.0</title>
+            <description><![CDATA[<h2>What's New in v1.2.0</h2><ul><li>**Compact indicator mode** — Minimize the recording indicator to a slim bar at the bottom of the screen to avoid blocking content. Click to expand back.</li><li>**Custom floating tooltips** — Action buttons (Stop & transcribe, Discard recording, Minimize) now show instant tooltips above the button, rendered in a separate window so they're never clipped.</li><li>**Recording action buttons** — Simplified to icon-only with instant tooltip labels instead of hover-expand text, reducing visual clutter when multiple buttons are present.</li></ul>]]></description>
+            <pubDate>Fri, 20 Mar 2026 19:49:22 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v1.1.0/Verba-v1.1.0.dmg"
-                sparkle:version="41"
-                sparkle:shortVersionString="1.1.0"
-                sparkle:edSignature="58YzTLblcMJ6ZceSBqPcJEDB0IXDBwftCRjEHThyGH6k617PtPji2tbzmeM8mQVrKSblzz4CeQktJJjL/PavBw=="
-                length="10438838"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v1.2.0/Verba-v1.2.0.dmg"
+                sparkle:version="42"
+                sparkle:shortVersionString="1.2.0"
+                sparkle:edSignature="eM6tIs25vzfbfzJP4NtZyKDF70Nu+ADRbRRy7Lx0b4AFkGrZDV93sUw4AbUJVaUC9+458ryqcrmLee4pIgw0Aw=="
+                length="10477611"
                 type="application/octet-stream"
             />
         </item>
