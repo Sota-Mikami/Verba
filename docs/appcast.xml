@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 1.3.0</title>
-            <description><![CDATA[<h2>What's New in v1.3.0</h2><ul><li>**Writing Style personalization** — Each formatting prompt now has a Writing Style field. Define how your text should sound (tone, sentence endings, punctuation habits) independently from what the prompt does.</li><li>**AI style extraction** — Paste samples of your writing and let the on-device LLM analyze your style into concrete rules. Results are a starting point you can edit.</li><li>**Formatting settings UX** — When Output Mode is set to Fast, formatting-related sections are hidden with a hint and quick switch button to Formatted mode.</li><li>**Simplified prompt editor** — Removed few-shot example fields. System Prompt + Writing Style is sufficient for both local and cloud models.</li><li>**Sidebar alignment** — License badge and Whisper status now share consistent indentation.</li></ul>]]></description>
-            <pubDate>Sun, 22 Mar 2026 13:32:51 +0700</pubDate>
+            <title>Version 1.3.1</title>
+            <description><![CDATA[<h2>What's New in v1.3.1</h2><ul><li>**Startup crash fix** — Resolved SIGTRAP crash on launch caused by `@AppStorage` with enum types receiving invalid UserDefaults values. All enum-backed settings now safely fall back to defaults.</li></ul>]]></description>
+            <pubDate>Wed, 25 Mar 2026 16:42:54 +0900</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v1.3.0/Verba-v1.3.0.dmg"
-                sparkle:version="43"
-                sparkle:shortVersionString="1.3.0"
-                sparkle:edSignature="vWo3fQiwsmQORMA9n/4MXa0u1qA53sk++S4Snvnp0lteq4a1Y9o9hph1BhQf/BYaQmwmikLDZVK1h/C6rpbNCQ=="
-                length="10511010"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v1.3.1/Verba-v1.3.1.dmg"
+                sparkle:version="44"
+                sparkle:shortVersionString="1.3.1"
+                sparkle:edSignature="sDk53WHu64nROBlPMqPORBSp+svehD/jI7q/CG+/O6RUWWjoyXJwL8m3M9MpgMO2kodX7a5rbWVkeuGaX3vGCA=="
+                length="10514125"
                 type="application/octet-stream"
             />
         </item>
