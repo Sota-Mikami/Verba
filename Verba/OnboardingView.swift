@@ -3,7 +3,6 @@ import AVFoundation
 
 struct OnboardingView: View {
     @EnvironmentObject var appState: AppState
-    @Binding var hasCompletedOnboarding: Bool
     @State private var currentStep = 0
     @State private var micGranted = false
     @State private var accessibilityGranted = AXIsProcessTrusted()
@@ -12,6 +11,7 @@ struct OnboardingView: View {
     @State private var trialInputText = ""
     @State private var historyCountBeforeTrial = 0
     @State private var trialAccuracy: Int?
+    @State private var selectedWhisperModel: String = "openai_whisper-large-v3-turbo"
     @FocusState private var trialFieldFocused: Bool
 
     private let totalSteps = 8 // 0: value prop, 1-4: permissions/model/shortcut, 5: PTT trial, 6: HF trial, 7: completion
@@ -104,7 +104,7 @@ struct OnboardingView: View {
                 nextButton(enabled: accessibilityGranted)
             }
         case 3:
-            // Step 3: Whisper + LLM model download
+            // Step 3: Model selection + download
             stepCard(
                 icon: "arrow.down.circle.fill",
                 title: appState.l10n.onboardingModelTitle,
@@ -121,26 +121,75 @@ struct OnboardingView: View {
                                 .foregroundStyle(DS.green)
                         }
                         .transition(.scale.combined(with: .opacity))
-                    } else {
-                        // Whisper progress row
-                        modelProgressRow(
-                            label: appState.l10n.whisperModelLabel,
-                            isComplete: appState.isModelLoaded,
-                            progress: nil // Whisper doesn't expose fractional progress
-                        )
-                        // LLM progress row (only for local provider)
-                        if needsLocalLLM {
+                    } else if appState.isInitializing {
+                        // Download/load in progress
+                        VStack(spacing: 12) {
                             modelProgressRow(
-                                label: appState.l10n.formattingModelLabel,
-                                isComplete: llmDownloaded,
-                                progress: llmDownloadProgress
+                                label: appState.l10n.whisperModelLabel,
+                                isComplete: appState.isModelLoaded,
+                                progress: nil
                             )
+                            if needsLocalLLM {
+                                modelProgressRow(
+                                    label: appState.l10n.formattingModelLabel,
+                                    isComplete: llmDownloaded,
+                                    progress: llmDownloadProgress
+                                )
+                            }
                         }
+                    } else if let error = appState.initError {
+                        // Error state with retry
+                        VStack(spacing: 10) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(DS.warm)
+                                Text(errorMessage(for: error))
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(DS.textMuted)
+                                    .multilineTextAlignment(.center)
+                            }
+
+                            HStack(spacing: 12) {
+                                Button {
+                                    Task { await retryModelInit() }
+                                } label: {
+                                    Text(appState.l10n.retry)
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundStyle(DS.textLink)
+                                }
+                                .buttonStyle(.plain)
+
+                                Text("·")
+                                    .foregroundStyle(DS.textFaint)
+
+                                Button {
+                                    // Cycle to a simpler model
+                                    selectFallbackModel()
+                                    Task { await retryModelInit() }
+                                } label: {
+                                    Text(appState.l10n.changeModel)
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundStyle(DS.textLink)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    } else {
+                        // Model picker (before download starts)
+                        VStack(spacing: 8) {
+                            ForEach(onboardingModelOptions) { option in
+                                modelOptionRow(option)
+                            }
+                        }
+
+                        HoverAccentButton(label: appState.l10n.onboardingDownloadBtn) {
+                            appState.whisperModel = selectedWhisperModel
+                            Task { await appState.initializeServices() }
+                            startLLMDownloadIfNeeded()
+                        }
+                        .padding(.top, 4)
                     }
-                }
-                .onAppear {
-                    // Ensure LLM download starts in parallel with Whisper
-                    startLLMDownloadIfNeeded()
                 }
             } footer: {
                 nextButton(enabled: bothModelsDownloaded) {
@@ -492,7 +541,7 @@ struct OnboardingView: View {
             VStack(spacing: 8) {
                 HoverAccentButton(label: appState.l10n.startUsingVerba, horizontalPadding: 36, verticalPadding: 12, fontSize: 15) {
                     appState.isOnboardingTrial = false
-                    hasCompletedOnboarding = true
+                    appState.hasCompletedOnboarding = true
                 }
 
                 VStack(spacing: 2) {
@@ -738,6 +787,72 @@ struct OnboardingView: View {
                         .controlSize(.mini)
                         .frame(width: 36)
                 }
+            }
+        }
+    }
+
+    // MARK: - Model Selection Helpers
+
+    /// Models shown during onboarding (excludes "auto" — user picks explicitly)
+    private var onboardingModelOptions: [WhisperModelOption] {
+        WhisperModelOption.recommended.filter { $0.id != "auto" }
+    }
+
+    private func modelOptionRow(_ option: WhisperModelOption) -> some View {
+        let isSelected = selectedWhisperModel == option.id
+        return Button {
+            selectedWhisperModel = option.id
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(option.name)
+                        .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
+                        .foregroundStyle(DS.textNormal)
+                    Text("\(option.description) · \(option.sizeLabel)")
+                        .font(.system(size: 11))
+                        .foregroundStyle(DS.textFaint)
+                }
+                Spacer()
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundStyle(DS.blurple)
+                } else {
+                    Circle()
+                        .stroke(DS.textFaint.opacity(0.4), lineWidth: 1.5)
+                        .frame(width: 16, height: 16)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(isSelected ? DS.blurple.opacity(0.08) : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func errorMessage(for error: WhisperInitError) -> String {
+        switch error {
+        case .timedOut:
+            return appState.l10n.modelLoadTimedOut
+        case .failed(let msg):
+            return "\(appState.l10n.modelLoadFailed): \(msg.prefix(60))"
+        }
+    }
+
+    private func retryModelInit() async {
+        appState.whisperModel = selectedWhisperModel
+        await appState.initializeServices()
+        startLLMDownloadIfNeeded()
+    }
+
+    /// Select a simpler model when current one fails
+    private func selectFallbackModel() {
+        let fallbackOrder = ["openai_whisper-small", "openai_whisper-base", "openai_whisper-tiny"]
+        for modelId in fallbackOrder {
+            if modelId != selectedWhisperModel {
+                selectedWhisperModel = modelId
+                return
             }
         }
     }

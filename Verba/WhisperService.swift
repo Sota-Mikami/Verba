@@ -98,24 +98,49 @@ class WhisperService {
 
         Self.writeLog("Starting WhisperKit initialization with variant: \(variant)...")
 
+        // Timeout: 120s for download+load (large models on slow networks need time)
+        let timeoutSeconds: UInt64 = 120
+
         do {
-            if variant == "auto" {
-                whisperKit = try await WhisperKit(
-                    verbose: true,
-                    logLevel: .debug,
-                    prewarm: false,
-                    load: true,
-                    download: true
-                )
-            } else {
-                whisperKit = try await WhisperKit(
-                    model: variant,
-                    verbose: true,
-                    logLevel: .debug,
-                    prewarm: false,
-                    load: true,
-                    download: true
-                )
+            whisperKit = try await withThrowingTaskGroup(of: WhisperKit?.self) { group in
+                group.addTask {
+                    if variant == "auto" {
+                        return try await WhisperKit(
+                            verbose: true,
+                            logLevel: .debug,
+                            prewarm: false,
+                            load: true,
+                            download: true
+                        )
+                    } else {
+                        return try await WhisperKit(
+                            model: variant,
+                            verbose: true,
+                            logLevel: .debug,
+                            prewarm: false,
+                            load: true,
+                            download: true
+                        )
+                    }
+                }
+                group.addTask {
+                    try await Task.sleep(nanoseconds: timeoutSeconds * 1_000_000_000)
+                    return nil // sentinel: timeout reached
+                }
+
+                // Take whichever finishes first
+                for try await result in group {
+                    if let kit = result {
+                        // WhisperKit succeeded — cancel the timer
+                        group.cancelAll()
+                        return kit
+                    } else {
+                        // Timer fired first — cancel WhisperKit and throw
+                        group.cancelAll()
+                        throw WhisperError.initTimedOut
+                    }
+                }
+                throw WhisperError.initTimedOut
             }
 
             // Model loaded successfully — clear crash flag
@@ -187,10 +212,12 @@ class WhisperService {
 
 enum WhisperError: LocalizedError {
     case notInitialized
+    case initTimedOut
 
     var errorDescription: String? {
         switch self {
         case .notInitialized: "Whisper not initialized. Please wait for model to load."
+        case .initTimedOut: "Whisper model initialization timed out. Try selecting a different model."
         }
     }
 }

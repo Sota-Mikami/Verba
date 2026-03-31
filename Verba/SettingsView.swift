@@ -18,8 +18,12 @@ struct SettingsView: View {
 
                 // Voice Engine
                 modelSection
-                promptSection
-                formattingSection
+                if appState.mode == .formatted {
+                    promptSection
+                    formattingSection
+                } else {
+                    disabledFormattingHint
+                }
 
                 // License (activated only)
                 if appState.licenseService.isActivated {
@@ -341,6 +345,38 @@ struct SettingsView: View {
                 },
                 onClose: { showLanguagePicker = false }
             )
+        }
+    }
+
+    // MARK: - Disabled Formatting Hint
+
+    private var disabledFormattingHint: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(appState.l10n.formattingPrompt)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(DS.textMuted.opacity(0.5))
+            VStack(spacing: 0) {
+                HStack(spacing: 8) {
+                    Image(systemName: "wand.and.stars")
+                        .font(.system(size: 14))
+                        .foregroundStyle(DS.textFaint)
+                    Text(appState.l10n.formattingDisabledHint)
+                        .font(.system(size: 12))
+                        .foregroundStyle(DS.textFaint)
+                    Spacer()
+                    Button {
+                        appState.mode = .formatted
+                    } label: {
+                        Text(appState.l10n.switchToFormatted)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(DS.blurple)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(16)
+            }
+            .background(DS.cardBg.opacity(0.5))
+            .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
         }
     }
 
@@ -884,6 +920,13 @@ struct PromptEditorSheet: View {
     let onCancel: () -> Void
     var onReset: (() -> Void)? = nil
 
+    @State private var isExtractorExpanded = false
+    @State private var styleSamples = ""
+    @State private var extractedStyle = ""
+    @State private var isAnalyzing = false
+    @State private var highlightSampleArea = false
+    @EnvironmentObject private var appState: AppState
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
@@ -897,6 +940,7 @@ struct PromptEditorSheet: View {
             Divider().foregroundStyle(DS.cardBorder)
 
             // Scrollable form
+            ScrollViewReader { scrollProxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     VStack(alignment: .leading, spacing: 6) {
@@ -926,47 +970,155 @@ struct PromptEditorSheet: View {
                             .foregroundStyle(DS.textNormal)
                     }
 
-                    DisclosureGroup {
-                        VStack(alignment: .leading, spacing: 14) {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(L10n.current.exampleInput)
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundStyle(DS.textMuted)
-                                TextEditor(text: $prompt.fewShotUser)
-                                    .font(.system(size: 11, design: .monospaced))
-                                    .padding(8)
-                                    .frame(minHeight: 60)
-                                    .scrollContentBackground(.hidden)
-                                    .background(DS.inputBg)
-                                    .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
-                                    .foregroundStyle(DS.textNormal)
+                    // Writing Style
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text(L10n.current.writingStyle)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(DS.textMuted)
+                            Spacer()
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    isExtractorExpanded.toggle()
+                                }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "sparkles")
+                                        .font(.system(size: 10))
+                                    Text(L10n.current.extractFromWriting)
+                                        .font(.system(size: 11, weight: .medium))
+                                }
+                                .foregroundStyle(isExtractorExpanded ? DS.textMuted : DS.blurple)
                             }
-
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(L10n.current.expectedOutput)
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundStyle(DS.textMuted)
-                                TextEditor(text: $prompt.fewShotAssistant)
-                                    .font(.system(size: 11, design: .monospaced))
-                                    .padding(8)
-                                    .frame(minHeight: 60)
-                                    .scrollContentBackground(.hidden)
-                                    .background(DS.inputBg)
-                                    .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
-                                    .foregroundStyle(DS.textNormal)
-                            }
+                            .buttonStyle(.plain)
                         }
-                        .padding(.top, 8)
-                    } label: {
-                        Text(L10n.current.fewShotExample)
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(DS.textMuted)
+                        TextEditor(text: $prompt.writingStyle)
+                            .font(.system(size: 12, design: .monospaced))
+                            .padding(8)
+                            .frame(minHeight: 80)
+                            .scrollContentBackground(.hidden)
+                            .background(DS.inputBg)
+                            .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                            .foregroundStyle(DS.textNormal)
+                        if prompt.writingStyle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isExtractorExpanded {
+                            Text(L10n.current.writingStylePlaceholder)
+                                .font(.system(size: 11))
+                                .foregroundStyle(DS.textFaint)
+                        }
+
+                        // Inline style extractor — visually nested under Writing Style
+                        if isExtractorExpanded {
+                            VStack(alignment: .leading, spacing: 10) {
+                                EmptyView().id("styleExtractor")
+
+                                Text(L10n.current.styleExtractorDesc)
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(DS.textFaint)
+
+                                TextEditor(text: $styleSamples)
+                                    .font(.system(size: 12))
+                                    .padding(8)
+                                    .frame(minHeight: 100)
+                                    .scrollContentBackground(.hidden)
+                                    .background(DS.bgSecondary)
+                                    .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: DS.radiusSmall)
+                                            .strokeBorder(DS.blurple, lineWidth: highlightSampleArea ? 1.5 : 0)
+                                    )
+                                    .foregroundStyle(DS.textNormal)
+                                if styleSamples.isEmpty {
+                                    Text(L10n.current.writingSamplesPlaceholder)
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(DS.textFaint)
+                                }
+
+                                // Extracted result preview (editable)
+                                if !extractedStyle.isEmpty {
+                                    Text(L10n.current.styleExtractResult)
+                                        .font(.system(size: 11, weight: .medium))
+                                        .foregroundStyle(DS.textMuted)
+                                    TextEditor(text: $extractedStyle)
+                                        .font(.system(size: 11, design: .monospaced))
+                                        .padding(8)
+                                        .frame(minHeight: 80)
+                                        .scrollContentBackground(.hidden)
+                                        .background(DS.bgSecondary)
+                                        .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                                        .foregroundStyle(DS.textNormal)
+                                }
+
+                                // Action buttons
+                                HStack {
+                                    Spacer()
+                                    if !extractedStyle.isEmpty {
+                                        Button {
+                                            prompt.writingStyle = extractedStyle
+                                            withAnimation(.easeInOut(duration: 0.2)) {
+                                                isExtractorExpanded = false
+                                            }
+                                        } label: {
+                                            Text(L10n.current.apply)
+                                                .font(.system(size: 12, weight: .medium))
+                                                .foregroundStyle(DS.blurple)
+                                                .padding(.horizontal, 14)
+                                                .padding(.vertical, 6)
+                                                .background(DS.blurple.opacity(0.12))
+                                                .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                    Button {
+                                        analyzeStyle()
+                                    } label: {
+                                        HStack(spacing: 5) {
+                                            if isAnalyzing {
+                                                ProgressView()
+                                                    .controlSize(.mini)
+                                            } else {
+                                                Image(systemName: "sparkles")
+                                                    .font(.system(size: 10))
+                                            }
+                                            Text(isAnalyzing ? L10n.current.analyzing : L10n.current.analyze)
+                                                .font(.system(size: 12, weight: .medium))
+                                        }
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 6)
+                                        .background(styleSamples.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isAnalyzing ? DS.blurple.opacity(0.4) : DS.blurple)
+                                        .clipShape(RoundedRectangle(cornerRadius: DS.radiusSmall))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .disabled(styleSamples.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isAnalyzing)
+                                }
+                            }
+                            .padding(12)
+                            .background(DS.inputBg)
+                            .clipShape(RoundedRectangle(cornerRadius: DS.radiusMedium))
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
                     }
-                    .tint(DS.textMuted)
                 }
                 .padding(.horizontal, 28)
                 .padding(.vertical, 20)
+                .onChange(of: isExtractorExpanded) { expanded in
+                    if expanded {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                scrollProxy.scrollTo("styleExtractor", anchor: .top)
+                            }
+                        }
+                        // Pulse highlight on the sample textarea
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                            withAnimation(.easeIn(duration: 0.2)) { highlightSampleArea = true }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                                withAnimation(.easeOut(duration: 0.5)) { highlightSampleArea = false }
+                            }
+                        }
+                    }
+                }
             }
+            } // ScrollViewReader
 
             // Footer
             Divider().foregroundStyle(DS.cardBorder)
@@ -1020,8 +1172,18 @@ struct PromptEditorSheet: View {
             .padding(.vertical, 16)
         }
         .frame(width: 520)
-        .frame(minHeight: 440, maxHeight: 660)
+        .frame(minHeight: 500, maxHeight: 720)
         .background(DS.bgSecondary)
+    }
+
+    private func analyzeStyle() {
+        isAnalyzing = true
+        Task {
+            if let result = await appState.extractWritingStyle(from: styleSamples) {
+                extractedStyle = result
+            }
+            isAnalyzing = false
+        }
     }
 }
 

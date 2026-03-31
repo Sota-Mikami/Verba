@@ -28,12 +28,10 @@ enum NavigationPage: String, CaseIterable {
 struct MainView: View {
     @EnvironmentObject var appState: AppState
     @State private var selectedPage: NavigationPage = .dashboard
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
-
     private var showOnboarding: Binding<Bool> {
         Binding(
-            get: { !hasCompletedOnboarding },
-            set: { newValue in hasCompletedOnboarding = !newValue }
+            get: { !appState.hasCompletedOnboarding },
+            set: { newValue in appState.hasCompletedOnboarding = !newValue }
         )
     }
 
@@ -70,7 +68,7 @@ struct MainView: View {
         .preferredColorScheme(appState.resolvedColorScheme)
         .animation(.easeOut(duration: 0.25), value: selectedPage)
         .sheet(isPresented: showOnboarding) {
-            OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
+            OnboardingView()
                 .environmentObject(appState)
                 .interactiveDismissDisabled()
         }
@@ -184,26 +182,53 @@ struct MainView: View {
             }
 
             // Status
-            HStack(spacing: 8) {
-                ZStack {
-                    if !appState.isModelLoaded {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    ZStack {
+                        if !appState.isModelLoaded && appState.initError == nil {
+                            Circle()
+                                .fill(DS.orange.opacity(0.3))
+                                .frame(width: 12, height: 12)
+                                .scaleEffect(1.5)
+                                .opacity(0.5)
+                                .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: appState.isModelLoaded)
+                        }
                         Circle()
-                            .fill(DS.orange.opacity(0.3))
-                            .frame(width: 12, height: 12)
-                            .scaleEffect(1.5)
-                            .opacity(0.5)
-                            .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: appState.isModelLoaded)
+                            .fill(appState.isModelLoaded ? DS.green : (appState.initError != nil ? DS.warm : DS.orange))
+                            .frame(width: 8, height: 8)
                     }
-                    Circle()
-                        .fill(appState.isModelLoaded ? DS.green : DS.orange)
-                        .frame(width: 8, height: 8)
+                    if appState.isModelLoaded {
+                        Text(appState.l10n.whisperReady)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(DS.textMuted)
+                    } else if appState.initError != nil {
+                        Text(appState.l10n.modelLoadFailed)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(DS.warm)
+                    } else {
+                        Text(appState.l10n.loadingModel)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(DS.textMuted)
+                    }
                 }
-                Text(appState.isModelLoaded ? appState.l10n.whisperReady : appState.l10n.loadingModel)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(DS.textMuted)
+
+                // Retry button when initialization failed
+                if appState.initError != nil && !appState.isInitializing {
+                    Button {
+                        Task { await appState.initializeServices() }
+                    } label: {
+                        Text(appState.l10n.retry)
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(DS.textLink)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.leading, 14)
+                }
             }
-            .padding(16)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
             .animation(.easeOut(duration: 0.3), value: appState.isModelLoaded)
+            .animation(.easeOut(duration: 0.3), value: appState.initError == nil)
         }
         .frame(width: 200)
         .background(DS.bgTertiary)

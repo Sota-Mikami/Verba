@@ -19,6 +19,11 @@ enum SystemAudioBehavior: String, CaseIterable {
     case captureSystemAudio = "Capture System Audio"
 }
 
+enum WhisperInitError: Equatable {
+    case timedOut
+    case failed(String)
+}
+
 private enum RecordingTrigger {
     case none
     case pushToTalk
@@ -31,6 +36,7 @@ class AppState: ObservableObject {
     @Published var isProcessing = false
     @Published var isModelLoaded = false
     @Published var isInitializing = false
+    @Published var initError: WhisperInitError? = nil
     @Published var mode: TranscriptionMode = .formatted
     @Published var lastTranscription = ""
     @Published var statusMessage = ""
@@ -43,7 +49,11 @@ class AppState: ObservableObject {
     @Published var isOnboardingTrial = false
     @Published var isLLMReadyForTrial = false
 
-    @AppStorage("formattingProvider") var formattingProvider: FormattingProvider = .local
+    @AppStorage("formattingProvider") private var formattingProviderRaw: String = FormattingProvider.local.rawValue
+    var formattingProvider: FormattingProvider {
+        get { FormattingProvider(rawValue: formattingProviderRaw) ?? .local }
+        set { formattingProviderRaw = newValue.rawValue }
+    }
     @AppStorage("openRouterApiKey") var openRouterApiKey = ""
     @AppStorage("openRouterModel") var openRouterModel = "google/gemma-3-4b-it"
     @AppStorage("openAIApiKey") var openAIApiKey = ""
@@ -56,8 +66,10 @@ class AppState: ObservableObject {
     @AppStorage("uiLanguage") var uiLanguage: String = systemLanguageDefault {
         didSet { l10n = L10n(UILanguage(rawValue: uiLanguage) ?? .en) }
     }
-    @AppStorage("appearance") var appearance: AppAppearance = .dark {
-        didSet { applyAppearance() }
+    @AppStorage("appearance") private var appearanceRaw: String = AppAppearance.dark.rawValue
+    var appearance: AppAppearance {
+        get { AppAppearance(rawValue: appearanceRaw) ?? .dark }
+        set { appearanceRaw = newValue.rawValue; applyAppearance() }
     }
     @Published var customPrompts: [FormattingPrompt] = [] {
         didSet { saveCustomPrompts() }
@@ -72,30 +84,44 @@ class AppState: ObservableObject {
     @AppStorage("lifetimeSessions") var lifetimeSessions = 0
     @AppStorage("lifetimeWords") var lifetimeWords = 0
     @AppStorage("lifetimeDuration") var lifetimeDuration: Double = 0
-    @AppStorage("historyRetention") var historyRetention: HistoryRetention = .thirtyDays
+    @AppStorage("historyRetention") private var historyRetentionRaw: String = HistoryRetention.thirtyDays.rawValue
+    var historyRetention: HistoryRetention {
+        get { HistoryRetention(rawValue: historyRetentionRaw) ?? .thirtyDays }
+        set { historyRetentionRaw = newValue.rawValue }
+    }
     @Published var launchAtLogin = false
     @AppStorage("showInDock") var showInDock = true {
         didSet { applyDockVisibility() }
     }
+    @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding = false
     @AppStorage("whisperModel") var whisperModel = "auto"
     @AppStorage("speechLanguages") var speechLanguagesJSON = "[]"
     @AppStorage("selectedMicDeviceUID") var selectedMicDeviceUID = "" // empty = system default
-    @AppStorage("systemAudioBehavior") var systemAudioBehavior: SystemAudioBehavior = .keepPlaying {
-        didSet {
-            if systemAudioBehavior == .captureSystemAudio && !SystemAudioCapture.hasPermission {
+    @AppStorage("systemAudioBehavior") private var systemAudioBehaviorRaw: String = SystemAudioBehavior.keepPlaying.rawValue
+    var systemAudioBehavior: SystemAudioBehavior {
+        get { SystemAudioBehavior(rawValue: systemAudioBehaviorRaw) ?? .keepPlaying }
+        set {
+            systemAudioBehaviorRaw = newValue.rawValue
+            if newValue == .captureSystemAudio && !SystemAudioCapture.hasPermission {
                 SystemAudioCapture.requestPermission()
             }
         }
     }
-    @AppStorage("pttShortcut") var pttShortcut: KeyShortcut = .defaultPTT {
-        didSet {
-            hotkeyController.pttShortcut = pttShortcut
+    @AppStorage("pttShortcut") private var pttShortcutRaw: String = KeyShortcut.defaultPTT.rawValue
+    var pttShortcut: KeyShortcut {
+        get { KeyShortcut(rawValue: pttShortcutRaw) ?? .defaultPTT }
+        set {
+            pttShortcutRaw = newValue.rawValue
+            hotkeyController.pttShortcut = newValue
             hotkeyController.restart()
         }
     }
-    @AppStorage("hfShortcut") var hfShortcut: KeyShortcut = .defaultHF {
-        didSet {
-            hotkeyController.hfShortcut = hfShortcut
+    @AppStorage("hfShortcut") private var hfShortcutRaw: String = KeyShortcut.defaultHF.rawValue
+    var hfShortcut: KeyShortcut {
+        get { KeyShortcut(rawValue: hfShortcutRaw) ?? .defaultHF }
+        set {
+            hfShortcutRaw = newValue.rawValue
+            hotkeyController.hfShortcut = newValue
             hotkeyController.restart()
         }
     }
@@ -164,8 +190,12 @@ class AppState: ObservableObject {
         }
         setupFloatingIndicatorCallbacks()
         setupKeyboardShortcuts()
-        Task {
-            await initializeServices()
+        // Only auto-initialize if onboarding is already completed.
+        // During onboarding, Step 3 triggers initialization explicitly.
+        if hasCompletedOnboarding {
+            Task {
+                await initializeServices()
+            }
         }
     }
 
@@ -299,6 +329,18 @@ class AppState: ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self, self.isRecording else { return }
                 self.cancelRecording()
+            }
+        }
+
+        // Compact mode notifications
+        NotificationCenter.default.addObserver(forName: .indicatorCollapseRequested, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.floatingIndicator.toggleCompact()
+            }
+        }
+        NotificationCenter.default.addObserver(forName: .indicatorExpandRequested, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.floatingIndicator.toggleCompact()
             }
         }
     }
@@ -441,6 +483,7 @@ class AppState: ObservableObject {
             return
         }
         isInitializing = true
+        initError = nil
         statusMessage = l10n.downloadingModel
 
         do {
@@ -448,6 +491,7 @@ class AppState: ObservableObject {
             DebugLog.log("[AS] initializeServices: micPermission=\(micGranted)")
             if !micGranted {
                 statusMessage = l10n.micPermissionDenied
+                initError = .failed(l10n.micPermissionDenied)
                 isInitializing = false
                 return
             }
@@ -461,9 +505,14 @@ class AppState: ObservableObject {
             isModelLoaded = true
             statusMessage = l10n.ready
             DebugLog.log("[AS] initializeServices: model loaded successfully, isModelLoaded=true")
+        } catch let error as WhisperError where error == .initTimedOut {
+            statusMessage = l10n.modelLoadTimedOut
+            initError = .timedOut
+            logger.error("[AS] initializeServices: TIMED OUT")
         } catch {
             let msg = String(describing: error)
             statusMessage = "Error: \(msg.prefix(80))"
+            initError = .failed(String(msg.prefix(120)))
             logger.error("[AS] initializeServices: FAILED — \(msg)")
         }
         isInitializing = false
@@ -829,6 +878,70 @@ class AppState: ObservableObject {
             AudioPlaybackService.shared.stop()
         }
         history.removeAll { $0.id == record.id }
+    }
+
+    // MARK: - Writing Style Extraction
+
+    func extractWritingStyle(from samples: String) async -> String? {
+        let systemPrompt = """
+        あなたは文体分析の専門家です。与えられた文章サンプルの「書き方のスタイル」だけを分析してください。内容には触れないでください。
+
+        以下のルールに厳密に従ってください:
+        - 出力は5〜8個のルールを番号付きリストで出力
+        - 各ルールは1行で、LLMへの指示として書く
+        - 例を挙げる場合は1つだけ（例: 「〜している」）
+        - 単語の羅列は禁止。パターンを要約すること
+        - 文章の内容（固有名詞、トピック）には言及しない
+
+        分析する観点:
+        - 文末: です/ます体 or だ/である体 or 混在か
+        - 句読点の種類と頻度
+        - 漢字の使用度（硬め or 柔らかめ）
+        - 一文の長さ傾向
+        - 口語的 or 書き言葉的か
+        - 感嘆符（！）や記号（…、〜）の使用頻度
+        - 主語の省略頻度
+        - その他の特徴的なクセ
+
+        英語の文章の場合は以下の観点で分析:
+        - Formality and use of contractions
+        - Sentence length and structure
+        - Active vs passive voice
+        - Punctuation habits (!, em dashes, semicolons)
+        - Person (I/we/you) and tone
+
+        良いルールの例:
+        1. です/ます体を基本とし、だ/である体は使わない
+        2. 一文は長め（30〜50字）で、読点を多用して区切る
+        3. 感嘆符は使わない。文末は「。」で終える
+        4. 主語は頻繁に省略する
+        5. カタカナ語を自然に混ぜる（例: 「スピード」「アウトプット」）
+
+        悪いルールの例（こう書かないこと）:
+        - 「です」「ます」「です」「ます」のように同じ語を羅列する
+        - 文中の単語を全部リストアップする
+        - 「自然に書く」のような曖昧な指示
+        """
+        let userMessage = "<samples>\n\(samples)\n</samples>"
+
+        if formattingProvider == .local {
+            if !localLLMService.isReady {
+                await prepareLocalLLM()
+                guard localLLMService.isReady else { return nil }
+            }
+            return await localLLMService.generate(systemPrompt: systemPrompt, userMessage: userMessage)
+        } else {
+            // Use cloud provider for style extraction
+            return await formattingService.format(
+                text: samples,
+                provider: formattingProvider,
+                apiKey: currentApiKey,
+                model: currentModel,
+                customEndpoint: customEndpoint,
+                prompt: FormattingPrompt(name: "style-extract", systemPrompt: systemPrompt),
+                localLLMService: localLLMService
+            )
+        }
     }
 
     // MARK: - Prompt Management

@@ -127,12 +127,23 @@ struct L10n {
     var editPrompt: String { s("Edit Prompt", "プロンプトを編集") }
     var name: String { s("Name", "名前") }
     var systemPrompt: String { s("System Prompt", "システムプロンプト") }
-    var fewShotExample: String { s("Few-shot Example (optional)", "Few-shot例（任意）") }
-    var exampleInput: String { s("Example Input", "入力例") }
-    var expectedOutput: String { s("Expected Output", "期待する出力") }
     var cancel: String { s("Cancel", "キャンセル") }
     var addPromptBtn: String { s("Add Prompt", "プロンプトを追加") }
     var saveChanges: String { s("Save Changes", "変更を保存") }
+
+    // MARK: Writing Style
+    var writingStyle: String { s("Writing Style", "文体スタイル") }
+    var writingStylePlaceholder: String { s("e.g. Casual tone, short sentences, use だ/である endings...", "例: カジュアルな口調、短い文、だ/である調...") }
+    var extractFromWriting: String { s("Extract from your writing...", "あなたの文章から抽出...") }
+    var styleExtractorDesc: String { s("Paste samples of your writing (3-5 paragraphs). AI will analyze your style. Review and edit the result — it's a starting point, not final.", "あなたの文章サンプルをペースト（3〜5段落推奨）。AIがスタイルを分析します。結果はたたき台です。確認・修正してお使いください。") }
+    var writingSamplesPlaceholder: String { s("Paste your writing samples here...", "ここに文章サンプルをペースト...") }
+    var analyze: String { s("Analyze", "分析") }
+    var analyzing: String { s("Analyzing...", "分析中...") }
+    var apply: String { s("Apply", "適用") }
+    var styleExtractResult: String { s("Extracted Style", "抽出されたスタイル") }
+
+    var formattingDisabledHint: String { s("Formatting options are available in Formatted mode.", "整形オプションはFormattedモードで使用できます。") }
+    var switchToFormatted: String { s("Switch to Formatted", "Formattedに切替") }
 
     var autoDetect: String { s("Auto Detect", "自動検出") }
     var speechLanguages: String { s("Languages I speak", "話す言語") }
@@ -218,9 +229,10 @@ struct L10n {
     var onboardingMicDesc: String { s("Verba needs microphone access to record your voice.", "Verbaは音声を録音するためにマイクへのアクセスが必要です。") }
     var onboardingAccessibilityTitle: String { s("Accessibility Permission", "アクセシビリティ権限") }
     var onboardingAccessibilityDesc: String { s("Required to automatically paste transcribed text into your active app.", "文字起こしテキストをアクティブなアプリに自動ペーストするために必要です。") }
-    var onboardingModelTitle: String { s("Downloading AI Models", "AIモデルをダウンロード中") }
-    var onboardingModelDesc: String { s("Downloading the speech recognition model. This only happens once.", "音声認識モデルをダウンロード中。初回のみ必要です。") }
-    var onboardingModelDescBoth: String { s("Downloading speech recognition and text formatting models...", "音声認識とテキスト整形モデルをダウンロード中...") }
+    var onboardingModelTitle: String { s("Choose AI Model", "AIモデルを選択") }
+    var onboardingModelDesc: String { s("Select a speech recognition model. Larger models are more accurate but take longer to download.", "音声認識モデルを選択してください。大きいモデルほど精度が高くなりますが、ダウンロードに時間がかかります。") }
+    var onboardingModelDescBoth: String { s("Select a speech recognition model. A text formatting model will also be downloaded.", "音声認識モデルを選択してください。テキスト整形モデルも同時にダウンロードされます。") }
+    var onboardingDownloadBtn: String { s("Download & Continue", "ダウンロードして続行") }
     var whisperModelLabel: String { s("Speech Recognition", "音声認識") }
     var formattingModelLabel: String { s("Text Formatting", "テキスト整形") }
     var modelsReady: String { s("Both models are ready", "両方のモデルの準備ができました") }
@@ -323,6 +335,9 @@ struct L10n {
     var noSpeechDetected: String { s("No speech detected", "音声が検出されませんでした") }
     var noSpeechModelHint: String { s("No speech detected — try changing Whisper model in Settings", "音声が検出されません — 設定からWhisperモデルを変更してみてください") }
     var modelNotLoaded: String { s("Model not loaded yet", "モデルがまだ読み込まれていません") }
+    var modelLoadTimedOut: String { s("Model loading timed out — try a different model", "モデルの読み込みがタイムアウトしました — 別のモデルをお試しください") }
+    var modelLoadFailed: String { s("Model failed to load", "モデルの読み込みに失敗しました") }
+    var changeModel: String { s("Change Model", "モデルを変更") }
     var accessibilityNeeded: String { s("⚠ Accessibility permission needed — text copied to clipboard", "⚠ アクセシビリティ権限が必要です — テキストはクリップボードにコピーされました") }
 }
 

@@ -76,17 +76,25 @@ struct FormattingPrompt: Identifiable, Codable, Equatable {
     let id: UUID
     var name: String
     var systemPrompt: String
-    var fewShotUser: String
-    var fewShotAssistant: String
     var isBuiltIn: Bool
+    var writingStyle: String
 
-    init(id: UUID = UUID(), name: String, systemPrompt: String, fewShotUser: String = "", fewShotAssistant: String = "", isBuiltIn: Bool = false) {
+    init(id: UUID = UUID(), name: String, systemPrompt: String, isBuiltIn: Bool = false, writingStyle: String = "") {
         self.id = id
         self.name = name
         self.systemPrompt = systemPrompt
-        self.fewShotUser = fewShotUser
-        self.fewShotAssistant = fewShotAssistant
         self.isBuiltIn = isBuiltIn
+        self.writingStyle = writingStyle
+    }
+
+    // Migration: decode existing data (ignores removed fewShotUser/fewShotAssistant, adds writingStyle)
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        systemPrompt = try container.decode(String.self, forKey: .systemPrompt)
+        isBuiltIn = try container.decode(Bool.self, forKey: .isBuiltIn)
+        writingStyle = try container.decodeIfPresent(String.self, forKey: .writingStyle) ?? ""
     }
 
     static let builtInGeneral = FormattingPrompt(
@@ -113,16 +121,6 @@ struct FormattingPrompt: Identifiable, Codable, Equatable {
 
         Output ONLY the cleaned text.
         """,
-        fewShotUser: """
-        <transcription>
-        えーとですね あのクロードに聞いてほしいんですけど このコードを あーなんだっけ リファクタ あ リファクタリングしてもらえますか えっと具体的にはあの関数を関数を分割してほしいです あと関連するんですけど テストも追加してほしいなと思っています
-        </transcription>
-        """,
-        fewShotAssistant: """
-        Claudeに聞いてほしいんですけど、このコードをリファクタリングしてもらえますか。具体的には関数を分割してほしいです。
-
-        あと関連するんですけど、テストも追加してほしいなと思っています。
-        """,
         isBuiltIn: true
     )
 
@@ -145,20 +143,6 @@ struct FormattingPrompt: Identifiable, Codable, Equatable {
 
         整形後の議事録テキストだけを出力してください。
         """,
-        fewShotUser: """
-        <transcription>
-        えっとですね 今日の議題なんですけど まずデザインレビューの件です あの先週出したワイヤーフレームについてフィードバックもらいたいんですけど 田中さんどうですか うーん 全体的にはいいと思うんですけど ヘッダーのナビゲーションがちょっと分かりにくいかなと じゃあそこは修正しましょう 来週の水曜までに直します
-        </transcription>
-        """,
-        fewShotAssistant: """
-        ## デザインレビュー
-
-        - 先週提出したワイヤーフレームについてフィードバック
-        - 田中さん: 全体的には良いが、ヘッダーのナビゲーションが分かりにくい
-
-        ### アクションアイテム
-        - ヘッダーナビゲーションの修正 → 来週水曜まで
-        """,
         isBuiltIn: true
     )
 
@@ -180,18 +164,6 @@ struct FormattingPrompt: Identifiable, Codable, Equatable {
         - 前置きを付けない
 
         整形後のメッセージテキストだけを出力してください。
-        """,
-        fewShotUser: """
-        <transcription>
-        えーと山田さんに送りたいんですけど 先日の打ち合わせありがとうございました あの件なんですが えっと見積もりの方確認しまして 問題なさそうなので進めていただければと思います あと来週のミーティングなんですけど 水曜の午後でお願いできますか
-        </transcription>
-        """,
-        fewShotAssistant: """
-        先日の打ち合わせ、ありがとうございました。
-
-        お見積もりの件、確認いたしました。問題なさそうですので、進めていただければと思います。
-
-        また、来週のミーティングですが、水曜の午後でお願いできますでしょうか。
         """,
         isBuiltIn: true
     )
@@ -226,14 +198,6 @@ struct FormattingPrompt: Identifiable, Codable, Equatable {
         6. Do NOT add any commentary, explanation, or preamble
 
         Output ONLY the cleaned text.
-        """,
-        fewShotUser: """
-        <transcription>
-        キーを関しながら関してください 話すと温泉がテキストになり 自動でペースとされます
-        </transcription>
-        """,
-        fewShotAssistant: """
-        キーを押しながら話してください。離すと音声がテキストになり、自動でペーストされます。
         """,
         isBuiltIn: true
     )
@@ -287,8 +251,11 @@ class FormattingService {
         // Wrap input in delimiters so LLM treats it as data, not instructions
         let wrappedInput = "<transcription>\n\(text)\n</transcription>"
 
-        // Build system prompt with dictionary injection
+        // Build system prompt with writing style and dictionary injection
         var systemPrompt = prompt.systemPrompt
+        if !prompt.writingStyle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            systemPrompt += "\n\n【文体スタイル】以下のスタイルに従って出力してください:\n\(prompt.writingStyle)"
+        }
         if !dictionary.isEmpty {
             let termLines = dictionary.map { "- \($0.term)" }.joined(separator: "\n")
             systemPrompt += "\n\n【用語辞書】以下の用語は正確にこの表記を使ってください:\n\(termLines)"
@@ -305,13 +272,7 @@ class FormattingService {
                 logger.error("Local model not ready")
                 return nil
             }
-            // Build full user message including few-shot context
-            var userMessage = ""
-            if !prompt.fewShotUser.isEmpty && !prompt.fewShotAssistant.isEmpty {
-                userMessage += "例:\nInput: \(prompt.fewShotUser)\nOutput: \(prompt.fewShotAssistant)\n\n"
-            }
-            userMessage += wrappedInput
-            return await localService.generate(systemPrompt: systemPrompt, userMessage: userMessage)
+            return await localService.generate(systemPrompt: systemPrompt, userMessage: wrappedInput)
         }
 
         // Cloud API providers
@@ -336,14 +297,10 @@ class FormattingService {
             request.addValue("Verba", forHTTPHeaderField: "X-Title")
         }
 
-        var messages: [ChatRequest.Message] = [
+        let messages: [ChatRequest.Message] = [
             .init(role: "system", content: systemPrompt),
+            .init(role: "user", content: wrappedInput),
         ]
-        if !prompt.fewShotUser.isEmpty && !prompt.fewShotAssistant.isEmpty {
-            messages.append(.init(role: "user", content: prompt.fewShotUser))
-            messages.append(.init(role: "assistant", content: prompt.fewShotAssistant))
-        }
-        messages.append(.init(role: "user", content: wrappedInput))
 
         let body = ChatRequest(
             model: model,

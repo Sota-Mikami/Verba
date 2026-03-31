@@ -20,6 +20,7 @@ class FloatingIndicatorState: ObservableObject {
     @Published var isStreamingActive = false
     @Published var showSuccess = false
     @Published var recordingSessionId = UUID()
+    @Published var isCompact = false
     var onPromptSelected: ((String) -> Void)?
     var onModeChanged: ((TranscriptionMode) -> Void)?
     var onErrorDismissed: (() -> Void)?
@@ -47,6 +48,8 @@ class FloatingIndicatorController {
     let state = FloatingIndicatorState()
 
     private static let indicatorWidth: CGFloat = 340
+    private static let compactWidth: CGFloat = 240
+    private static let compactHeight: CGFloat = 30
 
     @MainActor
     func show(isRecording: Bool, statusMessage: String, mode: TranscriptionMode) {
@@ -56,6 +59,7 @@ class FloatingIndicatorController {
         state.errorMessage = nil
         state.audioLevels = Array(repeating: 0, count: 30)
         state.resetStreaming()
+        state.isCompact = false
         if isRecording {
             state.recordingSessionId = UUID()
         }
@@ -81,7 +85,7 @@ class FloatingIndicatorController {
             w.contentView = hostingView
             self.window = w
         } else {
-            updateWindowHeight(indicatorHeight)
+            updateWindowSize(width: Self.indicatorWidth, height: indicatorHeight)
         }
 
         positionAtBottom()
@@ -98,17 +102,21 @@ class FloatingIndicatorController {
     }
 
     @MainActor
-    func updateWindowHeight(_ newHeight: CGFloat) {
+    func updateWindowSize(width: CGFloat, height: CGFloat) {
         guard let w = window else { return }
         var frame = w.frame
-        let oldHeight = frame.height
-        guard abs(oldHeight - newHeight) > 1 else { return }
-        // Keep bottom edge pinned — grow upward
-        // macOS coords: origin.y = bottom edge, so keep it unchanged
-        frame.size.height = newHeight
-        // origin.y stays the same → window grows upward
+        guard abs(frame.height - height) > 1 || abs(frame.width - width) > 1 else { return }
+        // Keep bottom edge pinned
+        frame.size.width = width
+        frame.size.height = height
         w.setFrame(frame, display: true, animate: false)
-        (w.contentView as? NSHostingView<FloatingIndicatorView>)?.frame.size.height = newHeight
+        (w.contentView as? NSHostingView<FloatingIndicatorView>)?.frame.size = NSSize(width: width, height: height)
+    }
+
+    @MainActor
+    func updateWindowHeight(_ newHeight: CGFloat) {
+        guard let w = window else { return }
+        updateWindowSize(width: w.frame.width, height: newHeight)
     }
 
     /// Fixed height when streaming text is active — controls always visible
@@ -118,7 +126,7 @@ class FloatingIndicatorController {
     func updateStreamingText(_ text: String) {
         state.streamingText = text
         state.isStreamingActive = true
-        if !text.isEmpty {
+        if !text.isEmpty && !state.isCompact {
             updateWindowHeight(Self.streamingHeight)
         }
     }
@@ -133,12 +141,17 @@ class FloatingIndicatorController {
         }, completionHandler: { [weak self] in
             self?.window?.orderOut(nil)
             self?.state.showSuccess = false
+            self?.state.isCompact = false
         })
     }
 
     /// Show green checkmark briefly, then fade out
     @MainActor
     func hideWithSuccess() {
+        // If compact, expand briefly to show success
+        if state.isCompact {
+            expandFromCompact()
+        }
         state.showSuccess = true
         state.isRecording = false
         state.statusMessage = ""
@@ -155,6 +168,7 @@ class FloatingIndicatorController {
         state.errorMessage = message
         state.isRecording = false
         state.statusMessage = ""
+        state.isCompact = false
 
         let indicatorHeight: CGFloat = 72
 
@@ -202,6 +216,68 @@ class FloatingIndicatorController {
         state.pushLevel(level)
     }
 
+    // MARK: - Compact Mode
+
+    @MainActor
+    func toggleCompact() {
+        if state.isCompact {
+            expandFromCompact()
+        } else {
+            collapseToCompact()
+        }
+    }
+
+    @MainActor
+    private func collapseToCompact() {
+        guard let window else { return }
+        state.isCompact = true
+
+        let screen = NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) })
+            ?? NSScreen.main ?? NSScreen.screens.first
+        guard let screen else { return }
+
+        let targetWidth = Self.compactWidth
+        let targetHeight = Self.compactHeight
+        // Center-anchored: keep midX and bottom edge (y) stable
+        let midX = screen.visibleFrame.midX
+        let bottomY = screen.visibleFrame.minY + 32
+
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.3
+            ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            window.animator().setFrame(
+                NSRect(x: midX - targetWidth / 2, y: bottomY, width: targetWidth, height: targetHeight),
+                display: true
+            )
+        }
+    }
+
+    @MainActor
+    private func expandFromCompact() {
+        guard let window else { return }
+        state.isCompact = false
+
+        let hasStreaming = state.isStreamingActive && !state.streamingText.isEmpty
+        let targetHeight: CGFloat = hasStreaming ? Self.streamingHeight : (state.isRecording ? 96 : 72)
+
+        let screen = NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) })
+            ?? NSScreen.main ?? NSScreen.screens.first
+        guard let screen else { return }
+
+        // Center-anchored: keep midX and bottom edge (y) stable
+        let midX = screen.visibleFrame.midX
+        let bottomY = screen.visibleFrame.minY + 32
+
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.3
+            ctx.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            window.animator().setFrame(
+                NSRect(x: midX - Self.indicatorWidth / 2, y: bottomY, width: Self.indicatorWidth, height: targetHeight),
+                display: true
+            )
+        }
+    }
+
     @MainActor
     private func positionAtBottom() {
         guard let window else { return }
@@ -230,6 +306,107 @@ struct FloatingIndicatorView: View {
     private let warmAmber = Color(hex: 0xf0a060)
 
     var body: some View {
+        Group {
+            if state.isCompact {
+                compactView
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                expandedView
+            }
+        }
+        .environment(\.colorScheme, .dark)
+        .animation(.easeInOut(duration: 0.3), value: state.isCompact)
+    }
+
+    // MARK: - Compact View
+
+    @State private var compactHovered = false
+
+    /// Smooth average of recent audio levels for the compact bar
+    private var smoothLevel: CGFloat {
+        let recent = state.audioLevels.suffix(10)
+        guard !recent.isEmpty else { return 0 }
+        return recent.reduce(0, +) / CGFloat(recent.count)
+    }
+
+    private var compactView: some View {
+        Button {
+            NotificationCenter.default.post(name: .indicatorExpandRequested, object: nil)
+        } label: {
+            HStack(spacing: 6) {
+                // Recording dot — amber with voice-reactive ring
+                ZStack {
+                    // Voice-reactive outer ring
+                    Circle()
+                        .stroke(warmAmber.opacity(0.2 + smoothLevel * 0.4), lineWidth: 1.5)
+                        .frame(width: 14, height: 14)
+                        .scaleEffect(1.0 + smoothLevel * 0.3)
+                        .animation(.easeOut(duration: 0.15), value: smoothLevel)
+
+                    Circle()
+                        .fill(warmAmber)
+                        .frame(width: 6, height: 6)
+                        .shadow(color: warmAmber.opacity(0.5), radius: 3)
+                }
+                .frame(width: 16, height: 16)
+
+                // Mini level bars — 8 bars, Discord voice-activity style
+                HStack(spacing: 1.5) {
+                    ForEach(0..<8, id: \.self) { i in
+                        let idx = max(0, state.audioLevels.count - 8 + i)
+                        let level = idx < state.audioLevels.count ? state.audioLevels[idx] : 0
+                        RoundedRectangle(cornerRadius: 0.5)
+                            .fill(warmAmber.opacity(0.4 + level * 0.6))
+                            .frame(width: 2, height: max(3, level * 12))
+                            .animation(.easeOut(duration: 0.08), value: level)
+                    }
+                }
+                .frame(height: 14)
+
+                // Hover: show action hint
+                if compactHovered {
+                    Text("Click to expand")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(Color(hex: 0xede8e1).opacity(0.8))
+                        .transition(.opacity.combined(with: .move(edge: .leading)))
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(
+                Capsule()
+                    .fill(Color(hex: 0x1e1d24).opacity(0.92))
+                    .overlay(
+                        Capsule()
+                            .strokeBorder(
+                                compactHovered ? warmAmber.opacity(0.2) : Color.white.opacity(0.06),
+                                lineWidth: 0.5
+                            )
+                    )
+            )
+            .shadow(color: compactHovered ? warmAmber.opacity(0.15) : Color.black.opacity(0.2),
+                    radius: 8, y: 2)
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            compactHovered = hovering
+            if hovering {
+                NSCursor.pointingHand.push()
+            } else {
+                NSCursor.pop()
+            }
+        }
+        .animation(.easeOut(duration: 0.2), value: compactHovered)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
+                breathe = true
+            }
+        }
+    }
+
+    // MARK: - Expanded View
+
+    private var expandedView: some View {
         VStack(spacing: 0) {
             if let error = state.errorMessage {
                 // Error state — persistent, with dismiss button
@@ -360,19 +537,24 @@ struct FloatingIndicatorView: View {
                     Spacer()
 
                     HStack(spacing: 6) {
-                        // Cancel (discard) — muted, destructive hint
+                        // Collapse to compact
+                        CompactToggleButton {
+                            NotificationCenter.default.post(name: .indicatorCollapseRequested, object: nil)
+                        }
+
+                        // Cancel (discard)
                         RecordingActionButton(
                             icon: "trash",
-                            label: "Cancel",
+                            tooltip: "Discard recording",
                             style: .cancel
                         ) {
                             state.onCancelRecording?()
                         }
 
-                        // Done (confirm & transcribe) — accent, primary action
+                        // Done (confirm & transcribe)
                         RecordingActionButton(
                             icon: "checkmark",
-                            label: "Done",
+                            tooltip: "Stop & transcribe",
                             style: .confirm
                         ) {
                             state.onStopRecording?()
@@ -406,12 +588,130 @@ struct FloatingIndicatorView: View {
                     lineWidth: 0.5
                 )
         )
-        .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: Color(hex: 0x3c2814).opacity(0.3), radius: 20, y: 8)
-        .environment(\.colorScheme, .dark)
         .animation(.easeOut(duration: 0.25), value: state.isRecording)
         .animation(.easeOut(duration: 0.2), value: hasStreamingText)
     }
+}
+
+// MARK: - Compact Toggle Button
+
+struct CompactToggleButton: View {
+    let action: () -> Void
+    @State private var isHovered = false
+    @State private var buttonScreenFrame: NSRect = .zero
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "arrow.down.right.and.arrow.up.left")
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(isHovered ? Color(hex: 0xede8e1) : Color(hex: 0x9a948a))
+                .frame(width: 24, height: 24)
+                .background(
+                    Capsule().fill(Color.white.opacity(isHovered ? 0.12 : 0.06))
+                )
+        }
+        .buttonStyle(.plain)
+        .background(ScreenPositionTracker { frame in buttonScreenFrame = frame })
+        .onHover { hovering in
+            isHovered = hovering
+            if hovering {
+                FloatingTooltip.shared.show("Minimize", above: NSPoint(
+                    x: buttonScreenFrame.midX,
+                    y: buttonScreenFrame.maxY
+                ))
+            } else {
+                FloatingTooltip.shared.hide()
+            }
+        }
+        .animation(.easeOut(duration: 0.1), value: isHovered)
+    }
+}
+
+// MARK: - Floating Tooltip (separate window — never clipped)
+
+class FloatingTooltip {
+    static let shared = FloatingTooltip()
+    private var window: NSWindow?
+
+    func show(_ text: String, above screenPoint: NSPoint) {
+        hide()
+
+        let label = NSTextField(labelWithString: text)
+        label.font = .systemFont(ofSize: 10, weight: .medium)
+        label.textColor = NSColor(red: 0.93, green: 0.91, blue: 0.88, alpha: 1) // #ede8e1
+        label.backgroundColor = .clear
+        label.isBezeled = false
+        label.isEditable = false
+        label.sizeToFit()
+
+        let padding: CGFloat = 8
+        let vPadding: CGFloat = 4
+        let size = NSSize(
+            width: label.frame.width + padding * 2,
+            height: label.frame.height + vPadding * 2
+        )
+        label.frame.origin = NSPoint(x: padding, y: vPadding)
+
+        let container = NSView(frame: NSRect(origin: .zero, size: size))
+        container.wantsLayer = true
+        container.layer?.cornerRadius = 6
+        container.layer?.backgroundColor = NSColor(red: 0.12, green: 0.11, blue: 0.14, alpha: 0.95).cgColor
+        container.layer?.borderColor = NSColor.white.withAlphaComponent(0.1).cgColor
+        container.layer?.borderWidth = 0.5
+        container.addSubview(label)
+
+        let w = NSWindow(
+            contentRect: NSRect(origin: .zero, size: size),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+        w.level = .floating + 1
+        w.isOpaque = false
+        w.backgroundColor = .clear
+        w.hasShadow = true
+        w.ignoresMouseEvents = true
+        w.contentView = container
+        w.setFrameOrigin(NSPoint(
+            x: screenPoint.x - size.width / 2,
+            y: screenPoint.y + 6
+        ))
+        w.orderFront(nil)
+        self.window = w
+    }
+
+    func hide() {
+        window?.orderOut(nil)
+        window = nil
+    }
+}
+
+/// Invisible NSView that reports its screen frame — used to position tooltips
+struct ScreenPositionTracker: NSViewRepresentable {
+    let onFrame: (NSRect) -> Void
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        view.setFrameSize(NSSize(width: 1, height: 1))
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async {
+            guard let window = nsView.window else { return }
+            let frameInWindow = nsView.convert(nsView.superview?.bounds ?? nsView.bounds, to: nil)
+            let frameInScreen = window.convertToScreen(frameInWindow)
+            onFrame(frameInScreen)
+        }
+    }
+}
+
+// MARK: - Notification Names
+
+extension Notification.Name {
+    static let indicatorCollapseRequested = Notification.Name("indicatorCollapseRequested")
+    static let indicatorExpandRequested = Notification.Name("indicatorExpandRequested")
 }
 
 // MARK: - Streaming Text View
@@ -634,10 +934,11 @@ struct RecordingActionButton: View {
     enum Style { case cancel, confirm }
 
     let icon: String
-    let label: String
+    let tooltip: String
     let style: Style
     let action: () -> Void
     @State private var isHovered = false
+    @State private var buttonScreenFrame: NSRect = .zero
 
     private var fg: Color {
         switch style {
@@ -655,30 +956,30 @@ struct RecordingActionButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 9, weight: .semibold))
-                if isHovered {
-                    Text(label)
-                        .font(.system(size: 10, weight: .medium))
-                        .transition(.opacity.combined(with: .move(edge: .trailing)))
-                }
-            }
-            .foregroundStyle(fg)
-            .padding(.horizontal, isHovered ? 10 : 6)
-            .padding(.vertical, 5)
-            .background(
-                Capsule().fill(bg)
-            )
-            .overlay(
-                Capsule()
-                    .strokeBorder(style == .confirm ? Color(hex: 0x7c6cfc).opacity(0.4) : Color.clear, lineWidth: 0.5)
-            )
+            Image(systemName: icon)
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(fg)
+                .frame(width: 24, height: 24)
+                .background(Capsule().fill(bg))
+                .overlay(
+                    Capsule()
+                        .strokeBorder(style == .confirm ? Color(hex: 0x7c6cfc).opacity(0.4) : Color.clear, lineWidth: 0.5)
+                )
         }
         .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
+        .background(ScreenPositionTracker { frame in buttonScreenFrame = frame })
+        .onHover { hovering in
+            isHovered = hovering
+            if hovering {
+                FloatingTooltip.shared.show(tooltip, above: NSPoint(
+                    x: buttonScreenFrame.midX,
+                    y: buttonScreenFrame.maxY
+                ))
+            } else {
+                FloatingTooltip.shared.hide()
+            }
+        }
         .animation(.easeOut(duration: 0.15), value: isHovered)
-        .help(style == .cancel ? L10n.current.discardRecording : L10n.current.stopAndTranscribe)
     }
 }
 

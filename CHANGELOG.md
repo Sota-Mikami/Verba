@@ -2,6 +2,46 @@
 
 All notable changes to Verba will be documented in this file.
 
+## [1.4.0] - 2026-03-31
+
+### Added
+- **Onboarding model picker** — First-time users now choose their Whisper model explicitly (Tiny / Base / Small / Large V3 Turbo) instead of relying on auto-detection. Large V3 Turbo is pre-selected as the recommended default.
+- **WhisperKit initialization timeout** — Model download and loading now time out after 120 seconds instead of waiting indefinitely. Prevents the app from getting stuck on launch when network, hardware, or CoreML issues cause a hang.
+- **Initialization error recovery** — When model loading fails or times out, the sidebar shows an error state with a Retry button. During onboarding, users can also switch to a different model and retry.
+
+### Changed
+- **Deferred initialization for new users** — `initializeServices()` no longer runs before onboarding is complete. Model download starts only when the user reaches Step 3 and taps "Download & Continue".
+
+### Fixed
+- **Onboarding model download starting before user interaction** — Previously, the app began downloading the auto-detected model immediately on launch, before the user even saw the onboarding screen.
+
+## [1.3.1] - 2026-03-25
+
+### Fixed
+- **Startup crash fix** — Resolved SIGTRAP crash on launch caused by `@AppStorage` with enum types receiving invalid UserDefaults values. All enum-backed settings now safely fall back to defaults.
+
+## [1.3.0] - 2026-03-22
+
+### Added
+- **Writing Style personalization** — Each formatting prompt now has a Writing Style field. Define how your text should sound (tone, sentence endings, punctuation habits) independently from what the prompt does.
+- **AI style extraction** — Paste samples of your writing and let the on-device LLM analyze your style into concrete rules. Results are a starting point you can edit.
+- **Formatting settings UX** — When Output Mode is set to Fast, formatting-related sections are hidden with a hint and quick switch button to Formatted mode.
+
+### Changed
+- **Simplified prompt editor** — Removed few-shot example fields. System Prompt + Writing Style is sufficient for both local and cloud models.
+
+### Fixed
+- **Sidebar alignment** — License badge and Whisper status now share consistent indentation.
+
+## [1.2.0] - 2026-03-20
+
+### Added
+- **Compact indicator mode** — Minimize the recording indicator to a slim bar at the bottom of the screen to avoid blocking content. Click to expand back.
+- **Custom floating tooltips** — Action buttons (Stop & transcribe, Discard recording, Minimize) now show instant tooltips above the button, rendered in a separate window so they're never clipped.
+
+### Changed
+- **Recording action buttons** — Simplified to icon-only with instant tooltip labels instead of hover-expand text, reducing visual clutter when multiple buttons are present.
+
 ## [1.1.0] - 2026-03-19
 
 ### Added
