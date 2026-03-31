@@ -6,16 +6,16 @@
         <description>Verba update feed</description>
         <language>en</language>
         <item>
-            <title>Version 1.3.1</title>
-            <description><![CDATA[<h2>What's New in v1.3.1</h2><ul><li>**Startup crash fix** — Resolved SIGTRAP crash on launch caused by `@AppStorage` with enum types receiving invalid UserDefaults values. All enum-backed settings now safely fall back to defaults.</li></ul>]]></description>
-            <pubDate>Wed, 25 Mar 2026 16:42:54 +0900</pubDate>
+            <title>Version 1.4.0</title>
+            <description><![CDATA[<h2>What's New in v1.4.0</h2><ul><li>**Onboarding model picker** — First-time users now choose their Whisper model explicitly (Tiny / Base / Small / Large V3 Turbo) instead of relying on auto-detection. Large V3 Turbo is pre-selected as the recommended default.</li><li>**WhisperKit initialization timeout** — Model download and loading now time out after 120 seconds instead of waiting indefinitely. Prevents the app from getting stuck on launch when network, hardware, or CoreML issues cause a hang.</li><li>**Initialization error recovery** — When model loading fails or times out, the sidebar shows an error state with a Retry button. During onboarding, users can also switch to a different model and retry.</li><li>**Deferred initialization for new users** — `initializeServices()` no longer runs before onboarding is complete. Model download starts only when the user reaches Step 3 and taps "Download & Continue".</li><li>**Onboarding model download starting before user interaction** — Previously, the app began downloading the auto-detected model immediately on launch, before the user even saw the onboarding screen.</li></ul>]]></description>
+            <pubDate>Tue, 31 Mar 2026 08:12:30 +0700</pubDate>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/Sota-Mikami/Verba/releases/download/v1.3.1/Verba-v1.3.1.dmg"
-                sparkle:version="44"
-                sparkle:shortVersionString="1.3.1"
-                sparkle:edSignature="sDk53WHu64nROBlPMqPORBSp+svehD/jI7q/CG+/O6RUWWjoyXJwL8m3M9MpgMO2kodX7a5rbWVkeuGaX3vGCA=="
-                length="10514125"
+                url="https://github.com/Sota-Mikami/Verba/releases/download/v1.4.0/Verba-v1.4.0.dmg"
+                sparkle:version="45"
+                sparkle:shortVersionString="1.4.0"
+                sparkle:edSignature="yEiMYRnOdCoSphV75mluONpAPCxsVv1+66RdOe9JS7rLnein43Pi0+exjkX6HQ6D3t8BucLCHCeO4vJI7Qm2Dg=="
+                length="10541356"
                 type="application/octet-stream"
             />
         </item>
